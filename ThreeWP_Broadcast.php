@@ -391,7 +391,9 @@ class ThreeWP_Broadcast extends ThreeWP_Broadcast_Base
 		
 		$post_types = $this->get_site_option( 'post_types' );
 		
-		$input_post_types = array(
+		$inputs = array();
+		
+		$inputs[ 'post_types' ] =array(
 			'type' => 'text',
 			'name' => 'post_types',
 			'label' => $this->_( 'Post types to broadcast' ),
@@ -418,10 +420,10 @@ class ThreeWP_Broadcast extends ThreeWP_Broadcast_Base
 		
 		'.$form->start().'
 		
-		' . $this->display_form_table( $input_post_types ) .'
+		' . $this->display_form_table( $inputs ) .'
 		
 		<p>
-		'.$form->make_input( $input_submit).'
+			'.$form->make_input( $input_submit).'
 		</p>
 		
 		'.$form->stop().'
