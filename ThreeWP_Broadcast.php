@@ -3,7 +3,7 @@
 Plugin Name: ThreeWP Broadcast
 Plugin URI: http://mindreantre.se/program/threewp/threewp-broadcast/
 Description: Network plugin to broadcast a post to other blogs. Whitelist, blacklist, groups and automatic category+tag+custom field posting/creation available. 
-Version: 1.14
+Version: 1.17
 Author: edward mindreantre
 Author URI: http://www.mindreantre.se
 Author Email: edward@mindreantre.se
@@ -40,18 +40,19 @@ class ThreeWP_Broadcast extends ThreeWP_Broadcast_Base
 	public function __construct()
 	{
 		parent::__construct(__FILE__);
-		if ( $this->is_network )
+		if ( ! $this->is_network )
+			return;
+		
+		add_action( 'network_admin_menu', array( &$this, 'network_admin_menu' ) );
+		add_action( 'admin_menu', array( &$this, 'add_menu' ) );
+		add_action( 'admin_menu', array( &$this, 'create_meta_box' ) );
+		add_action( 'admin_print_styles', array( &$this, 'admin_print_styles' ) );
+		if ( $this->get_site_option( 'override_child_permalinks' ) )
 		{
-			add_action( 'network_admin_menu', array( &$this, 'network_admin_menu' ) );
-			add_action( 'admin_menu', array( &$this, 'add_menu' ) );
-			add_action( 'admin_menu', array( &$this, 'create_meta_box' ) );
-			add_action( 'admin_print_styles', array( &$this, 'admin_print_styles' ) );
-			if ( $this->get_site_option( 'override_child_permalinks' ) )
-			{
-				add_action( 'post_link', array( &$this, 'post_link' ) );
-			}
-			add_filter( 'threewp_activity_monitor_list_activities', array( &$this, 'list_activities') );
+			add_action( 'post_link', array( &$this, 'post_link' ) );
 		}
+		add_filter( 'threewp_activity_monitor_list_activities', array( &$this, 'list_activities') );
+		add_action( 'wp_head', array( &$this, 'wp_head' ), 1 );
 	}
 	
 	public function network_admin_menu()
@@ -393,7 +394,7 @@ class ThreeWP_Broadcast extends ThreeWP_Broadcast_Base
 		
 		$inputs = array();
 		
-		$inputs[ 'post_types' ] =array(
+		$inputs[ 'post_types' ] = array(
 			'type' => 'text',
 			'name' => 'post_types',
 			'label' => $this->_( 'Post types to broadcast' ),
@@ -707,7 +708,7 @@ class ThreeWP_Broadcast extends ThreeWP_Broadcast_Base
 		$nonce_key = 'broadcast_find_orphans';
 		$nonce_key .= '_' . $post_id;
 			
-		if (!wp_verify_nonce( $nonce, $nonce_key) )
+		if ( ! wp_verify_nonce( $nonce, $nonce_key) )
 			die("Security check: not finding orphans for you!");
 			
 		$post = get_post( $post_id );
@@ -792,8 +793,10 @@ class ThreeWP_Broadcast extends ThreeWP_Broadcast_Base
 				);
 
 				$t_body .= '
-					<th scope="row" class="check-column">' . $form->make_input( $select ) . ' <span class="screen-reader-text">' . $form->make_label( $select ) . '</span></th>
-					<td><a href="' . $orphan->permalink . '">' . $blogs[ $blog ][ 'blogname' ] . '</a></td>
+					<tr>
+						<th scope="row" class="check-column">' . $form->make_input( $select ) . ' <span class="screen-reader-text">' . $form->make_label( $select ) . '</span></th>
+						<td><a href="' . $orphan->permalink . '">' . $blogs[ $blog ][ 'blogname' ] . '</a></td>
+					</tr>
 				';
 			}
 			
@@ -1770,7 +1773,6 @@ class ThreeWP_Broadcast extends ThreeWP_Broadcast_Base
 			
 			$this->delete_post_broadcast_data( $blog_id, $post_id );
 		}
-
 	}
 	
 	public function manage_posts_columns( $defaults)
@@ -1896,6 +1898,36 @@ class ThreeWP_Broadcast extends ThreeWP_Broadcast_Base
 		return $permalink;
 	}
 	
+	/**
+		@brief		Use the correct canonical link.
+	**/
+	public function wp_head()
+	{
+		// Only override the canonical if we're looking at a single post.
+		if ( ! is_single() )
+			return;
+		
+		global $post;
+		global $blog_id;
+		
+		// Find the parent, if any.
+		$broadcast_data = $this->get_post_broadcast_data( $blog_id, $post->ID );
+		$linked_parent = $broadcast_data->get_linked_parent();
+		if ( $linked_parent === false)
+			return;
+		
+		// Post has a parent. Get the parent's permalink.
+		switch_to_blog( $linked_parent['blog_id'] );
+		$url = get_permalink( $linked_parent['post_id'] );
+		restore_current_blog();
+		
+		echo sprintf( '<link rel="canonical" href="%s" />', $url );
+		echo "\n";
+		
+		// Prevent Wordpress from outputting its own canonical.
+		remove_action( 'wp_head', 'rel_canonical' );
+	}
+	
 	// --------------------------------------------------------------------------------------------
 	// ----------------------------------------- Misc functions
 	// --------------------------------------------------------------------------------------------
@@ -1919,10 +1951,11 @@ class ThreeWP_Broadcast extends ThreeWP_Broadcast_Base
 		// This is taken almost directly from http://codex.wordpress.org/Function_Reference/wp_insert_attachment
 		$wp_filetype = wp_check_filetype( $attachment_data->filename_base(), null );
 		$attachment = array(
+			'menu_order' => $attachment_data->attachment_menu_order(),
 			'post_mime_type' => $wp_filetype['type'],
-			'post_title' => preg_replace( '/\.[^.]+$/', '', $attachment_data->filename_base() ),
+			'post_title' => $attachment_data->attachment_title(),
 			'post_content' => '',
-			'post_status' => 'inherit'
+			'post_status' => 'inherit',
 		);
 		$attach_id = wp_insert_attachment( $attachment, $upload_dir['path'] . '/' . $attachment_data->filename_base(), $post_id );
 		
@@ -2340,3 +2373,4 @@ class ThreeWP_Broadcast extends ThreeWP_Broadcast_Base
 }
 
 $threewp_broadcast = new ThreeWP_Broadcast();
+
