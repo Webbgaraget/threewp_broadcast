@@ -1404,8 +1404,6 @@ class ThreeWP_Broadcast extends ThreeWP_Broadcast_Base
 				);
 
 				$source_post_taxonomies[ $source_blog_taxonomy ] = get_the_terms( $post_id, $source_blog_taxonomy );
-				if ( $source_post_taxonomies[ $source_blog_taxonomy ] === false )
-					unset( $source_post_taxonomies[ $source_blog_taxonomy ] ); 
 			}
 		}
 		
@@ -1509,7 +1507,11 @@ class ThreeWP_Broadcast extends ThreeWP_Broadcast_Base
 					if ( $link )
 						if ( $broadcast_data->has_linked_child_on_this_blog() )
 							wp_set_object_terms( $new_post_id, array(), $source_post_taxonomy );
-					
+
+					// Skip this iteration of there are no terms
+					if ( ! is_array( $source_post_terms ) )
+						continue;
+
 					// Get a list of cats that the target blog has.
 					$target_blog_terms = $this->get_current_blog_taxonomy_terms( $source_post_taxonomy );
 
