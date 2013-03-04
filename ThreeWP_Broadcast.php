@@ -73,6 +73,7 @@ class ThreeWP_Broadcast extends ThreeWP_Broadcast_Base
 			add_filter( 'manage_pages_columns', array( &$this, 'manage_posts_columns' ) ); 
 			add_action( 'manage_pages_custom_column', array( &$this, 'manage_posts_custom_column' ), 10, 2 );
 			
+			add_action( 'wp_trash_post', array( &$this, 'trash_post' ) );
 			add_action( 'trash_post', array( &$this, 'trash_post' ) );
 			add_action( 'trash_page', array( &$this, 'trash_post' ) );
 
@@ -1739,6 +1740,7 @@ class ThreeWP_Broadcast extends ThreeWP_Broadcast_Base
 	{
 		global $blog_id;
 		$broadcast_data = $this->get_post_broadcast_data( $blog_id, $post_id );
+
 		if ( $broadcast_data->has_linked_children() )
 		{
 			foreach( $broadcast_data->get_linked_children() as $childBlog=>$childPost)
