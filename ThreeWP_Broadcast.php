@@ -1756,7 +1756,7 @@ class ThreeWP_Broadcast extends ThreeWP_Broadcast_Base
 		// Check if the parent already exists at the target
 		foreach ( $target_blog_terms as $term )
 		{
-			if ( $term['slug'] == $source_parent['slug'] )
+			if ( $term['slug'] === $source_parent['slug'] )
 			{
 				// The parent already exists, return its ID
 				return $term['term_id'];
@@ -1771,19 +1771,31 @@ class ThreeWP_Broadcast extends ThreeWP_Broadcast_Base
 			$target_grandparent_id = $this->insert_term_ancestors( $source_parent, $source_post_taxonomy, $target_blog_terms, $source_blog_taxonomy_terms );
 		}
 
-		// The target parent does not exist, we need to create it
-		$new_term = wp_insert_term(
-			$source_parent['name'],
-			$source_post_taxonomy,
-			array( 
-				'slug' => $source_parent['slug'],
-				'description' => $source_parent['description'],
-				'parent' => $target_grandparent_id,
-			)
-		);
+		// Check if the parent exists at the target grandparent
+		$term_id = term_exists( $source_parent['name'], $source_post_taxonomy, $target_grandparent_id );
 
+		if ( is_null( $term_id ) || 0 == $term_id )
+		{
+			// The target parent does not exist, we need to create it
+			$new_term = wp_insert_term(
+				$source_parent['name'],
+				$source_post_taxonomy,
+				array( 
+					'slug'        => $source_parent['slug'],
+					'description' => $source_parent['description'],
+					'parent'      => $target_grandparent_id,
+				)
+			);
 
-		return $new_term['term_id'];
+			$term_id = $new_term['term_id'];
+		}
+		elseif ( is_array( $term_id ) )
+		{
+			// The target parent exists and we got an array as response, extract parent id
+			$term_id = $term_id['term_id'];
+		}
+
+		return $term_id;
 	}
 	
 	public function trash_post( $post_id)
