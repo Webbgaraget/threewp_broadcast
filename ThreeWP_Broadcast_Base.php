@@ -4,6 +4,9 @@
 	
 	@par	Changelog
 
+	- 2013-03-05	12:45	Fix: check_plain also stripslashes.
+	- 2013-03-01	10:25	New: check_column() and check_column_body().
+	- 2013-03-01	10:25	Fix: display_form_table inserted input names automatically (based on the array key).
 	- 2013-02-15	04:51	Fix: role_at_least optimized for super admin queries.
 	- 2012-12-14	08:47	Fix: role_at_least works again. It appears as current_user_can is broken somehow.
 	- 2012-12-13	19:55	Fix: super admin can do everything when asked role_at_least
@@ -419,12 +422,12 @@ class ThreeWP_Broadcast_Base
 	**/ 
 	public function roles_as_options()
 	{
-		$returnValue = array();
+		$rv = array();
 		if (function_exists('is_super_admin'))
-			$returnValue['super_admin'] = $this->_( 'Super admin');
+			$rv['super_admin'] = $this->_( 'Super admin');
 		foreach( $this->roles as $role )
-			$returnValue[ $role[ 'name' ] ] = __( ucfirst( $role[ 'name' ] ) );		// See how we ask WP to translate the roles for us? See also how it doesn't. Sometimes.
-		return $returnValue;
+			$rv[ $role[ 'name' ] ] = __( ucfirst( $role[ 'name' ] ) );		// See how we ask WP to translate the roles for us? See also how it doesn't. Sometimes.
+		return $rv;
 	}
 	
 	/**
@@ -830,14 +833,14 @@ class ThreeWP_Broadcast_Base
 		ksort( $sorted );
 		
 		// The array has been sorted, we want the original array again.
-		$returnValue = array();
+		$rv = array();
 		foreach( $sorted as $item )
 		{
 			$value = ( $is_array ? (array)$item[ 'value' ] : $item[ 'value' ] );
-			$returnValue[ $item['key'] ] = $item['value'];
+			$rv[ $item['key'] ] = $item['value'];
 		}
 			
-		return $returnValue;
+		return $rv;
 	}
 	
 	/**
@@ -895,9 +898,40 @@ class ThreeWP_Broadcast_Base
 		return '<span title="'.$time_string.'">' . sprintf( __('%s ago'), $diff) . '</span>';
 	}
 	
+	public function check_column()
+	{
+		$selected = array(
+			'type' => 'checkbox',
+			'name' => 'check',
+		);
+		$form = $this->form();
+		return '<th class="check-column">' . $form->make_input( $selected ) . '<span class="screen-reader-text">' . $this->_('Selected') . '</span></th>';
+	}
+	
+	public function check_column_body( $options )
+	{
+		$options = array_merge( array(
+			'form' => $this->form(),
+			'nameprefix' => '[cb]',
+			'type' => 'checkbox',
+		), $options );
+		
+		if ( ! isset( $options[ 'label' ] ) )
+			$options[ 'label' ] = $options[ 'name' ];
+		
+		$form = $options[ 'form' ];		// Conv
+		return '
+			<th scope="row" class="check-column">
+				' . $form->make_input( $options ) . '
+				<span class="screen-reader-text">' . $form->make_label( $options ) . '</span>
+			</th>
+		';
+	}
+	
 	public function check_plain( $text )
 	{
 		$text = strip_tags( $text );
+		$text = stripslashes( $text );
 		return $text;
 	}
 	
@@ -910,31 +944,34 @@ class ThreeWP_Broadcast_Base
 		
 		$tr = array();
 		
-		$returnValue = '';
+		$rv = '';
 		
 		if ( !isset($options['form']) )
 			$options['form'] = $this->form();
 			
-		foreach( $inputs as $input )
+		foreach( $inputs as $name => $input )
 		{
+			if ( ! isset( $input[ 'name' ] ) )
+				$input[ 'name' ] = $name;
+			
 			if ( $input[ 'type' ] == 'hidden' )
 			{
-				$returnValue .= $options['form']->make_input( $input );
+				$rv .= $options['form']->make_input( $input );
 				continue;
 			}
 			$tr[] = $this->display_form_table_row( $input, $options['form'] );
 		}
 		
 		if ( $options['header'] != '' )
-			$returnValue .= '<'.$options['header_level'].'>' . $options['header'] . '</'.$options['header_level'].'>';
+			$rv .= '<'.$options['header_level'].'>' . $options['header'] . '</'.$options['header_level'].'>';
 		
-		$returnValue .= '
+		$rv .= '
 			<table class="form-table">
 				' . implode('', $tr) . '
 			</table>
 		';
 		
-		return $returnValue;
+		return $rv;
 	}
 
 	public function display_form_table_row($input, $form = null)
@@ -1257,10 +1294,10 @@ class ThreeWP_Broadcast_Base
 	{
 		if (is_array( $object ))
 		{
-			$returnValue = array();
+			$rv = array();
 			foreach($object as $o)
-				$returnValue[] = get_object_vars($o);
-			return $returnValue;
+				$rv[] = get_object_vars($o);
+			return $rv;
 		}
 		else
 			return get_object_vars($object);
@@ -1433,13 +1470,13 @@ class ThreeWP_Broadcast_Base
 		
 		// Done setting up.
 		if (!$mail->Send())
-			$returnValue = $mail->ErrorInfo;
+			$rv = $mail->ErrorInfo;
 		else 
-			$returnValue = true;
+			$rv = true;
 			
 		$mail->SmtpClose();
 		
-		return $returnValue;		
+		return $rv;		
 	}
 	
 	/**
@@ -1531,10 +1568,10 @@ class ThreeWP_Broadcast_Base
 		
 		$options['valid_get_keys']['page'] = 'page';
 		
-		$returnValue = '';
+		$rv = '';
 		if ( count( $options['tabs'] ) > 1 )
 		{
-			$returnValue .= '<ul class="subsubsub">';
+			$rv .= '<ul class="subsubsub">';
 			$original_link = $_SERVER['REQUEST_URI'];
 
 			foreach($get as $key => $value)
@@ -1570,10 +1607,10 @@ class ThreeWP_Broadcast_Base
 				if ( isset( $options[ 'descriptions' ][ $tab_slug ] ) )
 					$title = 'title="' . $options[ 'descriptions' ][ $tab_slug ] . '"';
 				 
-				$returnValue .= '<li><a'.$current.' '. $title .' href="'.$link.'">'.$text.'</a>'.$separator.'</li>';
+				$rv .= '<li><a'.$current.' '. $title .' href="'.$link.'">'.$text.'</a>'.$separator.'</li>';
 				$index++;
 			}
-			$returnValue .= '</ul>';
+			$rv .= '</ul>';
 		}
 		
 		if ( !isset($selected_index) )
@@ -1592,7 +1629,7 @@ class ThreeWP_Broadcast_Base
 				
 				echo $options[ 'display_before_tab_name' ] . $page_title . $options[ 'display_after_tab_name' ];
 			}
-			echo $returnValue;
+			echo $rv;
 			echo '<div style="clear: both"></div>';
 			if ( isset( $options[ 'functions' ][ $selected_index ] ) )
 			{
@@ -1608,7 +1645,7 @@ class ThreeWP_Broadcast_Base
 			ob_end_flush();
 		}
 		else
-			return $returnValue;
+			return $rv;
 	}
 	
 	/**
@@ -1632,7 +1669,7 @@ class ThreeWP_Broadcast_Base
 		
 		@return		HTML wrapped HTML.
 	**/
-	public function wrap( $title, $text )
+	public function wrap( $text, $title )
 	{
 		echo "<h2>$title</h2>
 			<div class=\"wrap\">
