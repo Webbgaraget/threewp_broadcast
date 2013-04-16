@@ -747,7 +747,7 @@ class ThreeWP_Broadcast extends ThreeWP_Broadcast_Base
 			switch_to_blog( $temp_blog_id );
 			
 			$args = array(
-				'post_title' => $post->post_title,
+				'name' => $post->post_name,
 				'numberposts' => 1,
 				'post_type'=> $post_type,
 				'post_status' => $post->post_status,
