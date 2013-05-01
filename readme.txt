@@ -18,6 +18,8 @@ Last used settings are remembered between uses. Broadcasted categories keep thei
 
 Has options for whitelisting (required blogs), blacklisting, user role access granularity, custom post and custom taxonomy support and an uninstall to completely remove itself. No traces of the plugin are left (assuming the created tables are successfully removed).
 
+Requires php v5.4 for trait support. Users of php v5.3 should remain with version 1.18.
+
 Available in the following languages:
 
 * Dutch
@@ -34,6 +36,7 @@ Did I miss anything?
 
 == Installation ==
 
+1. See that you have PHP v5.4 installed (for traits support)
 1. Unzip and copy the zip contents (including directory) into the `/wp-content/plugins/` directory
 1. Activate the plugin sitewide through the 'Plugins' menu in WordPress.
 
@@ -86,7 +89,7 @@ _bcc_
 = 1.19 2013-05-01 =
 * Fix: Trying to add a taxonomy term that already exists at the target blog. Thanks: https://github.com/alisspers
 * Fix: Using new wp_trash_post hook when deleting [child] posts. Thanks: https://github.com/alisspers
-* Code: Using plainview_sdk
+* Code: Using plainview_sdk. Requires php v5.4 (because of traits).
 
 = 1.18 2013-02-22 =
 * New: Option to disable overriding of canonical URLs. Used if other plugins also manipulate the url in the HTML head.
