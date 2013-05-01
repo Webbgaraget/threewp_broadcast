@@ -1,9 +1,34 @@
 <?php
 /**
-	Provides a simple framework with common Wordpress functions.
+	@brief		Base class for the Plainview Wordpress SDK.
+	@details	Provides a framework with which to build Wordpress modules.
+	@author		Edward Plainview	edward@plainview.se
+	@license	GPL v3
+	@version	20130430
 	
 	@par	Changelog
 
+	- 2013-04-30	08:54	New: ABSPATH check on construct().
+	- 2013-04-25	08:53	New: string_to_emails() convert a string of e-mails to an array. \n
+					12:19	New: instance() to retrieve the current instance of the object. \
+					20:14	Code: Lots of static, non-wordpress specific functions moved to \plainview\base.
+	- 2013-04-24	15:57	Code: Removed array_to_object. \n
+							Code: Lots of functions have become static.
+	- 2013-04-23	16:56	Code: mime_type() is now static.
+	- 2013-04-22	17:02	New: db_aware_object added.
+	- 2013-04-16	13:45	New: Added sdk_version and sdk_version_required.
+							New: Added sdk version check on __construct().
+							New: activate(), deactivate() and uninstall() should no longer call parent::.
+							Code cleanup.
+	- 2013-04-10	21:21	Fix: Converted to plainview\wordpress SDK.
+							Fix: Removed object_to_array
+							Fix: send_mail options are far more underscored.
+							Fix: Functions better documented.
+							New: open_close_tag(), h1(), h2(), h3()
+	- 2013-04-08	20:20	New: sd_table classes.
+							New: merge_objects
+							Fix: check_column and check_column_body accept the table as a parameter.
+	- 2013-03-07	15:43	New: add_submenu_page and add_submenu_pages
 	- 2013-03-05	12:45	Fix: check_plain also stripslashes.
 	- 2013-03-01	10:25	New: check_column() and check_column_body().
 	- 2013-03-01	10:25	Fix: display_form_table inserted input names automatically (based on the array key).
@@ -42,21 +67,46 @@
 	- 2011-10-28	14:00	URLMake removed. tabs() now uses Wordpress' add_query_arg and remove_query_arg.
 	- 2011-11-04	09:42	now() is public
 	- 2011-11-07	16:11	new: rmdir().
-	
-	@brief		Base class for the SD series of Wordpress plugins.
-	@author		Edward Plainview	edward.plainview@sverigedemokraterna.se
 */
 
-class ThreeWP_Broadcast_Base
+namespace plainview\wordpress;
+
+if ( ! class_exists( '\\plainview\\base' ) )
+	require_once( dirname( __FILE__ ) . '/../sdk.php' );
+
+if ( ! trait_exists( '\\plainview\\wordpress\\db_aware_object' ) )
+	require_once( dirname( __FILE__ ) . '/db_aware_object.php' );
+
+if ( class_exists( '\\plainview\\wordpress\\base' ) )
+	return;
+
+class base
+	extends \plainview\base
 {
 	/**
-		Stores whether this blog is a network blog.
-		@var	$is_network
+		@brief		Stores whether this blog is a network blog.
+		@since		20130416
+		@var		$is_network
 	**/
 	protected $is_network;
 	
 	/**
-		Contains the paths to the plugin and other places of interest.
+		@brief		Text domain of .PO translation.		
+		If left unset will be set to the base filename minus the .php
+		@var		$language_domain
+		@since		20130416
+	**/ 
+	protected $language_domain = ''; 
+
+	/**
+		@brief		Array of options => default_values that this plugin stores locally.
+		@since		20130416
+		@var		$local_options
+	**/ 
+	protected $local_options = array();
+
+	/**
+		@brief		Contains the paths to the plugin and other places of interest.
 		
 		The keys in the array are:
 		
@@ -67,53 +117,41 @@ class ThreeWP_Broadcast_Base
 		path_from_base_directory<br /> 
 		url<br />
 
-		@var	$paths
+		@since		20130416
+		@var		$paths
 	**/
 	public $paths = array();
 	
 	/**
-		Array of options => default_values that this plugin stores sitewide.
-		
-		@var	$site_options
+		@brief		The version of this SDK file.
+		@since		20130416
+		@var		$sdk_version
 	**/ 
-	protected $site_options = array();
-
+	protected $sdk_version = 20130425;
+	
 	/**
-		Array of options => default_values that this plugin stores locally.
-		@var	$local_options
+		@brief		Use this property in your extended class to require that the SDK is a specific version.
+		@since		20130416
+		@var		$sdk_version_required
 	**/ 
-	protected $local_options = array();
-
+	protected $sdk_version_required = 20000101;
+	
 	/**
-		Array of options => default_values that this plugin stores locally or globally.
-		@var	$options
-		@deprecated 
-	**/ 
-	protected $options = array();
-
-	/**
-		Text domain of .PO translation.
-		
-		If left unset will be set to the base filename minus the .php
-		
-		@var	$language_domain
-	**/ 
-	protected $language_domain = ''; 
-
-	/**
-		Links to Wordpress' database object.
-		@var	$wpdb
+		@brief		Links to Wordpress' database object.
+		@since		20130416
+		@var		$wpdb
 	**/
 	protected $wpdb;
 	
 	/**
-		The list of the standard user roles in Wordpress.
+		@brief		The list of the standard user roles in Wordpress.
 		
 		First an array of role_name => array
 		
 		And then each role is an array of name => role_name and current_user_can => capability.
 
-		@var	$roles
+		@since		20130416
+		@var		$roles
 	**/
 	protected $roles = array(
 		'administrator' => array(
@@ -139,14 +177,27 @@ class ThreeWP_Broadcast_Base
 	);
 	
 	/**
-		Construct the class.
-		
-		@param		$filename		The full path of the parent class.
+		@brief		Array of options => default_values that this plugin stores sitewide.
+		@since		20130416
+		@var		$site_options
+	**/ 
+	protected $site_options = array();
+
+	/**
+		@brief		Construct the class.		
+		@param		string		$filename		The __FILE__ special variable of the parent.
+		@since		20130416
 	**/
-	public function __construct($filename)
+	public function __construct( $filename = null )
 	{
+		if ( ! defined( 'ABSPATH' ) )
+			wp_die( 'ABSPATH is not defined!' );
+		
+		parent::__construct();
+		
 		global $wpdb;
 		$this->wpdb = $wpdb;
+		
 		$this->is_network = MULTISITE;
 
 		$this->paths = array(
@@ -159,50 +210,83 @@ class ThreeWP_Broadcast_Base
 			'url' => WP_PLUGIN_URL . '/' . basename(dirname($filename)),
 		);
 
-		register_activation_hook( $this->paths['filename_from_plugin_directory'],	array( $this, 'activate') );
-		register_deactivation_hook( $this->paths['filename_from_plugin_directory'],	array( $this, 'deactivate') );
+		if ( $this->sdk_version_required > $this->sdk_version )
+			wp_die( sprintf( 'This plugin requires Plainview SDK version %s, but only %s is available.', $this->sdk_version_required, $this->sdk_version ) );
+		
+		register_activation_hook( $this->paths['filename_from_plugin_directory'],	array( $this, 'activate_internal') );
+		register_deactivation_hook( $this->paths['filename_from_plugin_directory'],	array( $this, 'deactivate_internal') );
 		
 		add_action( 'admin_init', array(&$this, 'admin_init') );
 	}
 	
 	/**
-		Overridable activation function.
-		
-		It's here in case plugins need a common activation method in the future.
+		@brief		Overridable activation function.
+		@see		activate_internal()
+		@since		20130416
 	**/
 	public function activate()
 	{
+	}
+	
+	/**
+		@brief		Internal activation function.
+		
+		Child plugins should override activate().
+		
+		@since		20130416
+	**/
+	public function activate_internal()
+	{
 		$this->register_options();
+		$this->activate();
 	}
 	
 	/**
-		Overridable method to deactive the plugin.
+		@brief		Queues a submenu page for adding later.
+		
+		@details	Used to ensure alphabetic sorting of submenu pages independent of language.
+		
+		Uses the same parameters as Wordpress' add_submenu_page. Uses the menu title as the sorting key.
+		
+		After all pages have been add_submenu_page'd, call add_submenu_pages to actually sort and add them.
+		
+		@since		20130416
 	**/
-	public function deactivate()
+	public function add_submenu_page()
 	{
+		if ( ! isset( $this->submenu_pages ) )
+			$this->submenu_pages = array();
+		
+		$args = func_get_args();
+		$key = $args[ 2 ];
+		$key = $this->strtolower( $key );
+		$this->submenu_pages[ $key ] = $args;
 	}
 	
 	/**
-		Deactivates the plugin.
+		@brief		Flush the add_submenu_page cache.
+		@details	Will first sort by key and then add the subpages.		
+		@since		20130416
 	**/
-	public function deactivate_me()
+	public function add_submenu_pages()
 	{
-		deactivate_plugins(array(
-			$this->paths['filename_from_plugin_directory']
-		));
+		ksort( $this->submenu_pages );
+		foreach( $this->submenu_pages as $submenu )
+			call_user_func_array( 'add_submenu_page', $submenu );
 	}
 	
 	/**
-		Filter for admin_init. 
+		@brief		Filter for admin_init. 		
+		@since		20130416
 	**/
 	public function admin_init()
 	{
-		$class_name = get_class($this);
+		$class_name = get_class( $this );
 		if ( isset($_POST[ $class_name ]['uninstall']) )
 		{
 			if ( isset($_POST[ $class_name ]['sure']) )
 			{
-				$this->uninstall();
+				$this->uninstall_internal();
 				$this->deactivate_me();
 				if ($this->is_network)
 					wp_redirect( 'ms-admin.php' );
@@ -214,9 +298,8 @@ class ThreeWP_Broadcast_Base
 	}
 
 	/**
-		Shows the uninstall form.
-		
-		Form is currently only available in English.
+		@brief		Shows the uninstall form.
+		@since		20130416
 	**/
 	public function admin_uninstall()
 	{
@@ -224,7 +307,7 @@ class ThreeWP_Broadcast_Base
 		
 		if (isset($_POST[ get_class($this) ]['uninstall']))
 			if (!isset($_POST['sure']))
-				$this->error('You have to check the checkbox in order to uninstall the plugin.');
+				$this->error_( 'You have to check the checkbox in order to uninstall the plugin.' );
 		
 		$nameprefix = '['.get_class($this).']';
 		$inputs = array(
@@ -232,41 +315,64 @@ class ThreeWP_Broadcast_Base
 				'name' => 'sure',
 				'nameprefix' => $nameprefix,
 				'type' => 'checkbox',
-				'label' => "Yes, I'm sure I want to remove all the plugin tables and settings.",
+				'label' => $this->_( "Yes, I'm sure I want to remove all the plugin tables and settings." ),
 			),
 			'uninstall' => array(
 				'name' => 'uninstall',
 				'nameprefix' => $nameprefix,
 				'type' => 'submit',
 				'css_class' => 'button-primary',
-				'value' => 'Uninstall plugin',
+				'value' => $this->_( 'Uninstall plugin' ),
 			),
 		);
 		
-		echo '
-			'.$form->start().'
-			<p>
-				This page will remove all the plugin tables and settings from the database and then deactivate the plugin.
-			</p>
+		echo $form->start().'
+			<p>' . $this->_( 'This page will remove all the plugin tables and settings from the database and then deactivate the plugin.' ) . '</p>
 
-			<p>
-				'.$form->make_input($inputs['sure']).' '.$form->make_label($inputs['sure']).'
-			</p>
+			<p>'.$form->make_input($inputs['sure']).' '.$form->make_label($inputs['sure']).'</p>
 
-			<p>
-				'.$form->make_input($inputs['uninstall']).'
-			</p>
-			'.$form->stop().'
-		';
+			<p>'.$form->make_input($inputs['uninstall']).'</p>
+			
+			'.$form->stop();
 	}
 	
 	/**
-		Loads this plugin's language files.
+		@brief		Overridable deactivation function.
+		@see		deactivate_internal()
+		@since		20130416
+	**/
+	public function deactivate()
+	{
+	}
+	
+	/**
+		@brief		Internal function that runs when deactivating the plugin.		
+		@since		20130416
+	**/
+	public function deactivate_internal()
+	{
+		$this->deactivate();
+	}
+	
+	/**
+		@brief		Deactivates the plugin.
+		@since		20130416
+	**/
+	public function deactivate_me()
+	{
+		deactivate_plugins(array(
+			$this->paths['filename_from_plugin_directory']
+		));
+	}
+	
+	/**
+		@brief		Loads this plugin's language files.
 		
 		Reads the language data from the class's name domain as default.
 		
 		@param		$domain
-					Optional domain.
+					Optional domain.		
+		@since		20130416
 	**/
 	public function load_language($domain = '')
 	{
@@ -279,16 +385,15 @@ class ThreeWP_Broadcast_Base
 	}
 	
 	/**
-		Translate a string, if possible.
+		@brief		Translate a string, if possible.
 		
 		Like Wordpress' internal _() method except this one automatically uses the plugin's domain.
 		
 		Can function like sprintf, if any %s are specified.
 		
-		@param		$string
-					String to translate. %s will require extra arguments to the method.
-		
-		@return		Translated string, or the untranslated string.
+		@param		string		$string		String to translate. %s will require extra arguments to the method.		
+		@since		20130416
+		@return		string					Translated string, or the untranslated string.		
 	**/
 	public function _( $string )
 	{
@@ -301,7 +406,7 @@ class ThreeWP_Broadcast_Base
 			array_shift( $args );
 			
 			if ( $count != count( $args ) )
-				throw new Exception( sprintf(
+				throw new \Exception( sprintf(
 					'_() requires the same amount of arguments as occurrences of %%s. Needed: %s, given %s',
 					$count,
 					count( $args )
@@ -315,90 +420,21 @@ class ThreeWP_Broadcast_Base
 	}
 	
 	/**
-		Overridable uninstall method.
+		@brief		Internal function to handle uninstallation (database removal) of module.
+		@since		20130416
+	**/
+	public function uninstall_internal()
+	{
+		$this->deregister_options();
+		$this->uninstall();
+	}
+	
+	/**
+		@brief		Overridable uninstall method.
+		@since		20130416
 	**/
 	public function uninstall()
 	{
-		$this->deregister_options();
-	}
-	
-	// -------------------------------------------------------------------------------------------------
-	// ----------------------------------------- SQL
-	// -------------------------------------------------------------------------------------------------
-	
-	/**
-		Sends a query to wpdb and return the results.
-		
-		@param		$query		The SQL query.
-		@param		$wpdb		An optional, other WPDB if the standard $wpdb isn't good enough for you.
-		@return		array		The rows from the query.
-	**/
-	public function query($query , $wpdb = null)
-	{
-		if ( $wpdb === null )
-			$wpdb = $this->wpdb;
-		$results = $wpdb->get_results($query, 'ARRAY_A');
-		return (is_array($results) ? $results : array());
-	}
-	
-	/**
-		Fire an SQL query and return the results only if there is one row result.
-		
-		@param		$query			The SQL query.
-		@return						Either the row as an array, or false if more than one row.
-	**/
-	public function query_single($query)
-	{
-		$results = $this->wpdb->get_results($query, 'ARRAY_A');
-		if ( count($results) != 1)
-			return false;
-		return $results[0];
-	}
-	
-	/**
-		Fire an SQL query and return the row ID of the inserted row.
-
-		@param		$query		The SQL query.
-		@return					The inserted ID.
-	**/
-	public function query_insert_id($query)
-	{
-		$this->wpdb->query($query);
-		return $this->wpdb->insert_id;
-	}
-	
-	/**
-		Converts an object to a base64 encoded, serialized string, ready to be inserted into sql.
-		
-		@param		$object		An object.
-		@return					Serialized, base64-encoded string.
-	**/
-	public function sql_encode( $object )
-	{
-		return base64_encode( serialize($object) );
-	}
-	
-	/**
-		Converts a base64 encoded, serialized string back into an object.
-		@param		$string			Serialized, base64-encoded string.
-		@return						Object, if possible.
-	**/
-	public function sql_decode( $string )
-	{
-		return unserialize( base64_decode($string) );
-	}
-	
-	/**
-		Returns whether a table exists.
-		
-		@param		$table_name		Table name to check for.
-		@return						True if the table exists.
-	**/
-	public function sql_table_exists( $table_name )
-	{
-		$query = "SHOW TABLES LIKE '$table_name'";
-		$result = $this->query( $query );
-		return count($result) > 0;
 	}
 	
 	// -------------------------------------------------------------------------------------------------
@@ -408,26 +444,28 @@ class ThreeWP_Broadcast_Base
 	/**
 		Returns the user's role as a string.
 		@return					User's role as a string.
+		@since		20130416
 	**/
 	public function get_user_role()
 	{
-		foreach($this->roles as $role)
-			if (current_user_can($role['current_user_can']))
+		foreach( $this->roles as $role )
+			if ( current_user_can( $role['current_user_can'] ) )
 				return $role['name'];
 	}
 	
 	/**
 		Returns the user roles as a select options array.
 		@return		The user roles as a select options array.
+		@since		20130416
 	**/ 
 	public function roles_as_options()
 	{
-		$rv = array();
-		if (function_exists('is_super_admin'))
-			$rv['super_admin'] = $this->_( 'Super admin');
+		$r = array();
+		if ( function_exists( 'is_super_admin' ) )
+			$r['super_admin'] = $this->_( 'Super admin' );
 		foreach( $this->roles as $role )
-			$rv[ $role[ 'name' ] ] = __( ucfirst( $role[ 'name' ] ) );		// See how we ask WP to translate the roles for us? See also how it doesn't. Sometimes.
-		return $rv;
+			$r[ $role[ 'name' ] ] = __( ucfirst( $role[ 'name' ] ) );		// See how we ask WP to translate the roles for us? See also how it doesn't. Sometimes.
+		return $r;
 	}
 	
 	/**
@@ -435,6 +473,7 @@ class ThreeWP_Broadcast_Base
 		
 		@param		$role		Role as string.
 		@return					True if role is at least $role.
+		@since		20130416
 	**/
 	public function role_at_least($role)
 	{
@@ -463,6 +502,7 @@ class ThreeWP_Broadcast_Base
 		Return the user_id of the current user.
 	
 		@return		int						The user's ID.
+		@since		20130416
 	**/
 	public function user_id()
 	{
@@ -471,6 +511,94 @@ class ThreeWP_Broadcast_Base
 		return $current_user->ID;
 	}
 	
+	// -------------------------------------------------------------------------------------------------
+	// ----------------------------------------- MESSAGES
+	// -------------------------------------------------------------------------------------------------
+	
+	/**
+		Displays a message.
+		
+		Autodetects HTML / text.
+		
+		@param		$type
+					Type of message: error, warning, whatever. Free content.
+					
+		@param		$string
+					The message to display.
+		@since		20130416
+	**/
+	public function display_message($type, $string)
+	{
+		// If this string has html codes, then output it as it.
+		$stripped = strip_tags($string);
+		if (strlen($stripped) == strlen($string))
+		{
+			$string = explode("\n", $string);
+			$string = implode('</p><p>', $string);
+		}
+		echo '<div class="sd_message_box '.$type.'">
+			<p class="message_timestamp">'.$this->now().'</p>
+			<p>'.$string.'</p></div>';
+	}
+	
+	/**
+		Displays an informational message.
+		
+		@param		$string
+					String to display.
+		@since		20130416
+	**/
+	public function message( $string )
+	{
+		$this->display_message( 'updated', $string );
+	}
+	
+	/**
+		@brief		Convenience function to translate and then create a message from a string and optional sprintf arguments.
+		
+		@param		$string
+					String to translate and create into a message.
+		
+		@return		A translated message.
+		@since		20130416
+	**/
+	public function message_( $string, $args = '' )
+	{
+		$args = func_get_args();
+		$string = call_user_func_array( array( &$this, '_' ), $args );
+		return $this->message( $string );
+	}
+		
+	/**
+		Displays an error message.
+		
+		The only thing that makes it an error message is that the div has the class "error".
+		
+		@param		$string
+					String to display.
+		@since		20130416
+	**/
+	public function error( $string )
+	{
+		$this->display_message( 'error', $string );
+	}
+	
+	/**
+		@brief		Convenience function to translate and then create an error message from a string and optional sprintf arguments.
+		
+		@param		$string
+					String to translate and create into an error message.
+		
+		@return		A translated error message.
+		@since		20130416
+	**/
+	public function error_( $string, $args = '' )
+	{
+		$args = func_get_args();
+		$string = call_user_func_array( array( &$this, '_' ), $args );
+		return $this->error( $string );
+	}
+		
 	// -------------------------------------------------------------------------------------------------
 	// ----------------------------------------- OPTIONS
 	// -------------------------------------------------------------------------------------------------
@@ -481,6 +609,7 @@ class ThreeWP_Broadcast_Base
 		If this is a network, the site option is preferred.
 		
 		@param		$option		Name of option to delete.
+		@since		20130416
 	**/
 	public function delete_option($option)
 	{
@@ -495,6 +624,7 @@ class ThreeWP_Broadcast_Base
 		Deletes a local option.
 		
 		@param		$option		Name of option to delete.
+		@since		20130416
 	**/
 	public function delete_local_option($option)
 	{
@@ -506,6 +636,7 @@ class ThreeWP_Broadcast_Base
 		Deletes a site option.
 		
 		@param		$option		Name of option to delete.
+		@since		20130416
 	**/
 	public function delete_site_option($option)
 	{
@@ -519,6 +650,7 @@ class ThreeWP_Broadcast_Base
 		Will prepend the class name in front, to make the options easily findable in the table.
 		
 		@param		$option		Option name to fix.
+		@since		20130416
 	**/
 	public function fix_option_name($option)
 	{
@@ -526,7 +658,8 @@ class ThreeWP_Broadcast_Base
 	}
 	
 	/**
-		Removes all the options this plugin uses.
+		@brief		Removes all the options this plugin uses.
+		@since		20130416
 	**/
 	public function deregister_options()
 	{
@@ -564,6 +697,7 @@ class ThreeWP_Broadcast_Base
 		
 		@param		$option		Name of option to get.
 		@return					Value.
+		@since		20130416
 	**/
 	public function get_option($option)
 	{
@@ -580,6 +714,7 @@ class ThreeWP_Broadcast_Base
 		@param		$option			Name of option to get.
 		@param		$default		The default value if the option === false
 		@return						Value.
+		@since		20130416
 	**/
 	public function get_local_option($option, $default = false)
 	{
@@ -597,6 +732,7 @@ class ThreeWP_Broadcast_Base
 		@param		$option		Name of option to get.
 		@param		$default	The default value if the option === false
 		@return					Value.
+		@since		20130416
 	**/
 	public function get_site_option($option, $default = false)
 	{
@@ -610,15 +746,17 @@ class ThreeWP_Broadcast_Base
 	
 	/**
 		Registers all the options this plugin uses.
+		@since		20130416
 	**/
 	public function register_options()
 	{
+/*
 		foreach($this->options as $option=>$value)
 		{
 			if ($this->get_option($option) === false)
 				$this->update_option($option, $value);
 		}
-
+*/
 		foreach($this->local_options as $option=>$value)
 		{
 			$option = $this->fix_option_name($option);
@@ -653,6 +791,7 @@ class ThreeWP_Broadcast_Base
 		
 		@param		$option		Name of option to update.
 		@param		$value		New value
+		@since		20130416
 	**/
 	public function update_option($option, $value)
 	{
@@ -668,6 +807,7 @@ class ThreeWP_Broadcast_Base
 		
 		@param		option		Name of option to update.
 		@param		$value		New value
+		@since		20130416
 	**/
 	public function update_local_option($option, $value)
 	{
@@ -680,6 +820,7 @@ class ThreeWP_Broadcast_Base
 		
 		@param		$option		Name of option to update.
 		@param		$value		New value
+		@since		20130416
 	**/
 	public function update_site_option($option, $value)
 	{
@@ -688,207 +829,102 @@ class ThreeWP_Broadcast_Base
 	}
 	
 	// -------------------------------------------------------------------------------------------------
-	// ----------------------------------------- MESSAGES
+	// ----------------------------------------- SQL
 	// -------------------------------------------------------------------------------------------------
 	
 	/**
-		Displays a message.
+		Sends a query to wpdb and return the results.
 		
-		Autodetects HTML / text.
-		
-		@param		$type
-					Type of message: error, warning, whatever. Free content.
-					
-		@param		$string
-					The message to display.
+		@param		$query		The SQL query.
+		@param		$wpdb		An optional, other WPDB if the standard $wpdb isn't good enough for you.
+		@return		array		The rows from the query.
+		@since		20130416
 	**/
-	public function display_message($type, $string)
+	public function query($query , $wpdb = null)
 	{
-		// If this string has html codes, then output it as it.
-		$stripped = strip_tags($string);
-		if (strlen($stripped) == strlen($string))
-		{
-			$string = explode("\n", $string);
-			$string = implode('</p><p>', $string);
-		}
-		echo '<div class="sd_message_box '.$type.'">
-			<p class="message_timestamp">'.$this->now().'</p>
-			<p>'.$string.'</p></div>';
+		if ( $wpdb === null )
+			$wpdb = $this->wpdb;
+		$results = $wpdb->get_results( $query, 'ARRAY_A' );
+		return (is_array($results) ? $results : array());
 	}
 	
 	/**
-		Displays an informational message.
+		Fire an SQL query and return the results only if there is one row result.
 		
-		@param		$string
-					String to display.
+		@param		$query			The SQL query.
+		@return						Either the row as an array, or false if more than one row.
+		@since		20130416
 	**/
-	public function message( $string )
+	public function query_single($query)
 	{
-		$this->display_message( 'updated', $string );
+		$results = $this->wpdb->get_results($query, 'ARRAY_A');
+		if ( count($results) != 1)
+			return false;
+		return $results[0];
 	}
 	
 	/**
-		@brief		Convenience function to translate and then create a message from a string and optional sprintf arguments.
-		
-		@param		$string
-					String to translate and create into a message.
-		
-		@return		A translated message.
+		Fire an SQL query and return the row ID of the inserted row.
+
+		@param		$query		The SQL query.
+		@return					The inserted ID.
+		@since		20130416
 	**/
-	public function message_( $string, $args = '' )
+	public function query_insert_id($query)
 	{
-		$args = func_get_args();
-		$string = call_user_func_array( array( &$this, '_' ), $args );
-		return $this->message( $string );
-	}
-		
-	/**
-		Displays an error message.
-		
-		The only thing that makes it an error message is that the div has the class "error".
-		
-		@param		$string
-					String to display.
-	**/
-	public function error( $string )
-	{
-		$this->display_message( 'error', $string );
+		$this->wpdb->query($query);
+		return $this->wpdb->insert_id;
 	}
 	
 	/**
-		@brief		Convenience function to translate and then create an error message from a string and optional sprintf arguments.
+		Converts an object to a base64 encoded, serialized string, ready to be inserted into sql.
 		
-		@param		$string
-					String to translate and create into an error message.
-		
-		@return		A translated error message.
+		@param		$object		An object.
+		@return					Serialized, base64-encoded string.
+		@since		20130416
 	**/
-	public function error_( $string, $args = '' )
+	public function sql_encode( $object )
 	{
-		$args = func_get_args();
-		$string = call_user_func_array( array( &$this, '_' ), $args );
-		return $this->error( $string );
+		return base64_encode( serialize($object) );
 	}
+	
+	/**
+		Converts a base64 encoded, serialized string back into an object.
+		@param		$string			Serialized, base64-encoded string.
+		@return						Object, if possible.
+		@since		20130416
+	**/
+	public function sql_decode( $string )
+	{
+		return unserialize( base64_decode($string) );
+	}
+	
+	/**
+		Returns whether a table exists.
 		
+		@param		$table_name		Table name to check for.
+		@return						True if the table exists.
+		@since		20130416
+	**/
+	public function sql_table_exists( $table_name )
+	{
+		$query = "SHOW TABLES LIKE '$table_name'";
+		$result = $this->query( $query );
+		return count($result) > 0;
+	}
+	
 	// -------------------------------------------------------------------------------------------------
 	// ----------------------------------------- TOOLS
 	// -------------------------------------------------------------------------------------------------
 	
 	/**
-		@brief		Insert an array into another.
-		
-		Like array_splice but better, because it even inserts the new key.
-		
-		@param		$array
-						Array into which to insert the new array.
-
-		@param		$position
-						Position into which to insert the new array.
-
-		@param		$new_array
-						The new array which is to be inserted.
-		
-		@return		The complete array.
-	**/
-	public function array_insert( $array, $position, $new_array )
-	{
-		$part1 = array_slice( $array, 0, $position, true ); 
-		$part2 = array_slice( $array, $position, null, true ); 
-		return $part1 + $new_array + $part2;
-	}
-	
-	/**
-		@brief		Sort an array of arrays using a specific key in the subarray as the sort key.
-		
-		@param		$array
-					An array of arrays.
-		@param		$key
-					Key in subarray to use as sort key.
-		
-		@return		The array of arrays. 
-	**/
-	public function array_sort_subarrays( $array, $key )
-	{
-		// In order to be able to sort a bunch of objects, we have to extract the key and use it as a key in another array.
-		// But we can't just use the key, since there could be duplicates, therefore we attach a random value.
-		$sorted = array();
-		
-		$is_array = is_array( reset( $array ) );
-		
-		foreach( $array as $index => $item )
-		{
-			$item = (object) $item;
-			do
-			{
-				$rand = rand(0, PHP_INT_MAX / 2);
-				if ( is_int( $item->$key ) )
-					$random_key = $rand + $item->$key;
-				else
-					$random_key = $item->$key . '-' . $rand;
-			}
-			while ( isset( $sorted[ $random_key ] ) );
-			
-			$sorted[ $random_key ] = array( 'key' => $index, 'value' => $item );
-		}
-		ksort( $sorted );
-		
-		// The array has been sorted, we want the original array again.
-		$rv = array();
-		foreach( $sorted as $item )
-		{
-			$value = ( $is_array ? (array)$item[ 'value' ] : $item[ 'value' ] );
-			$rv[ $item['key'] ] = $item['value'];
-		}
-			
-		return $rv;
-	}
-	
-	/**
-		Make a value a key.
-		
-		Given an array of arrays, take the key from the subarray and makes it the key of the main array.
-	
-		@param		$array		Array to rearrange.
-		@param		$key		Which if the subarray keys to make the key in the main array.
-		@return		array		Rearranged array.
-	**/
-	public function array_rekey($array, $key)
-	{
-		$rv = array();
-		foreach( $array as $value )
-			$rv[ $value[ $key ] ] = $value;
-		return $rv;
-	}
-	
-	/**
-		Convert an array to stdClass, or appends the $array to an existing $object.
-		
-		@param	$array		Array to convert.
-		@param	$object		Existing object, if any, to append data to.
-		@return				Object with fields from the array.
-	**/ 
-	public function array_to_object( $array, $object = null )
-	{
-		if ( ! is_array( $array ) )
-			$array = array();
-
-		if ( $object === null )
-			$object = new stdClass();
-		
-		foreach( $array as $key => $value )
-			$object->$key = $value;
-		
-		return $object;
-	}
-	
-	/**
-		Display the time ago as human-readable string.
-		
+		@brief		Display the time ago as human-readable string.
 		@param		$time_string	"2010-04-12 15:19"
 		@param		$time			An optional timestamp to base time difference on, if not now.
 		@return						"28 minutes ago"
+		@since		20130416
 	**/
-	public function ago($time_string, $time = null)
+	public static function ago($time_string, $time = null)
 	{
 		if ($time_string == '')
 			return '';
@@ -898,56 +934,106 @@ class ThreeWP_Broadcast_Base
 		return '<span title="'.$time_string.'">' . sprintf( __('%s ago'), $diff) . '</span>';
 	}
 	
-	public function check_column()
-	{
-		$selected = array(
-			'type' => 'checkbox',
-			'name' => 'check',
-		);
-		$form = $this->form();
-		return '<th class="check-column">' . $form->make_input( $selected ) . '<span class="screen-reader-text">' . $this->_('Selected') . '</span></th>';
-	}
-	
+	/**
+		@brief		Generate a wordpress check column in a table body row.
+		
+		@details	The options array is:
+		
+		- @e form @b [form]					Optional \plainview\wordpress\form to use, instead of creating a new one.
+		- @e nameprefix @b [nameprefix]		Optional \plainview\wordpress\form name prefix. Default is '[cb]'.
+		- @e row @b [row]					Optional \plainview\wordpress\table\row into which to add the check column.
+		
+		@param		array		$options		Options array.
+		@return		mixed						Either nothing, if a table_row was supplied, or a string.
+		@since		20130416
+	**/
 	public function check_column_body( $options )
 	{
-		$options = array_merge( array(
+		$o = self::merge_objects( array(
 			'form' => $this->form(),
 			'nameprefix' => '[cb]',
+			'row' => null,
 			'type' => 'checkbox',
 		), $options );
 		
-		if ( ! isset( $options[ 'label' ] ) )
-			$options[ 'label' ] = $options[ 'name' ];
+		if ( ! isset( $o->label ) )
+			$o->label = $o->name;
 		
-		$form = $options[ 'form' ];		// Conv
+		$form = $o->form;		// Conv
+		
+		// If there is a supplied row, use it.
+		if ( $o->row !== null )
+		{
+			$text = $form->make_input( (array)$o );
+			$text .= '<span class="screen-reader-text">' . $form->make_label( (array)$o ) . '</span>';
+			
+			$o->row->th()->css_class( 'check-column' )->attribute( 'scope', 'row' )->text( $text );
+			return; 
+		}
+		
+		// Else return a manual table th.
 		return '
 			<th scope="row" class="check-column">
-				' . $form->make_input( $options ) . '
-				<span class="screen-reader-text">' . $form->make_label( $options ) . '</span>
+				' . $form->make_input( (array)$o ) . '
+				<span class="screen-reader-text">' . $form->make_label( (array)$o ) . '</span>
 			</th>
 		';
 	}
 	
-	public function check_plain( $text )
+	/**
+		@brief		Generate a wordpress check column in a table head.
+		
+		The options array is:
+		- @e row @b [row]					Optional \plainview\wordpress\table\row into which to add the check column.
+		
+		@param		array		$options		Options array.
+		@return		mixed						Either nothing, if a table_row was supplied, or a string.
+		@since		20130416
+	**/
+	public function check_column_head( $options = array() )
 	{
-		$text = strip_tags( $text );
-		$text = stripslashes( $text );
-		return $text;
+		$o = self::merge_objects( array(
+			'row' => null,
+		), $options );
+		
+		$selected = array(
+			'name' => 'check',
+			'type' => 'checkbox',
+		);
+		
+		$form = $this->form();
+		
+		// If there is a supplied table_row, use that.
+		if ( $o->row !== null )
+		{
+			$text = $form->make_input( $selected ) . '<span class="screen-reader-text">' . $this->_('Selected') . '</span>';
+			$o->row->th()->css_class( 'check-column' )->text( $text );
+		}
+		
+		// Else return a manual table th.
+		return '<th class="check-column">' . $form->make_input( $selected ) . '<span class="screen-reader-text">' . $this->_('Selected') . '</span></th>';
 	}
 	
+	/**
+		@brief		Displays an array of inputs using Wordpress table formatting.
+		@param		array		$inputs		Array of \plainview\wordpress\form inputs.
+		@param		array		$options	Array of options.
+		@since		20130416
+	**/
 	public function display_form_table( $inputs, $options = array() )
 	{
-		$options = array_merge(array(
+		$options = \plainview\base::merge_objects( array(
+			'form' => null,
 			'header' => '',
 			'header_level' => 'h3',
-		), $options);
+		), $options );
 		
-		$tr = array();
+		$r = '';
 		
-		$rv = '';
+		if ( $options->form === null )
+			$options->form = $this->form();
 		
-		if ( !isset($options['form']) )
-			$options['form'] = $this->form();
+		$table = $this->table()->set_attribute( 'class', 'form-table' );
 			
 		foreach( $inputs as $name => $input )
 		{
@@ -956,64 +1042,52 @@ class ThreeWP_Broadcast_Base
 			
 			if ( $input[ 'type' ] == 'hidden' )
 			{
-				$rv .= $options['form']->make_input( $input );
+				$r .= $options['form']->make_input( $input );
 				continue;
 			}
-			$tr[] = $this->display_form_table_row( $input, $options['form'] );
+			$o = new \stdClass();
+			$o->input = $input;
+			$o->form = $options->form;
+			
+			if ( $input[ 'type' ] == 'markup' )
+			{
+				$table->body()->row()->td()->attr( 'colspan', 2 )->text( $options->form->make_input( $input ) );
+				continue;
+			}
+			
+			$table->body()->row()
+				->th()->text( $options->form->make_label( $input ) )->row()
+				->td()->textf( '<div class="input_itself">%s</div><div class="input_description">%s</div>',
+					$options->form->make_input( $input ),
+					$options->form->make_description( $input )
+				);
 		}
 		
-		if ( $options['header'] != '' )
-			$rv .= '<'.$options['header_level'].'>' . $options['header'] . '</'.$options['header_level'].'>';
+		if ( $options->header != '' )
+			$r .= sprintf( '<%s>%s</%s>',
+				$options->header_level,
+				$options->header,
+				$options->header_level
+			);
 		
-		$rv .= '
-			<table class="form-table">
-				' . implode('', $tr) . '
-			</table>
-		';
+		$r .= $table;
 		
-		return $rv;
-	}
-
-	public function display_form_table_row($input, $form = null)
-	{
-		if ($form === null)
-			$form = $this->form();
-		
-		if ( $input[ 'type' ] == 'rawtext' )
-			return '<tr><td colspan="2">' . $form->make_input( $input ) . '</td></tr>';
-
-		return '
-			<tr>
-				<th>'.$form->make_label($input).'</th>
-				<td>
-					<div class="input_itself">
-						'.$form->make_input($input).'
-					</div>
-					<div class="input_description">
-						'.$form->make_description($input).'
-					</div>
-				</td>
-			</tr>';
+		return $r;
 	}
 	
 	/**
 		@brief		Output a file to the browser for downloading.
-		
-		@param		$file
-					Path to file on disk.
-		
-		@param		$name
-					Downloaded file's name.
-		
-		@param		$mime_type
-					Optional mime_type.
-
+		@param		string		$file			Path to file on disk.
+		@param		string		$name			Downloaded file's name.
+		@param		string		$mime_type		Optional mime_type.
 		@author		http://w-shadow.com/blog/2007/08/12/how-to-force-file-download-with-php/
+		@since		20130416
+		@todo		Have another look at this some time...
 	**/
 	public function download( $filepath, $options = array() )
 	{
 		if ( ! is_readable( $filepath ) )
-			throw new Exception( "The file $filepath could not be read!" );
+			throw new \Exception( "The file $filepath could not be read!" );
 		
 		$o = (object) array_merge( array(
 			'cache' => true,
@@ -1143,7 +1217,7 @@ class ThreeWP_Broadcast_Base
 		$bytes_sent = 0;
 		$file = fopen($filepath, 'r');
 		if ( ! $file )
-			throw new Exception( "File $filepath could not be opened for reading!" );
+			throw new \Exception( "File $filepath could not be opened for reading!" );
 /*		
 		if ( isset( $_SERVER['HTTP_RANGE'] ) )
 			fseek( $file, $range );
@@ -1158,7 +1232,12 @@ class ThreeWP_Broadcast_Base
 		fclose( $file );
 	}   
 
-	public function filters( $filter_name )
+	/**
+		@brief		Convenience function to call apply_filters.
+		@details	Has same parameters as apply filters. Will insert a null if there are no arguments.
+		@since		20130416
+	**/
+	public static function filters()
 	{
 		$args = func_get_args();
 		
@@ -1169,148 +1248,46 @@ class ThreeWP_Broadcast_Base
 	}
 	
 	/**
-		Creates a new SD_Form.
-		
-		@param		$options	Default options to send to the SD form constructor.
-		@return					A new SD form class.
+		@brief		Creates a new form.
+		@param		array		$options	Default options to send to the form constructor.
+		@return		object					A new \plainview\wordpress\form object.
+		@since		20130416
 	**/ 
 	public function form($options = array())
 	{
 		$options = array_merge($options, array('language' => preg_replace('/_.*/', '', get_locale())) );
-		if (class_exists('SD_Form'))
-			return new SD_Form($options);
-		require_once('SD_Form.php');
-		return new SD_Form($options);
+		
+		if ( ! class_exists( '\\plainview\\wordpress\\form' ) )
+			require_once( 'form.php' );
+		
+		return new \plainview\wordpress\form( $options );
 	}
 	
 	/**
-		Returns a hash value of a string. The standard hash type is sha512 (64 chars).
-		
-		@param		$string			String to hash.
-		@param		$type			Hash to use. Default is sha512.
-		@return						Hashed string.
+		@brief		Create a PHPmailer object.
+		@return		\\plainview\\mail\\mail		Mail object.
 	**/
-	public function hash($string, $type = 'sha512')
+	public static function mail()
 	{
-		return hash($type, $string);
+		return parent::mail();
 	}
 	
 	/**
-		@brief		Implode an array in an HTML-friendly way.
-		
-		Used to implode arrays using HTML tags before, between and after the array. Good for lists.
-		
-		@param		$prefix
-					li
-		
-		@param		$suffix
-					/li
-		
-		@param		$array
-					The array of strings to implode.
-		
-		@return		The imploded string.
+		@brief		Returns WP's current timestamp (corrected for UTC)	
+		@return		string		Current timestamp in MYSQL datetime format.
+		@since		20130416
 	**/
-	public function implode_html( $prefix, $suffix, $array )
-	{
-		return $prefix . implode( $suffix . $prefix, $array ) . $suffix;
-	}
-	
-	/**
-		@brief		Check en e-mail address for validity.
-		
-		@param		string		$address		Address to check.
-		
-		@return		boolean		True, if the e-mail address is valid.
-	**/
-	public function is_email( $address )
-	{
-		if ( ! is_email( $address ) )
-			return false;
-		
-		// Check the DNS record.
-		$host = preg_replace( '/.*@/', '', $address );
-		if ( ! checkdnsrr( $host, 'MX' ) )
-			return false;
-		
-		return true;
-	}
-	
-	/**
-		Returns the number corrected into the min and max values.
-	*/
-	public function minmax($number, $min, $max)
-	{
-		$number = min($max, $number);
-		$number = max($min, $number);
-		return $number;
-	}
-	
-	public function mime_type( $filename )
-	{
-		$rv = 'application/octet-stream';
-
-		if ( is_executable( '/usr/bin/file' ) )
-		{
-			exec( "file -bi '$filename'", $rv );
-			$rv = reset( $rv );
-			$rv = preg_replace( '/;.*/', '', $rv );
-			return $rv;
-		}
-		
-		if ( class_exists( 'finfo' ) )
-		{
-			$fi = new finfo( FILEINFO_MIME, '/usr/share/file/magic' );
-			$rv = $fi->buffer(file_get_contents( $filename ));
-			return $rv;
-		}
-		
-		if ( function_exists( 'mime_content_type' ) )
-		{
-			$rv = mime_content_type ( $filename );
-			return $rv;
-		}
-		
-		return $rv;
-	}
-	
-	/**
-		Returns WP's current timestamp (corrected for UTC)
-		
-		@return						Current timestamp in MYSQL datetime format.
-	*/
-	public function now()
+	public static function now()
 	{
 		return date('Y-m-d H:i:s', current_time('timestamp'));
 	}
-	
-	/**
-		Convert an object to an array.
-	
-		@param		$object		Object or array of objects to convert to a simple array.
-		@return		Array.
-	**/
-	public function object_to_array( $object )
-	{
-		if (is_array( $object ))
-		{
-			$rv = array();
-			foreach($object as $o)
-				$rv[] = get_object_vars($o);
-			return $rv;
-		}
-		else
-			return get_object_vars($object);
-	}
-	
+		
 	/**
 		@brief		wpautop's a string, using sprintf to replace arguments.
-		
-		@param		$string
-					String to wpautop.
-		@param		$args
-					Optional arguments to sprintf.
+		@param		string		$string		String to wpautop.
+		@param		mixed		$args		Optional arguments to sprintf.
 		@return		The wpautop'd sprintf string.
+		@since		20130416
 	**/
 	public function p( $string, $args = '' )
 	{
@@ -1319,13 +1296,11 @@ class ThreeWP_Broadcast_Base
 	}
 	
 	/**
-		@brief		wpautop's a translated string, using sprintf to replace arguments.
-
-		@param		$string
-					String to translate and then wpautop.
-		@param		$args
-					Optional arguments to _() / sprintf.
-		@return		The wpautop'd, translated string.
+		@brief		Translate and wpautop a string, using sprintf to replace arguments.
+		@param		string		$string		String to translate and then wpautop.
+		@param		mixed		$args		Optional arguments to sprintf.
+		@return		The translated, wpautop'd string.
+		@since		20130416
 	**/
 	public function p_( $string, $args = '' )
 	{
@@ -1334,212 +1309,167 @@ class ThreeWP_Broadcast_Base
 	}
 	
 	/**
-		Recursively removes a directory.
-		
-		Assumes that all files in the directory, and the dir itself, are writeable.
-		
-		@param		$directory		Directory to remove.
+		@brief		Sends mail via SMTP.
+		@param		array		$mail_data					Mail data.
+		@since		20130416
 	**/
-	public function rmdir( $directory )
+	public function send_mail( $mail_data )
 	{
-		$directory = rtrim( $directory, '/' );
-		if ( $directory == '.' || $directory == '..' )
-			return;
-		if ( is_file( $directory ) )
-			unlink ( $directory );
-		else
-		{
-			$files = glob( $directory . '/*' );
-			foreach( $files as $file )
-				$this->rmdir( $file );
-			rmdir( $directory );
-		}
-	}
-	
-	/**
-		Sends mail via SMTP.
-		
-		@param		$mail_data					Mail data.
-	**/
-	public function send_mail($mail_data)
-	{
-		// backwards compatability
-		if (isset($mail_data['bodyhtml']))
-			$mail_data['body_html'] = $mail_data['bodyhtml'];
-		
 		require_once ABSPATH . WPINC . '/class-phpmailer.php';
-		$mail = new PHPMailer();
+		$mail = new \PHPMailer();
 		
 		// Mandatory
-		$from_email		= key( $mail_data['from'] );
-		$from_name		= reset( $mail_data['from'] );
+		$from_email		= key( $mail_data[ 'from' ] );
+		$from_name		= reset( $mail_data[ 'from' ] );
 		$mail->From		= $from_email;
 		$mail->FromName	= $from_name;
 		$mail->Sender	= $from_email;
-		$mail->Subject  = $mail_data['subject'];
+		$mail->Subject  = $mail_data[ 'subject' ];
 		
-		// Optional
-		
-		// Often used settings...
-	
-		if (isset($mail_data['to']))
-			foreach($mail_data['to'] as $email=>$name)
+		if ( isset( $mail_data[ 'to' ] ) )
+			foreach( $mail_data[ 'to' ] as $email => $name )
 			{
-				if (is_int($email))
+				if ( is_int( $email) )
 					$email = $name;
-				$mail->AddAddress($email, $name);
+				$mail->AddAddress( $email, $name );
 			}
 			
-		if (isset($mail_data['cc']))
-			foreach($mail_data['cc'] as $email=>$name)
+		if ( isset( $mail_data[ 'cc' ] ) )
+			foreach( $mail_data[ 'cc' ] as $email => $name )
 			{
-				if (is_int($email))
+				if ( is_int( $email) )
 					$email = $name;
-				$mail->AddCC($email, $name);
+				$mail->AddCC( $email, $name );
 			}
 	
-		if (isset($mail_data['bcc']))
-			foreach($mail_data['bcc'] as $email=>$name)
+		if ( isset( $mail_data[ 'bcc' ] ) )
+			foreach( $mail_data[ 'bcc' ] as $email => $name )
 			{
-				if (is_int($email))
+				if ( is_int( $email) )
 					$email = $name;
-				$mail->AddBCC($email, $name);
+				$mail->AddBCC( $email, $name );
 			}
 			
-		if (isset($mail_data['body_html']))
-			$mail->MsgHTML($mail_data['body_html'] );
+		if ( isset( $mail_data[ 'body_html' ] ) )
+			$mail->MsgHTML( $mail_data[ 'body_html' ] );
 	
-		if (isset($mail_data['body']))
-			$mail->Body = $mail_data['body'];
+		if ( isset( $mail_data[ 'body' ] ) )
+			$mail->Body = $mail_data[ 'body' ];
 		
-		if (isset($mail_data['attachments']))
-			foreach($mail_data['attachments'] as $attachment=>$filename)
+		if ( isset( $mail_data[ 'attachments' ] ) )
+			foreach( $mail_data[ 'attachments' ] as $filepath => $filename )
 			{
 				$encoding = 'base64';
-				$mime_type = $this->mime_type ( $attachment );
+				$mime_type = self::mime_type ( $filepath );
 	
-				if (is_numeric($attachment))
-					$mail->AddAttachment($filename, '', $encoding, $mime_type);
+				if ( is_numeric( $filepath ) )
+					$mail->AddAttachment( $filename, '', $encoding, $mime_type );
 				else
-					$mail->AddAttachment($attachment, $filename, $encoding, $mime_type);
+					$mail->AddAttachment( $attachment, $filepath, $encoding, $mime_type );
 			}
 	
-		if ( isset( $mail_data['reply_to'] ) )
+		if ( isset( $mail_data[ 'reply_to' ] ) )
 		{
-			foreach($mail_data['reply_to'] as $email=>$name)
+			foreach( $mail_data[ 'reply_to' ] as $email => $name )
 			{
-				if (is_int($email))
+				if ( is_int( $email) )
 					$email = $name;
-				$mail->AddReplyTo($email, $name);
+				$mail->AddReplyTo( $email, $name );
 			}
 		}
 				
 		// Seldom used settings...
 		
-		if (isset($mail_data['wordwrap']))
-			$mail->WordWrap = $mail_data[wordwrap];
+		if ( isset( $mail_data[ 'wordwrap' ] ) )
+			$mail->WordWrap = $mail_data[ 'wordwrap' ];
 	
-		if (isset($mail_data['ConfirmReadingTo']))
+		if ( isset( $mail_data[ 'confirm_reading_to' ] ) )
 			$mail->ConfirmReadingTo = true;
 		
-		if (isset($mail_data['SingleTo']))
+		if ( isset( $mail_data[ 'single_to' ] ) )
 		{
 			$mail->SingleTo = true;
 			$mail->SMTPKeepAlive = true;
 		}
 		
-		if (isset($mail_data['SMTP']))									// SMTP? Or just plain old mail()
+		if ( isset( $mail_data[ 'SMTP' ] ) )									// SMTP? Or just plain old mail()
 		{
 			$mail->IsSMTP();
-			$mail->Host	= $mail_data['smtpserver'];
-			$mail->Port = $mail_data['smtpport'];
+			$mail->Host	= $mail_data[ 'smtp_server' ];
+			$mail->Port = $mail_data[ 'smtp_port' ];
 		}
 		else
 			$mail->IsMail();
 		
-		if ( isset($mail_data['charset']) )
-			$mail->CharSet = $mail_data['charset'];
+		if ( isset( $mail_data[ 'charset' ] ) )
+			$mail->CharSet = $mail_data[ 'charset' ];
 		else
 			$mail->CharSet = 'UTF-8';
 		
-		if ( isset($mail_data['content_type']) )
-			$mail->ContentType  = $mail_data['content_type'];
+		if ( isset( $mail_data[ 'content_type' ] ) )
+			$mail->ContentType  = $mail_data[ 'content_type' ];
 		
-		if ( isset($mail_data['encoding']) )
-			$mail->Encoding  = $mail_data['encoding'];
+		if ( isset( $mail_data[ 'encoding' ] ) )
+			$mail->Encoding  = $mail_data[ 'encoding' ];
 		
 		// Done setting up.
-		if (!$mail->Send())
-			$rv = $mail->ErrorInfo;
+		
+		if ( !$mail->Send() )
+			$r = $mail->ErrorInfo;
 		else 
-			$rv = true;
+			$r = true;
 			
 		$mail->SmtpClose();
 		
-		return $rv;		
+		return $r;		
 	}
 	
 	/**
-		Sanitizes a string.
-	
-		@param		$string		String to sanitize.
+		@brief		Sanitizes (slugs) a string.
+		@param		string		$string		String to sanitize.
+		@return		string					Sanitized string.
+		@since		20130416
 	**/
-	public function slug( $string )
+	public static function slug( $string )
 	{
 		return sanitize_title( $string );
 	}
 	
-	public function strip_post_slashes( $post = null )
+	/**
+		@brief		Sanitizes the name of a tab.
+	
+		@param		string		$string		String to sanitize.
+		@return		string					Sanitized string.
+		@since		20130416
+	**/
+	public static function tab_slug( $string )
 	{
-		if ( $post === null )
-			$post = $_POST;
-		foreach( $post as $key => $value )
-			if ( ! is_array( $value ) && strlen( $value ) > 1 )
-				$post[ $key ] = stripslashes( $value );
+		return self::slug( $string );
+	}
+	
+	/**
+		@brief		Creates a new table.
+		@return		object		A new \plainview\wordpress\table object.
+		@since		20130416
+	**/ 
+	public function table()
+	{
+		if ( ! class_exists( '\\plainview\\wordpress\\table' ) )
+			require_once( 'table.php' );
 		
-		return $post;
+		$table = new \plainview\wordpress\table\table( $this );
+		$table->css_class( 'widefat' );
+		return $table;
 	}
 	
 	/**
-		Multibyte strtolower.
-	
-		@param		$string			String to lowercase.
-		@return						Lowercased string.
-	**/
-	public function strtolower( $string )
-	{
-		return mb_strtolower( $string ); 
-	}
-	
-	/**
-		Multibyte strtoupper.
-	
-		@param		$string			String to uppercase.
-		@return						Uppercased string.
-	**/
-	public function strtoupper( $string )
-	{
-		return mb_strtoupper( $string ); 
-	}
-	
-	/**
-		Sanitizes the name of a tab.
-	
-		@param		$string		String to sanitize.
-	**/
-	public function tab_slug( $string )
-	{
-		return $this->slug( $string );
-	}
-	
-	/**
-		Displays Wordpress tabs.
-		
-		@param		$options		See options.
+		@brief		Displays Wordpress tabs.
+		@param		array		$options		See options.
+		@since		20130416
 	**/
 	public function tabs( $options )
 	{
-		$options = array_merge(array(
+		$options = $this->merge_objects(array(
 			'count' =>			array(),			// Optional array of a strings to display after each tab name. Think: page counts.
 			'default' => null,						// Default tab index.
 			'descriptions' =>	array(),			// Descriptions (link titles) for each tab
@@ -1555,31 +1485,31 @@ class ThreeWP_Broadcast_Base
 		), $options);
 		
 		$get = $_GET;						// Work on a copy of the _GET.
-		$get_key = $options['get_key'];		// Convenience.
+		$get_key = $options->get_key;		// Convenience.
 		
 		// Is the default not set or set to something stupid? Fix it.
-		if ( ! isset( $options['tabs'][ $options['default'] ] ) )
-			$options['default'] = key( $options['tabs'] );
+		if ( ! isset( $options->tabs[ $options->default ] ) )
+			$options->default = key( $options->tabs );
 		
 		// Select the default tab if none is selected.
 		if ( ! isset( $get[ $get_key ] ) )
-			$get[ $get_key ] = $options['default'];
+			$get[ $get_key ] = $options->default;
 		$selected = $get[ $get_key ];
 		
-		$options['valid_get_keys']['page'] = 'page';
+		$options->valid_get_keys['page'] = 'page';
 		
-		$rv = '';
-		if ( count( $options['tabs'] ) > 1 )
+		$r = '';
+		if ( count( $options->tabs ) > 1 )
 		{
-			$rv .= '<ul class="subsubsub">';
+			$r .= '<ul class="subsubsub">';
 			$original_link = $_SERVER['REQUEST_URI'];
 
 			foreach($get as $key => $value)
-				if ( !in_array($key, $options['valid_get_keys']) )
+				if ( !in_array($key, $options->valid_get_keys) )
 					$original_link = remove_query_arg( $key, $original_link );
 			
 			$index = 0;
-			foreach( $options['tabs'] as $tab_slug => $text )
+			foreach( $options->tabs as $tab_slug => $text )
 			{
 				// Make the link.
 				// If we're already on that tab, just return the current url.
@@ -1587,16 +1517,16 @@ class ThreeWP_Broadcast_Base
 					$link = remove_query_arg( time() );
 				else
 				{
-					if ( $tab_slug == $options['default'] )
+					if ( $tab_slug == $options->default )
 						$link = remove_query_arg( $get_key, $original_link );
 					else
 						$link = add_query_arg( $get_key, $tab_slug, $original_link );
 				}
 				
-				if ( isset( $options[ 'count' ][ $tab_slug ] ) )
-					$text .= ' <span class="count">(' . $options['count'][ $tab_slug ] . ')</span>';
+				if ( isset( $options->count[ $tab_slug ] ) )
+					$text .= ' <span class="count">(' . $options->count[ $tab_slug ] . ')</span>';
 				
-				$separator = ( $index+1 < count($options['tabs']) ? ' | ' : '' );
+				$separator = ( $index+1 < count($options->tabs) ? ' | ' : '' );
 				
 				$current = ( $tab_slug == $selected ? ' class="current"' : '' );
 				
@@ -1604,36 +1534,36 @@ class ThreeWP_Broadcast_Base
 					$selected_index = $tab_slug;
 				
 				$title = '';
-				if ( isset( $options[ 'descriptions' ][ $tab_slug ] ) )
-					$title = 'title="' . $options[ 'descriptions' ][ $tab_slug ] . '"';
+				if ( isset( $options->descriptions[ $tab_slug ] ) )
+					$title = 'title="' . $options->descriptions[ $tab_slug ] . '"';
 				 
-				$rv .= '<li><a'.$current.' '. $title .' href="'.$link.'">'.$text.'</a>'.$separator.'</li>';
+				$r .= '<li><a'.$current.' '. $title .' href="'.$link.'">'.$text.'</a>'.$separator.'</li>';
 				$index++;
 			}
-			$rv .= '</ul>';
+			$r .= '</ul>';
 		}
 		
 		if ( !isset($selected_index) )
-			$selected_index = $options['default'];
+			$selected_index = $options->default;
 		
-		if ($options['display'])
+		if ($options->display)
 		{
 			ob_start();
 			echo '<div class="wrap">';
-			if ($options['display_tab_name'])
+			if ($options->display_tab_name)
 			{
-				if ( isset( $options[ 'page_titles' ][ $selected_index ] ) )
-					$page_title = $options[ 'page_titles' ][ $selected_index ];
+				if ( isset( $options->page_titles[ $selected_index ] ) )
+					$page_title = $options->page_titles[ $selected_index ];
 				else
-					$page_title = $options[ 'tabs' ][ $selected_index ];
+					$page_title = $options->tabs[ $selected_index ];
 				
-				echo $options[ 'display_before_tab_name' ] . $page_title . $options[ 'display_after_tab_name' ];
+				echo $options->display_before_tab_name . $page_title . $options->display_after_tab_name;
 			}
-			echo $rv;
+			echo $r;
 			echo '<div style="clear: both"></div>';
-			if ( isset( $options[ 'functions' ][ $selected_index ] ) )
+			if ( isset( $options->functions[ $selected_index ] ) )
 			{
-				$functionName = $options[ 'functions' ][ $selected_index ];
+				$functionName = $options->functions[ $selected_index ];
 				if ( is_array( $functionName ) )
 				{
 					$functionName[0]->$functionName[1]();
@@ -1645,31 +1575,28 @@ class ThreeWP_Broadcast_Base
 			ob_end_flush();
 		}
 		else
-			return $rv;
+			return $r;
 	}
 	
 	/**
-		Returns the current time(), corrected for UTC and DST.
-
-		@return		int							Current, corrected timestamp.
+		@brief		Returns the current time(), corrected for UTC and DST.
+		@return		int		Current, corrected timestamp.
+		@since		20130416
 	**/
-	public function time()
+	public static function time()
 	{
 		return current_time('timestamp');
 	}
 	
 	/**
 		@brief		Outputs the text in Wordpress admin's panel format.
-		
-		@param		$title
-					H2 title to display.
-		
-		@param		$text
-					Text to display.
-		
+		@details	To remember the correct parameter order: wrap THIS in THIS.
+		@param		string		$title		H2 title to display.
+		@param		string		$text		Text to display.
 		@return		HTML wrapped HTML.
+		@since		20130416
 	**/
-	public function wrap( $text, $title )
+	public static function wrap( $text, $title )
 	{
 		echo "<h2>$title</h2>
 			<div class=\"wrap\">
@@ -1678,3 +1605,4 @@ class ThreeWP_Broadcast_Base
 		";
 	}
 }
+
