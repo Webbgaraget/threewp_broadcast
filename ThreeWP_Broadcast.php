@@ -162,27 +162,14 @@ class ThreeWP_Broadcast
 	{
 		$this->load_language();
 		
-		$tabs = array(
-			'tabs' => array(),
-			'functions' => array(),
-		);
+		$tabs = $this->tabs();
+		$tabs->tab( 'settings' )		->callback_this( 'admin_settings' )			->name_( 'Settings' );
+		$tabs->tab( 'post_types' )		->callback_this( 'admin_post_types' )		->name_( 'Post types' );
+		$tabs->tab( 'required_list' )	->callback_this( 'admin_required_list' )	->name_( 'Required list' );
+		$tabs->tab( 'blacklist' )		->callback_this( 'admin_blacklist' )		->name_( 'Blacklist' );
+		$tabs->tab( 'uninstall' )		->callback_this( 'admin_uninstall' )		->name_( 'Uninstall' );
 		
-		$tabs[ 'tabs' ][ 'admin_settings' ]				= $this->_('Settings');
-		$tabs[ 'functions' ][ 'admin_settings' ]		= 'admin_settings';
-		
-		$tabs[ 'tabs' ][ 'admin_post_types' ]			= $this->_('Post types');
-		$tabs[ 'functions' ][ 'admin_post_types' ]		= 'admin_post_types';
-		
-		$tabs[ 'tabs' ][ 'admin_required_list' ]		= $this->_('Required list');
-		$tabs[ 'functions' ][ 'admin_required_list' ]	= 'admin_required_list';
-		
-		$tabs[ 'tabs' ][ 'admin_blacklist' ]			= $this->_('Blacklist');
-		$tabs[ 'functions' ][ 'admin_blacklist' ]		= 'admin_blacklist';
-		
-		$tabs[ 'tabs' ][ 'admin_uninstall' ]			= $this->_('Uninstall');
-		$tabs[ 'functions' ][ 'admin_uninstall' ]		= 'admin_uninstall';
-		
-		$this->tabs( $tabs );
+		echo $tabs;
 	}
 	
 	public function user()
@@ -225,7 +212,7 @@ class ThreeWP_Broadcast
 		$this->tabs( $tab_data );
 	}
 	
-	protected function admin_settings()
+	public function admin_settings()
 	{
 		$form = $this->form();
 		$roles = $this->roles_as_options();
@@ -361,7 +348,7 @@ class ThreeWP_Broadcast
 		echo $r;
 	}
 	
-	protected function admin_post_types()
+	public function admin_post_types()
 	{
 		if ( isset( $_POST['save_post_types'] ) )
 		{
@@ -413,7 +400,7 @@ class ThreeWP_Broadcast
 		';
 	}
 	
-	protected function admin_required_list()
+	public function admin_required_list()
 	{
 		$blogs = $this->get_blog_list();
 		$form = $this->form();
@@ -475,7 +462,7 @@ class ThreeWP_Broadcast
 		';	
 	}
 	
-	protected function admin_blacklist()
+	public function admin_blacklist()
 	{
 		$blogs = $this->get_blog_list();
 		$form = $this->form();
@@ -520,7 +507,7 @@ class ThreeWP_Broadcast
 		';	
 	}
 	
-	protected function user_edit_groups()
+	public function user_edit_groups()
 	{
 		$user_id = $this->user_id();		// Convenience.
 		$form = $this->form();
@@ -679,7 +666,7 @@ class ThreeWP_Broadcast
 	/**
 		Finds orhpans for a specific post.
 	**/
-	protected function user_find_orphans()
+	public function user_find_orphans()
 	{
 		global $blog_id;
 		$current_blog_id = $blog_id;
@@ -839,7 +826,7 @@ class ThreeWP_Broadcast
 	/**
 		Trashes a broadcasted post.
 	**/
-	protected function user_trash()
+	public function user_trash()
 	{
 		// Check that we're actually supposed to be removing the link for real.
 		global $blog_id;
@@ -873,7 +860,7 @@ class ThreeWP_Broadcast
 		';
 	}
 	
-	protected function user_unlink()
+	public function user_unlink()
 	{
 		// Check that we're actually supposed to be removing the link for real.
 		$nonce = $_GET['_wpnonce'];
@@ -963,7 +950,7 @@ class ThreeWP_Broadcast
 		';
 	}
 	
-	protected function user_help()
+	public function user_help()
 	{
 		echo '
 			<div id="broadcast_help">
@@ -2070,7 +2057,7 @@ class ThreeWP_Broadcast
 		return $returnValue;
 	}
 	
-	protected function list_user_writable_blogs( $user_id )
+	public function list_user_writable_blogs( $user_id )
 	{
 		// Super admins can write anywhere they feel like.
 		if (is_super_admin() )
@@ -2092,7 +2079,7 @@ class ThreeWP_Broadcast
 		return $this->sort_blogs( $blogs);
 	}
 	
-	protected function is_blog_user_writable( $user_id, $blog_id)
+	public function is_blog_user_writable( $user_id, $blog_id)
 	{
 		// If this blog is in the blacklist, reply no.
 		if ( $this->is_blog_blacklisted( $blog_id) )
@@ -2112,7 +2099,7 @@ class ThreeWP_Broadcast
 	/**
 	 * Returns whether the site admin has blacklisted the blog.
 	 */
-	protected function isRequired( $blog_id)
+	public function isRequired( $blog_id)
 	{
 		if (is_super_admin() )
 			return false;
@@ -2125,7 +2112,7 @@ class ThreeWP_Broadcast
 	/**
 	 * Returns whether the site admin has blacklisted the blog.
 	 */
-	protected function is_blog_blacklisted( $blog_id)
+	public function is_blog_blacklisted( $blog_id)
 	{
 		$blacklist = $this->get_site_option( 'blacklist' );
 		if ( $blacklist == '' )
@@ -2138,7 +2125,7 @@ class ThreeWP_Broadcast
 	/**
 	 * Lists ALL of the blogs. Including the main blog.
 	 */
-	protected function get_blog_list()
+	public function get_blog_list()
 	{
 		$site_id = get_current_site();
 		$site_id = $site_id->id;
@@ -2189,7 +2176,7 @@ class ThreeWP_Broadcast
 	/**
 	 * Sorts the blogs by name. The Site Blog is first, no matter the name.
 	 */
-	protected function sort_blogs( $blogs )
+	public function sort_blogs( $blogs )
 	{
 		// Make sure the main blog is saved.
 		$firstBlog = array_shift( $blogs);

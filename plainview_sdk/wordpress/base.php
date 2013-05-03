@@ -4,10 +4,12 @@
 	@details	Provides a framework with which to build Wordpress modules.
 	@author		Edward Plainview	edward@plainview.se
 	@license	GPL v3
-	@version	20130430
+	@version	20130501
 	
 	@par	Changelog
 
+	- 2013-05-01	14:17	New: SDK version requirement tells the user which plugin is the SDK source. \n
+							New: tabs() can return a \\tabs object.
 	- 2013-04-30	08:54	New: ABSPATH check on construct().
 	- 2013-04-25	08:53	New: string_to_emails() convert a string of e-mails to an array. \n
 					12:19	New: instance() to retrieve the current instance of the object. \
@@ -211,7 +213,7 @@ class base
 		);
 
 		if ( $this->sdk_version_required > $this->sdk_version )
-			wp_die( sprintf( 'This plugin requires Plainview SDK version %s, but only %s is available.', $this->sdk_version_required, $this->sdk_version ) );
+			wp_die( sprintf( 'This plugin requires Plainview SDK version %s, but only %s from the plugin %s is available.', $this->sdk_version_required, $this->sdk_version, get_class( $this ) ) );
 		
 		register_activation_hook( $this->paths['filename_from_plugin_directory'],	array( $this, 'activate_internal') );
 		register_deactivation_hook( $this->paths['filename_from_plugin_directory'],	array( $this, 'deactivate_internal') );
@@ -1463,12 +1465,22 @@ class base
 	}
 	
 	/**
-		@brief		Displays Wordpress tabs.
+		@brief		Displays Wordpress tabs OR creates a tabs instance.
+		@detail		The \\tabs functionality was introduced 20130501.
 		@param		array		$options		See options.
 		@since		20130416
 	**/
-	public function tabs( $options )
+	public function tabs( $options = array() )
 	{
+		if ( count( $options ) == 0 )
+		{
+			if ( ! class_exists( '\\plainview\\wordpress\\tabs\\tabs' ) )
+				require_once( 'tabs.php' );
+			
+			$tabs = new \plainview\wordpress\tabs\tabs( $this );
+			return $tabs;
+		}
+		
 		$options = $this->merge_objects(array(
 			'count' =>			array(),			// Optional array of a strings to display after each tab name. Think: page counts.
 			'default' => null,						// Default tab index.
@@ -1499,6 +1511,7 @@ class base
 		$options->valid_get_keys['page'] = 'page';
 		
 		$r = '';
+		
 		if ( count( $options->tabs ) > 1 )
 		{
 			$r .= '<ul class="subsubsub">';
@@ -1587,7 +1600,7 @@ class base
 	{
 		return current_time('timestamp');
 	}
-	
+		
 	/**
 		@brief		Outputs the text in Wordpress admin's panel format.
 		@details	To remember the correct parameter order: wrap THIS in THIS.

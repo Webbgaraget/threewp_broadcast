@@ -6,11 +6,11 @@ Stable tag: trunk
 Donate link: http://mindreantre.se/donate/
 Contributors: edward mindreantre
 
-Network plugin to broadcast posts to other blogs. Custom post types, custom taxonomies, post meta and attachments are supported. 
+Network plugin for PHP v5.4 to broadcast posts to other blogs. Custom post types, custom taxonomies, post meta and attachments are supported. 
 
 == Description ==
 
-Network plugin to broadcast posts to other blogs. Custom post types, custom taxonomies, post meta and attachments are supported. A blog whitelist and blacklist exist.
+Network plugin for PHP v5.4 to broadcast posts to other blogs. Custom post types, custom taxonomies, post meta and attachments are supported. A blog whitelist and blacklist exist.
 
 Broadcasted posts can be linked to their parents: updated parent posts also update the child posts. Child post permalinks can be overriden with a link to the parent post.
 
@@ -19,6 +19,8 @@ Last used settings are remembered between uses. Broadcasted categories keep thei
 Has options for whitelisting (required blogs), blacklisting, user role access granularity, custom post and custom taxonomy support and an uninstall to completely remove itself. No traces of the plugin are left (assuming the created tables are successfully removed).
 
 Requires php v5.4 for trait support. Users of php v5.3 should remain with version 1.18.
+
+Users of php v5.3 can only use the <a href="http://mindreantre.se/wp-content/uploads/2010/02/threewp-broadcast_v1.18.zip">latest legacy version: v1.18</a>.
 
 Available in the following languages:
 
@@ -55,6 +57,12 @@ Did I miss anything?
 
 == Frequently Asked Questions ==
 
+= Is php v5.4 really necessary? =
+
+Yes, if you expect me to write neat, maintainable, legible code.
+
+If you use v5.3 then use the last plugin that works with that version: v1.18. The download link is on the main page.
+
 = Why can I not see the Broadcast meta box? =
 
 Make sure that:
@@ -86,6 +94,9 @@ _bcc_
 
 == Changelog ==
 
+= 1.20 2013-xx-xx =
+* Code: Most methods are public.
+* Code: Tabs use new \\plainview\\wordpress\\tabs class.
 = 1.19 2013-05-01 =
 * Fix: Trying to add a taxonomy term that already exists at the target blog. Thanks: https://github.com/alisspers
 * Fix: Using new wp_trash_post hook when deleting [child] posts. Thanks: https://github.com/alisspers
