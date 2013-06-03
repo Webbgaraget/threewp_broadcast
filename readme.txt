@@ -94,6 +94,10 @@ _bcc_
 
 == Changelog ==
 
+= 1.21 2013-xx-xx =
+* Code: Added broacast_post() method.
+* Code: More documentation for Broadcasting_Data object, together with refactoring of save_post cost.
+
 = 1.20 2013-06-02 =
 * Fix: Attachments should be properly broadcast now.
 * Code: Added Broadcasting_Data.php.
