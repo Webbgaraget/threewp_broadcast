@@ -16,7 +16,7 @@
 
 	@author		Edward Plainview	edward@plainview.se
 	@copyright	GPL v3
-	@version	20130505
+	@version	20130528
 
 	@par	Changelog
 
