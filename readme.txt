@@ -94,9 +94,10 @@ _bcc_
 
 == Changelog ==
 
-= 1.20 2013-05-30 =
+= 1.20 2013-06-02 =
 * Fix: Attachments should be properly broadcast now.
 * Code: Added Broadcasting_Data.php.
+* Code: Added $threewp_broadcast->broadcasting_data when broadcasting.
 * Code: Most methods have been made public.
 * Code: Refactoring and cleanup.
 * Code: Tabs, SDK update.

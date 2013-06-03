@@ -26,7 +26,7 @@ class ThreeWP_Broadcast
 	**/
 	public $broadcasting_data = null;
 
-	protected $sdk_version_required = 20130503;		// tabs
+	protected $sdk_version_required = 20130505;		// add_action / add_filter
 
 	protected $site_options = array(
 		'always_use_required_list' => false,				// Require blogs only when broadcasting?
@@ -1267,11 +1267,11 @@ class ThreeWP_Broadcast
 			$allowed_post_status[] = 'future';
 
 		$post = get_post( $post_id, 'ARRAY_A' );
-		if ( !in_array( $post['post_status'], $allowed_post_status) )
+		if ( !in_array( $post[ 'post_status' ], $allowed_post_status) )
 			return;
 
 		// Check if the user hasn't marked any blogs for forced broadcasting but it the admin wants forced blogs.
-		if ( !isset( $_POST['broadcast'] ) )
+		if ( !isset( $_POST[ 'broadcast' ] ) )
 		{
 			// Site admin is never forced to do anything.
 			if ( is_super_admin() )
@@ -1282,8 +1282,8 @@ class ThreeWP_Broadcast
 		}
 
 		// Are there blogs to broadcast to?
-		if ( isset( $_POST['broadcast']['groups']['666'] ) )
-			$blogs = array_keys( $_POST['broadcast']['groups']['666'] );
+		if ( isset( $_POST[ 'broadcast' ][ 'groups' ][ '666' ] ) )
+			$blogs = array_keys( $_POST[ 'broadcast' ][ 'groups' ][ '666' ] );
 		else
 			$blogs = array();
 
@@ -1322,41 +1322,41 @@ class ThreeWP_Broadcast
 		$bc->blog_id->children = array_keys( $blogs );
 		$bc->upload_dir = wp_upload_dir();
 
-		$post_type = $_POST['post_type'];
-		$post_type_object = get_post_type_object( $post_type);
-		$post_type_supports_thumbnails = post_type_supports( $post_type, 'thumbnail' );
-		$post_type_supports_custom_fields = post_type_supports( $post_type, 'custom-fields' );
-		$post_type_is_hierarchical = $post_type_object->hierarchical;
+		$bc->post_type = $bc->_POST[ 'post_type' ];
+		$bc->post_type_object = get_post_type_object( $bc->post_type );
+		$bc->post_type_supports_thumbnails = post_type_supports( $bc->post_type, 'thumbnail' );
+		$bc->post_type_supports_custom_fields = post_type_supports( $bc->post_type, 'custom-fields' );
+		$bc->post_type_is_hierarchical = $bc->post_type_object->hierarchical;
 
 		// Create new post data from the original stuff.
 		$new_post = $post;
 		foreach(array( 'comment_count', 'guid', 'ID', 'menu_order', 'post_parent' ) as $key)
 			unset( $new_post[$key] );
 
-		$link = ( $this->role_at_least( $this->get_site_option( 'role_link' ) ) && isset( $_POST['broadcast']['link'] ) );
+		$link = ( $this->role_at_least( $this->get_site_option( 'role_link' ) ) && isset( $bc->_POST[ 'broadcast' ][ 'link' ] ) );
 		if ( $link)
 		{
 			// Prepare the broadcast data for linked children.
 			$broadcast_data = $this->get_post_broadcast_data( $bc->blog_id->parent, $post_id );
 
 			// Does this post type have parent support, so that we can link to a parent?
-			if ( $post_type_is_hierarchical && $_POST['post_parent'] > 0)
+			if ( $bc->post_type_is_hierarchical && $bc->_POST[ 'post_parent' ] > 0)
 			{
-				$post_id_parent = $_POST['post_parent'];
-				$parent_broadcast_data = $this->get_post_broadcast_data( $bc->blog_id->parent, $post_id_parent );
+				$bc->post_id_parent = $bc->_POST[ 'post_parent' ];
+				$parent_broadcast_data = $this->get_post_broadcast_data( $bc->blog_id->parent, $bc->post_id_parent );
 			}
 		}
 
 		$taxonomies = (
 			$this->role_at_least( $this->get_site_option( 'role_taxonomies' ) )
 			&&
-			isset( $_POST['broadcast']['taxonomies'] )
+			isset( $bc->_POST[ 'broadcast' ][ 'taxonomies' ] )
 		);
-		$taxonomies_create = ( $this->role_at_least( $this->get_site_option( 'role_taxonomies_create' ) ) && isset( $_POST['broadcast']['taxonomies_create'] ) );
+		$taxonomies_create = ( $this->role_at_least( $this->get_site_option( 'role_taxonomies_create' ) ) && isset( $bc->_POST[ 'broadcast' ][ 'taxonomies_create' ] ) );
 		if ( $taxonomies)
 		{
 			$source_blog_taxonomies = get_object_taxonomies( array(
-				'object_type' => $post_type,
+				'object_type' => $bc->post_type,
 			), 'array' );
 			$source_post_taxonomies = array();
 			foreach( $source_blog_taxonomies as $source_blog_taxonomy => $taxonomy )
@@ -1382,21 +1382,21 @@ class ThreeWP_Broadcast
 		$custom_fields = (
 			$this->role_at_least( $this->get_site_option( 'role_custom_fields' ) )
 			&&
-			isset( $_POST['broadcast']['custom_fields'] )
+			isset( $bc->_POST[ 'broadcast' ][ 'custom_fields' ] )
 			&&
-			( $post_type_supports_custom_fields || $post_type_supports_thumbnails)
+			( $bc->post_type_supports_custom_fields || $bc->post_type_supports_thumbnails)
 		);
 		if ( $custom_fields)
 		{
 			$post_custom_fields = get_post_custom( $post_id );
 
-			$has_thumbnail = isset( $post_custom_fields['_thumbnail_id'] );
+			$has_thumbnail = isset( $post_custom_fields[ '_thumbnail_id' ] );
 			if ( $has_thumbnail )
 			{
-				$thumbnail_id = $post_custom_fields['_thumbnail_id'][0];
+				$thumbnail_id = $post_custom_fields[ '_thumbnail_id' ][0];
 				$thumbnail = get_post( $thumbnail_id );
-				unset( $post_custom_fields['_thumbnail_id'] ); // There is a new thumbnail id for each blog.
-				$attachment_data['thumbnail'] = AttachmentData::from_attachment_id( $thumbnail, $bc->upload_dir);
+				unset( $post_custom_fields[ '_thumbnail_id' ] ); // There is a new thumbnail id for each blog.
+				$attachment_data[ 'thumbnail' ] = AttachmentData::from_attachment_id( $thumbnail, $bc->upload_dir);
 				// Now that we know what the attachment id the thumbnail has, we must remove it from the attached files to avoid duplicates.
 				unset( $attachment_data[ $thumbnail_id ] );
 			}
@@ -1406,17 +1406,17 @@ class ThreeWP_Broadcast
 		}
 
 		// Sticky isn't a tag, taxonomy or custom_field.
-		$post_is_sticky = @( $_POST['sticky'] == 'sticky' );
+		$bc->post_is_sticky = @( $bc->_POST[ 'sticky' ] == 'sticky' );
 
 		// And now save the user's last settings.
-		$this->save_last_used_settings( $user_id, $_POST['broadcast'] );
+		$this->save_last_used_settings( $user_id, $bc->_POST[ 'broadcast' ] );
 
 		$to_broadcasted_blogs = array();				// Array of blog names that we're broadcasting to. To be used for the activity monitor action.
 		$to_broadcasted_blog_details = array(); 		// Array of blog and post IDs that we're broadcasting to. To be used for the activity monitor action.
 
 		// To prevent recursion
-		$this->broadcasting = $_POST['broadcast'];
-		unset( $_POST['broadcast'] );
+		$this->broadcasting = $bc->_POST[ 'broadcast' ];
+		unset( $bc->_POST[ 'broadcast' ] );
 
 		foreach( $bc->blog_id->children as $child_blog_id )
 		{
@@ -1431,7 +1431,7 @@ class ThreeWP_Broadcast
 				if ( $parent_broadcast_data->has_linked_child_on_this_blog() )
 				{
 					$linked_parent = $parent_broadcast_data->get_linked_child_on_this_blog();
-					$new_post['post_parent'] = $linked_parent;
+					$new_post[ 'post_parent' ] = $linked_parent;
 				}
 
 			// Insert new? Or update? Depends on whether the parent post was linked before or is newly linked?
@@ -1446,7 +1446,7 @@ class ThreeWP_Broadcast
 					if ( $child_post !== null )
 					{
 						$temp_post_data = $new_post;
-						$temp_post_data['ID'] = $child_post_id;
+						$temp_post_data[ 'ID' ] = $child_post_id;
 						$new_post_id = wp_update_post( $temp_post_data );
 						$need_to_insert_post = false;
 					}
@@ -1485,10 +1485,10 @@ class ThreeWP_Broadcast
 						$source_slug = $source_post_term->slug;
 						foreach( $target_blog_terms as $target_blog_term )
 						{
-							if ( $target_blog_term['slug'] == $source_slug)
+							if ( $target_blog_term[ 'slug' ] == $source_slug)
 							{
 								$found = true;
-								$taxonomies_to_add_to[ $target_blog_term['term_id'] ] = intval( $target_blog_term['term_id'] );
+								$taxonomies_to_add_to[ $target_blog_term[ 'term_id' ] ] = intval( $target_blog_term[ 'term_id' ] );
 								break;
 							}
 						}
@@ -1505,7 +1505,7 @@ class ThreeWP_Broadcast
 									(array) $source_post_term,
 									$source_post_taxonomy,
 									$target_blog_terms,
-									$source_blog_taxonomies[ $source_post_taxonomy ]['terms']
+									$source_blog_taxonomies[ $source_post_taxonomy ][ 'terms' ]
 								);
 							}
 
@@ -1654,9 +1654,9 @@ class ThreeWP_Broadcast
 
 			// Sticky behaviour
 			$child_post_is_sticky = is_sticky( $new_post_id );
-			if ( $post_is_sticky && ! $child_post_is_sticky )
+			if ( $bc->post_is_sticky && ! $child_post_is_sticky )
 				stick_post( $new_post_id );
-			if ( ! $post_is_sticky && $child_post_is_sticky )
+			if ( ! $bc->post_is_sticky && $child_post_is_sticky )
 				unstick_post( $new_post_id );
 
 			if ( $link)
@@ -1678,7 +1678,7 @@ class ThreeWP_Broadcast
 
 		$this->load_language();
 
-		$post_url_and_name = '<a href="' . get_permalink( $post_id ) . '">' . $post['post_title']. '</a>';
+		$post_url_and_name = '<a href="' . get_permalink( $post_id ) . '">' . $post[ 'post_title' ]. '</a>';
 		do_action( 'threewp_activity_monitor_new_activity', array(
 			'activity_id' => '3broadcast_broadcasted',
 			'activity_strings' => array(
