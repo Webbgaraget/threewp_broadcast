@@ -1,15 +1,18 @@
 <?php
 /*
-Author:			edward mindreantre
-Author Email:	edward@mindreantre.se
-Author URI:		http://www.mindreantre.se
+Author:			edward_plainview
+Author Email:	edward@plainview.se
+Author URI:		http://www.plainview.se
 Description:	Network plugin to broadcast a post to other blogs. Whitelist, blacklist, groups and automatic category+tag+custom field posting/creation available.
 Plugin Name:	ThreeWP Broadcast
 Plugin URI:		http://mindreantre.se/program/threewp/threewp-broadcast/
-Version:		1.20
+Version:		1.21
 */
 
-if ( ! class_exists( '\\plainview\\wordpress\\base' ) )	require_once( 'plainview_sdk/wordpress/base.php' );
+if ( version_compare(PHP_VERSION, '5.4.0') < 0 )
+	die( 'Broadcast requires PHP version 5.4' );
+
+if ( ! class_exists( '\\plainview\\wordpress\\base' ) )	require_once( __DIR__ . '/plainview_sdk/plainview/autoload/vendor/autoload.php' );
 
 class ThreeWP_Broadcast
 	extends \plainview\wordpress\base
@@ -92,6 +95,7 @@ class ThreeWP_Broadcast
 			$this->add_action( 'delete_post' );
 			$this->add_action( 'delete_page', 'delete_post' );
 		}
+		add_submenu_page( 'options-general.php', 'ThreeWP Broadcast', 'Broadcast', 'activate_plugins', 'ThreeWP_Broadcast', array ( &$this, 'admin' ) );
 	}
 
 	public function admin_print_styles()
@@ -111,11 +115,6 @@ class ThreeWP_Broadcast
 
 		wp_enqueue_script( '3wp_broadcast', '/' . $this->paths['path_from_base_directory'] . '/js/user.js' );
 		wp_enqueue_style( '3wp_broadcast', '/' . $this->paths['path_from_base_directory'] . '/css/ThreeWP_Broadcast.css', false, '0.0.1', 'screen' );
-	}
-
-	public function network_admin_menu()
-	{
-		add_submenu_page( 'settings.php', 'ThreeWP Broadcast', 'Broadcast', 'activate_plugins', 'ThreeWP_Broadcast', array ( &$this, 'admin' ) );
 	}
 
 	// --------------------------------------------------------------------------------------------
@@ -859,7 +858,7 @@ class ThreeWP_Broadcast
 		';
 	}
 
-	public function user_unlink()
+	public function unlink()
 	{
 		// Check that we're actually supposed to be removing the link for real.
 		$nonce = $_GET['_wpnonce'];
@@ -1022,17 +1021,11 @@ class ThreeWP_Broadcast
 	// ----------------------------------------- Callbacks
 	// --------------------------------------------------------------------------------------------
 
-	public function add_meta_box_type( $post )
-	{
-		return $this->add_meta_box( $post->post_type );
-	}
-
-	public function add_meta_box( $type )
+	public function add_meta_box( $post )
 	{
 		global $blog_id;
-		global $post;
 		$form = $this->form();
-
+		$html = '';
 		$published = $post->post_status == 'publish';
 
 		// Find out if this post is already linked
@@ -1040,9 +1033,10 @@ class ThreeWP_Broadcast
 
 		if ( $broadcast_data->get_linked_parent() !== false)
 		{
-			echo '<p>';
-			echo $this->_( 'This post is broadcasted child post. It cannot be broadcasted further.' );
-			echo '</p>';
+			$html .='<p>';
+			$html .=$this->_( 'This post is broadcasted child post. It cannot be broadcasted further.' );
+			$html .='</p>';
+			echo $html;
 			return;
 		}
 
@@ -1078,10 +1072,10 @@ class ThreeWP_Broadcast
 				'title' => $this->_( 'Create a link to the children, which will be updated when this post is updated, trashed when this post is trashed, etc.' ),
 				'label' => $this->_( 'Link this post to its children' ),
 			);
-			echo '<p>'.$form->make_input( $inputBroadcastLink).' '.$form->make_label( $inputBroadcastLink).'</p>';
+			$html .= '<p>'.$form->make_input( $inputBroadcastLink).' '.$form->make_label( $inputBroadcastLink).'</p>';
 		}
 
-		echo '<div style="height: 1px; background-color: #ddd;"></div>';
+		$html .= '<div style="height: 1px; background-color: #ddd;"></div>';
 
 		if ( $this->role_at_least( $this->get_site_option( 'role_taxonomies' ) ) )
 		{
@@ -1094,7 +1088,7 @@ class ThreeWP_Broadcast
 				'label' => $this->_( 'Broadcast taxonomies also' ),
 				'title' => $this->_( 'The taxonomies must have the same name (slug) on the selected blogs.' ),
 			);
-			echo '<p class="broadcast_input_taxonomies">'.$form->make_input( $input_taxonomies).' '.$form->make_label( $input_taxonomies).'</p>';
+			$html .='<p class="broadcast_input_taxonomies">'.$form->make_input( $input_taxonomies).' '.$form->make_label( $input_taxonomies).'</p>';
 		}
 
 		if ( $this->role_at_least( $this->get_site_option( 'role_taxonomies_create' ) ) )
@@ -1108,7 +1102,7 @@ class ThreeWP_Broadcast
 				'label' => $this->_( 'Create taxonomies automatically' ),
 				'title' => $this->_( "The taxonomies will be created if they don't exist on the selected blogs." ),
 			);
-			echo '<p class="broadcast_input_taxonomies_create">&emsp;'.$form->make_input( $input_taxonomies_create).' '.$form->make_label( $input_taxonomies_create).'</p>';
+			$html .='<p class="broadcast_input_taxonomies_create">&emsp;'.$form->make_input( $input_taxonomies_create).' '.$form->make_label( $input_taxonomies_create).'</p>';
 		}
 
 		if ( $this->role_at_least( $this->get_site_option( 'role_custom_fields' ) ) && ( $post_type_supports_custom_fields || $post_type_supports_thumbnails) )
@@ -1122,10 +1116,10 @@ class ThreeWP_Broadcast
 				'title' => $this->_( 'Broadcast all the custom fields and the featured image?' ),
 				'label' => $this->_( 'Broadcast custom fields' ),
 			);
-			echo '<p>'.$form->make_input( $inputCustomFields).' '.$form->make_label( $inputCustomFields).'</p>';
+			$html .='<p>'.$form->make_input( $inputCustomFields).' '.$form->make_label( $inputCustomFields).'</p>';
 		}
 
-		echo '<div style="height: 1px; background-color: #ddd;"></div>
+		$html .= '<div style="height: 1px; background-color: #ddd;"></div>
 			<script type="text/javascript">
 				var broadcast_strings = {
 					select_deselect_all : "' . $this->_( 'Select / deselect all' ) . '",
@@ -1150,7 +1144,7 @@ class ThreeWP_Broadcast
 				$inputGroups['options'][] = array( 'text' => $groupData['name'], 'value' => implode( ' ', array_keys( $groupData['blogs'] ) ));
 
 			// The javascripts just reacts on a click to the select box and selects those checkboxes that the selected group has.
-			echo '
+			$html .='
 				<p>
 				'.$form->make_label( $inputGroups).' '.$form->make_input( $inputGroups).'
 				</p>
@@ -1198,7 +1192,8 @@ class ThreeWP_Broadcast
 		// I think there's a bug in WP since it reports the same post types no matter which blog we've switch_to_blogged.
 		// Therefore, no further action.
 
-		echo '<div class="broadcast_to">
+		$html .= '
+			<div class="broadcast_to">
 				<p class="howto">'. $this->_( 'Broadcast to:' ) .'</p>
 
 				<div class="blogs">
@@ -1215,6 +1210,14 @@ class ThreeWP_Broadcast
 				</div>
 			</div>
 		';
+
+		// Allow plugins to modify the meta box with their own info.
+		// The string, $box, must be modified or appended to using string search and replace.
+		$o = new \stdClass();
+		$o->post = $post;
+		$o->html = $html;
+		do_action( 'threewp_broadcast_add_meta_box', $o );
+		echo $o->html;
 	}
 
 	public function threewp_activity_monitor_list_activities( $activities )
@@ -1307,6 +1310,7 @@ class ThreeWP_Broadcast
 			foreach( $required_blogs as $required_blog=>$ignore)
 				$blogs[ $required_blog ] = $required_blog;
 		}
+
 		// End: Add and remove blogs
 
 		// Do we actually need to to anything?
@@ -1528,7 +1532,7 @@ class ThreeWP_Broadcast
 				$this->load_language();
 				$post_types = $this->get_site_option( 'post_types' );
 				foreach( $post_types as $post_type => $ignore )
-					add_meta_box( 'threewp_broadcast', $this->_( 'Broadcast' ), array( &$this, 'add_meta_box_type' ), $post_type, 'side', 'low' );
+					add_meta_box( 'threewp_broadcast', $this->_( 'Broadcast' ), array( &$this, 'add_meta_box' ), $post_type, 'side', 'low' );
 				add_action( 'save_post', array( &$this, 'save_post' ), $this->get_site_option( 'save_post_priority' ) );
 			}
 		}
@@ -1634,49 +1638,49 @@ class ThreeWP_Broadcast
 
 		require_once( 'include/Broadcasting_Data.php' );
 		$this->broadcasting_data = new Broadcasting_Data();		// Global copy.
-		$bc = $this->broadcasting_data;
-		$bc->_POST( $options->_POST );
+		$bcd = $this->broadcasting_data;						// Convenience.
+		$bcd->_POST( $options->_POST );
 
-		$bc->blog_id->parent = get_current_blog_id();
-		$bc->blog_id->children = $options->blogs;
-		$bc->post = $options->post;
-		$bc->upload_dir = wp_upload_dir();
+		$bcd->blog_id->parent = get_current_blog_id();
+		$bcd->blog_id->children = $options->blogs;
+		$bcd->post = $options->post;
+		$bcd->upload_dir = wp_upload_dir();
 
-		$bc->post_type = $bc->_POST[ 'post_type' ];
-		$bc->post_type_object = get_post_type_object( $bc->post_type );
-		$bc->post_type_supports_thumbnails = post_type_supports( $bc->post_type, 'thumbnail' );
-		$bc->post_type_supports_custom_fields = post_type_supports( $bc->post_type, 'custom-fields' );
-		$bc->post_type_is_hierarchical = $bc->post_type_object->hierarchical;
+		$bcd->post_type = $bcd->_POST[ 'post_type' ];
+		$bcd->post_type_object = get_post_type_object( $bcd->post_type );
+		$bcd->post_type_supports_thumbnails = post_type_supports( $bcd->post_type, 'thumbnail' );
+		$bcd->post_type_supports_custom_fields = post_type_supports( $bcd->post_type, 'custom-fields' );
+		$bcd->post_type_is_hierarchical = $bcd->post_type_object->hierarchical;
 
 		// Create new post data from the original stuff.
-		$bc->new_post = (array) $bc->post;
-		foreach(array( 'comment_count', 'guid', 'ID', 'menu_order', 'post_parent' ) as $key)
-			unset( $bc->new_post[ $key ] );
+		$bcd->new_post = (array) $bcd->post;
+		foreach( array( 'comment_count', 'guid', 'ID', 'menu_order', 'post_parent' ) as $key )
+			unset( $bcd->new_post[ $key ] );
 
-		$bc->link = ( $this->role_at_least( $this->get_site_option( 'role_link' ) ) && isset( $bc->_POST[ 'broadcast' ][ 'link' ] ) );
-		if ( $bc->link)
+		$bcd->link = ( $this->role_at_least( $this->get_site_option( 'role_link' ) ) && isset( $bcd->_POST[ 'broadcast' ][ 'link' ] ) );
+		if ( $bcd->link)
 		{
 			// Prepare the broadcast data for linked children.
-			$broadcast_data = $this->get_post_broadcast_data( $bc->blog_id->parent, $bc->post->ID );
+			$broadcast_data = $this->get_post_broadcast_data( $bcd->blog_id->parent, $bcd->post->ID );
 
 			// Does this post type have parent support, so that we can link to a parent?
-			if ( $bc->post_type_is_hierarchical && $bc->_POST[ 'post_parent' ] > 0)
+			if ( $bcd->post_type_is_hierarchical && $bcd->_POST[ 'post_parent' ] > 0)
 			{
-				$bc->parent_post_id = $bc->_POST[ 'post_parent' ];
-				$parent_broadcast_data = $this->get_post_broadcast_data( $bc->blog_id->parent, $bc->parent_post_id );
+				$bcd->parent_post_id = $bcd->_POST[ 'post_parent' ];
+				$parent_broadcast_data = $this->get_post_broadcast_data( $bcd->blog_id->parent, $bcd->parent_post_id );
 			}
 		}
 
-		$bc->taxonomies = (
+		$bcd->taxonomies = (
 			$this->role_at_least( $this->get_site_option( 'role_taxonomies' ) )
 			&&
-			isset( $bc->_POST[ 'broadcast' ][ 'taxonomies' ] )
+			isset( $bcd->_POST[ 'broadcast' ][ 'taxonomies' ] )
 		);
-		$bc->create_taxonomies = ( $this->role_at_least( $this->get_site_option( 'role_taxonomies_create' ) ) && isset( $bc->_POST[ 'broadcast' ][ 'taxonomies_create' ] ) );
-		if ( $bc->taxonomies )
+		$bcd->create_taxonomies = ( $this->role_at_least( $this->get_site_option( 'role_taxonomies_create' ) ) && isset( $bcd->_POST[ 'broadcast' ][ 'taxonomies_create' ] ) );
+		if ( $bcd->taxonomies )
 		{
 			$source_blog_taxonomies = get_object_taxonomies( array(
-				'object_type' => $bc->post_type,
+				'object_type' => $bcd->post_type,
 			), 'array' );
 			$source_post_taxonomies = array();
 			foreach( $source_blog_taxonomies as $source_blog_taxonomy => $taxonomy )
@@ -1687,77 +1691,81 @@ class ThreeWP_Broadcast
 					'terms'    => $this->get_current_blog_taxonomy_terms( $source_blog_taxonomy ),
 				);
 
-				$source_post_taxonomies[ $source_blog_taxonomy ] = get_the_terms( $bc->post->ID, $source_blog_taxonomy );
+				$source_post_taxonomies[ $source_blog_taxonomy ] = get_the_terms( $bcd->post->ID, $source_blog_taxonomy );
 			}
 		}
 
 		require_once( 'include/AttachmentData.php' );
-		$bc->attachment_data = array();
-		$attached_files =& get_children( 'post_parent='.$bc->post->ID.'&post_type=attachment' );
+		$bcd->attachment_data = array();
+		$attached_files =& get_children( 'post_parent='.$bcd->post->ID.'&post_type=attachment' );
 		$has_attached_files = count( $attached_files) > 0;
 		if ( $has_attached_files )
 			foreach( $attached_files as $attached_file )
-				$bc->attachment_data[ $attached_file->ID ] = AttachmentData::from_attachment_id( $attached_file, $bc->upload_dir );
+				$bcd->attachment_data[ $attached_file->ID ] = AttachmentData::from_attachment_id( $attached_file, $bcd->upload_dir );
 
-		$bc->custom_fields = (
+		$bcd->custom_fields = (
 			$this->role_at_least( $this->get_site_option( 'role_custom_fields' ) )
 			&&
-			isset( $bc->_POST[ 'broadcast' ][ 'custom_fields' ] )
+			isset( $bcd->_POST[ 'broadcast' ][ 'custom_fields' ] )
 			&&
-			( $bc->post_type_supports_custom_fields || $bc->post_type_supports_thumbnails)
+			( $bcd->post_type_supports_custom_fields || $bcd->post_type_supports_thumbnails)
 		);
-		if ( $bc->custom_fields )
+		if ( $bcd->custom_fields )
 		{
-			$bc->post_custom_fields = get_post_custom( $bc->post->ID );
+			$bcd->post_custom_fields = get_post_custom( $bcd->post->ID );
 
-			$bc->has_thumbnail = isset( $bc->post_custom_fields[ '_thumbnail_id' ] );
-			if ( $bc->has_thumbnail )
+			$bcd->has_thumbnail = isset( $bcd->post_custom_fields[ '_thumbnail_id' ] );
+			if ( $bcd->has_thumbnail )
 			{
-				$thumbnail_id = $bc->post_custom_fields[ '_thumbnail_id' ][0];
+				$thumbnail_id = $bcd->post_custom_fields[ '_thumbnail_id' ][0];
 				$thumbnail = get_post( $thumbnail_id );
-				unset( $bc->post_custom_fields[ '_thumbnail_id' ] ); // There is a new thumbnail id for each blog.
-				$bc->attachment_data[ 'thumbnail' ] = AttachmentData::from_attachment_id( $thumbnail, $bc->upload_dir);
+				unset( $bcd->post_custom_fields[ '_thumbnail_id' ] ); // There is a new thumbnail id for each blog.
+				$bcd->attachment_data[ 'thumbnail' ] = AttachmentData::from_attachment_id( $thumbnail, $bcd->upload_dir);
 				// Now that we know what the attachment id the thumbnail has, we must remove it from the attached files to avoid duplicates.
-				unset( $bc->attachment_data[ $thumbnail_id ] );
+				unset( $bcd->attachment_data[ $thumbnail_id ] );
 			}
 
 			// Remove all the _internal custom fields.
-			$bc->post_custom_fields = $this->keep_valid_custom_fields( $bc->post_custom_fields );
+			$bcd->post_custom_fields = $this->keep_valid_custom_fields( $bcd->post_custom_fields );
 		}
 
 		// Sticky isn't a tag, taxonomy or custom_field.
-		$bc->post_is_sticky = @( $bc->_POST[ 'sticky' ] == 'sticky' );
+		$bcd->post_is_sticky = @( $bcd->_POST[ 'sticky' ] == 'sticky' );
 
 		// And now save the user's last settings.
 		$user_id = get_current_user_id();
-		$this->save_last_used_settings( $user_id, $bc->_POST[ 'broadcast' ] );
+		$this->save_last_used_settings( $user_id, $bcd->_POST[ 'broadcast' ] );
 
 		$to_broadcasted_blogs = array();				// Array of blog names that we're broadcasting to. To be used for the activity monitor action.
 		$to_broadcasted_blog_details = array(); 		// Array of blog and post IDs that we're broadcasting to. To be used for the activity monitor action.
 
 		// To prevent recursion
-		$this->broadcasting = $bc->_POST[ 'broadcast' ];
+		$this->broadcasting = $bcd->_POST[ 'broadcast' ];
 		unset( $_POST[ 'broadcast' ] );
 
-		foreach( $bc->blog_id->children as $child_blog_id )
+		do_action( 'threewp_brodcast_broadcasting_started', $bcd );
+
+		foreach( $bcd->blog_id->children as $child_blog_id )
 		{
 			// Another safety check. Goes with the safety dance.
 			if ( !$this->is_blog_user_writable( $user_id, $child_blog_id ) )
 				continue;
-			$bc->blog_id->child = $child_blog_id;
 			switch_to_blog( $child_blog_id );
+			$bcd->blog_id->child = $child_blog_id;
+
+			do_action( 'threewp_brodcast_broadcasting_after_switch_to_blog', $bcd );
 
 			// Post parent
-			if ( $bc->link && isset( $parent_broadcast_data) )
+			if ( $bcd->link && isset( $parent_broadcast_data) )
 				if ( $parent_broadcast_data->has_linked_child_on_this_blog() )
 				{
 					$linked_parent = $parent_broadcast_data->get_linked_child_on_this_blog();
-					$bc->new_post[ 'post_parent' ] = $linked_parent;
+					$bcd->new_post[ 'post_parent' ] = $linked_parent;
 				}
 
 			// Insert new? Or update? Depends on whether the parent post was linked before or is newly linked?
 			$need_to_insert_post = true;
-			if ( $bc->link )
+			if ( $bcd->link )
 				if ( $broadcast_data->has_linked_child_on_this_blog() )
 				{
 					$child_post_id = $broadcast_data->get_linked_child_on_this_blog();
@@ -1766,29 +1774,29 @@ class ThreeWP_Broadcast
 					$child_post = get_post( $child_post_id );
 					if ( $child_post !== null )
 					{
-						$temp_post_data = $bc->new_post;
+						$temp_post_data = $bcd->new_post;
 						$temp_post_data[ 'ID' ] = $child_post_id;
-						$new_post_id = wp_update_post( $temp_post_data );
+						$bcd->new_post[ 'ID' ] = wp_update_post( $temp_post_data );
 						$need_to_insert_post = false;
 					}
 				}
 
 			if ( $need_to_insert_post )
 			{
-				$new_post_id = wp_insert_post( $bc->new_post );
+				$bcd->new_post[ 'ID' ] = wp_insert_post( $bcd->new_post );
 
-				if ( $bc->link )
-					$broadcast_data->add_linked_child( $child_blog_id, $new_post_id );
+				if ( $bcd->link )
+					$broadcast_data->add_linked_child( $child_blog_id, $bcd->new_post[ 'ID' ] );
 			}
 
-			if ( $bc->taxonomies )
+			if ( $bcd->taxonomies )
 			{
 				foreach( $source_post_taxonomies as $source_post_taxonomy => $source_post_terms )
 				{
 					// If we're updating a linked post, remove all the taxonomies and start from the top.
-					if ( $bc->link )
+					if ( $bcd->link )
 						if ( $broadcast_data->has_linked_child_on_this_blog() )
-							wp_set_object_terms( $new_post_id, array(), $source_post_taxonomy );
+							wp_set_object_terms( $bcd->new_post[ 'ID' ], array(), $source_post_taxonomy );
 
 					// Skip this iteration if there are no terms
 					if ( ! is_array( $source_post_terms ) )
@@ -1815,7 +1823,7 @@ class ThreeWP_Broadcast
 						}
 
 						// Should we create the taxonomy if it doesn't exist?
-						if ( ! $found && $bc->create_taxonomies )
+						if ( ! $found && $bcd->create_taxonomies )
 						{
 							// Does the term have a parent?
 							$target_parent_id = 0;
@@ -1845,49 +1853,49 @@ class ThreeWP_Broadcast
 						}
 					}
 
-					if ( $bc->create_taxonomies )
-						$this->sync_terms( $source_post_taxonomy, $bc->blog_id->parent, $child_blog_id );
+					if ( $bcd->create_taxonomies )
+						$this->sync_terms( $source_post_taxonomy, $bcd->blog_id->parent, $child_blog_id );
 
 					if ( count( $taxonomies_to_add_to) > 0 )
 					{
 						// This relates to the bug mentioned in the method $this->set_term_parent()
 						delete_option( $source_post_taxonomy . '_children' );
 						clean_term_cache( '', $source_post_taxonomy );
-						wp_set_object_terms( $new_post_id, $taxonomies_to_add_to, $source_post_taxonomy );
+						wp_set_object_terms( $bcd->new_post[ 'ID' ], $taxonomies_to_add_to, $source_post_taxonomy );
 					}
 				}
 			}
 
 			// Remove the current attachments.
-			$attachments_to_remove =& get_children( 'post_parent='.$new_post_id.'&post_type=attachment' );
+			$attachments_to_remove =& get_children( 'post_parent='.$bcd->new_post[ 'ID' ].'&post_type=attachment' );
 			foreach ( $attachments_to_remove as $attachment_to_remove )
 				wp_delete_attachment( $attachment_to_remove->ID );
 
 			// Copy the attachments
-			$bc->copied_attachments = array();
-			foreach( $bc->attachment_data as $key => $attachment )
+			$bcd->copied_attachments = array();
+			foreach( $bcd->attachment_data as $key => $attachment )
 			{
 				if ( $key != 'thumbnail' )
 				{
-					$o = clone( $bc );
+					$o = clone( $bcd );
 					$o->attachment_data = $attachment;
-					$o->post_id = $new_post_id;
+					$o->post_id = $bcd->new_post[ 'ID' ];
 					$new_attachment_id = $this->copy_attachment( $o );
 					$c = new stdClass();
 					$c->old = $attachment;
 					$c->new = get_post( $new_attachment_id );
-					$bc->copied_attachments[] = $c;
+					$bcd->copied_attachments[] = $c;
 				}
 			}
 
 			// If there were any image attachments copied...
-			if ( count( $bc->copied_attachments ) > 0 )
+			if ( count( $bcd->copied_attachments ) > 0 )
 			{
 				// Update the URLs in the post to point to the new images.
 				$new_upload_dir = wp_upload_dir();
-				$unmodified_post = get_post( $new_post_id );
+				$unmodified_post = get_post( $bcd->new_post[ 'ID' ] );
 				$modified_post = clone( $unmodified_post );
-				foreach( $bc->copied_attachments as $a )
+				foreach( $bcd->copied_attachments as $a )
 				{
 					// Replace the GUID with the new one.
 					$modified_post->post_content = str_replace( $a->old->guid, $a->new->guid, $modified_post->post_content );
@@ -1915,7 +1923,7 @@ class ThreeWP_Broadcast
 					// Try to find the equivalent new attachment ID.
 					// If no attachment found
 					foreach( explode( ',', $ids ) as $old_id )
-						foreach( $bc->copied_attachments as $a )
+						foreach( $bcd->copied_attachments as $a )
 							if ( $old_id == $a->old->id )
 								$new_ids[] = $a->new->id;
 					$new_shortcode = str_replace( $ids, implode( ',', $new_ids ) , $old_shortcode );
@@ -1926,10 +1934,10 @@ class ThreeWP_Broadcast
 					wp_update_post( $modified_post );	// Or maybe it is.
 			}
 
-			if ( $bc->custom_fields )
+			if ( $bcd->custom_fields )
 			{
 				// Remove all old custom fields.
-				$old_custom_fields = get_post_custom( $new_post_id );
+				$old_custom_fields = get_post_custom( $bcd->new_post[ 'ID' ] );
 
 				foreach( $old_custom_fields as $key => $value )
 				{
@@ -1940,57 +1948,65 @@ class ThreeWP_Broadcast
 						wp_delete_post( $thumbnail_post);
 					}
 
-					delete_post_meta( $new_post_id, $key );
+					delete_post_meta( $bcd->new_post[ 'ID' ], $key );
 				}
 
-				foreach( $bc->post_custom_fields as $meta_key => $meta_value )
+				foreach( $bcd->post_custom_fields as $meta_key => $meta_value )
 				{
 					if ( is_array( $meta_value ) )
 					{
 						foreach( $meta_value as $single_meta_value )
 						{
 							$single_meta_value = maybe_unserialize( $single_meta_value );
-							add_post_meta( $new_post_id, $meta_key, $single_meta_value );
+							add_post_meta( $bcd->new_post[ 'ID' ], $meta_key, $single_meta_value );
 						}
 					}
 					else
 					{
 						$meta_value = maybe_unserialize( $meta_value );
-						add_post_meta( $new_post_id, $meta_key, $meta_value );
+						add_post_meta( $bcd->new_post[ 'ID' ], $meta_key, $meta_value );
 					}
 				}
 
 				// Attached files are custom fields... but special custom fields.
-				if ( $bc->has_thumbnail )
+				if ( $bcd->has_thumbnail )
 				{
-					$o = clone( $bc );
-					$o->attachment_data = $bc->attachment_data[ 'thumbnail' ];
-					$o->post_id = $new_post_id;
+					$o = clone( $bcd );
+					$o->attachment_data = $bcd->attachment_data[ 'thumbnail' ];
+					$o->post_id = $bcd->new_post[ 'ID' ];
 					$new_attachment_id = $this->copy_attachment( $o );
 					if ( $new_attachment_id !== false )
-						update_post_meta( $new_post_id, '_thumbnail_id', $new_attachment_id );
+						update_post_meta( $bcd->new_post[ 'ID' ], '_thumbnail_id', $new_attachment_id );
 				}
 			}
 
 			// Sticky behaviour
-			$child_post_is_sticky = is_sticky( $new_post_id );
-			if ( $bc->post_is_sticky && ! $child_post_is_sticky )
-				stick_post( $new_post_id );
-			if ( ! $bc->post_is_sticky && $child_post_is_sticky )
-				unstick_post( $new_post_id );
+			$child_post_is_sticky = is_sticky( $bcd->new_post[ 'ID' ] );
+			if ( $bcd->post_is_sticky && ! $child_post_is_sticky )
+				stick_post( $bcd->new_post[ 'ID' ] );
+			if ( ! $bcd->post_is_sticky && $child_post_is_sticky )
+				unstick_post( $bcd->new_post[ 'ID' ] );
 
-			if ( $bc->link)
+			if ( $bcd->link)
 			{
-				$new_post_broadcast_data = $this->get_post_broadcast_data( $bc->blog_id->parent, $new_post_id );
-				$new_post_broadcast_data->set_linked_parent( $bc->blog_id->parent, $bc->post->ID );
-				$this->set_post_broadcast_data( $child_blog_id, $new_post_id, $new_post_broadcast_data );
+				$new_post_broadcast_data = $this->get_post_broadcast_data( $bcd->blog_id->parent, $bcd->new_post[ 'ID' ] );
+				$new_post_broadcast_data->set_linked_parent( $bcd->blog_id->parent, $bcd->post->ID );
+				$this->set_post_broadcast_data( $child_blog_id, $bcd->new_post[ 'ID' ], $new_post_broadcast_data );
 			}
 
-			$to_broadcasted_blogs[] = '<a href="' . get_permalink( $new_post_id ) . '">' . get_bloginfo( 'name' ) . '</a>';
-			$to_broadcasted_blog_details[] = array( 'blog_id' => $child_blog_id, 'post_id' => $new_post_id, 'inserted' => $need_to_insert_post );
+			$to_broadcasted_blogs[] = '<a href="' . get_permalink( $bcd->new_post[ 'ID' ] ) . '">' . get_bloginfo( 'name' ) . '</a>';
+			$to_broadcasted_blog_details[] = array( 'blog_id' => $child_blog_id, 'post_id' => $bcd->new_post[ 'ID' ], 'inserted' => $need_to_insert_post );
+
+			do_action( 'threewp_brodcast_broadcasting_before_restore_current_blog', $bcd );
 
 			restore_current_blog();
 		}
+
+		// Save the post broadcast data.
+		if ( $bcd->link )
+			$this->set_post_broadcast_data( $bcd->blog_id->parent, $bcd->post->ID, $broadcast_data );
+
+		do_action( 'threewp_brodcast_broadcasting_finished', $bcd );
 
 		// Finished broadcasting.
 		$this->broadcasting = false;
@@ -1998,7 +2014,7 @@ class ThreeWP_Broadcast
 
 		$this->load_language();
 
-		$post_url_and_name = '<a href="' . get_permalink( $bc->post->ID ) . '">' . $options->post->post_title. '</a>';
+		$post_url_and_name = '<a href="' . get_permalink( $bcd->post->ID ) . '">' . $options->post->post_title. '</a>';
 		do_action( 'threewp_activity_monitor_new_activity', array(
 			'activity_id' => '3broadcast_broadcasted',
 			'activity_strings' => array(
@@ -2006,10 +2022,6 @@ class ThreeWP_Broadcast
 			),
 			'activity_details' => $to_broadcasted_blog_details,
 		) );
-
-		// Save the post broadcast data.
-		if ( $bc->link )
-			$this->set_post_broadcast_data( $bc->blog_id->parent, $bc->post->ID, $broadcast_data );
 	}
 
 	/**
@@ -2099,7 +2111,7 @@ class ThreeWP_Broadcast
 	/**
 		Deletes the broadcast data completely of a post in a blog.
 	*/
-	private function delete_post_broadcast_data( $blog_id, $post_id)
+	public function delete_post_broadcast_data( $blog_id, $post_id)
 	{
 		$this->sql_delete_broadcast_data( $blog_id, $post_id );
 	}
@@ -2135,7 +2147,7 @@ class ThreeWP_Broadcast
 	 * Use BroadcastData->is_empty() to check for that.
 	 * @param int $post_id Post ID to retrieve data for.
 	 */
-	private function get_post_broadcast_data( $blog_id, $post_id )
+	public function get_post_broadcast_data( $blog_id, $post_id )
 	{
 		require_once( 'include/BroadcastData.php' );
 		$r = $this->sql_get_broadcast_data( $blog_id, $post_id );
@@ -2275,7 +2287,7 @@ class ThreeWP_Broadcast
 	{
 		$data = $this->sql_user_get( $user_id );
 		$data['last_used_settings'] = $settings;
-		$this->sql_user_set( $user_id, $data);
+		$this->sql_user_set( $user_id, $data );
 	}
 
 	/**
@@ -2287,7 +2299,7 @@ class ThreeWP_Broadcast
 	 * @param int $post_id Post ID to update
 	 * @param BroadcastData $broadcast_data BroadcastData file.
 	 */
-	private function set_post_broadcast_data( $blog_id, $post_id, $broadcast_data )
+	public function set_post_broadcast_data( $blog_id, $post_id, $broadcast_data )
 	{
 		require_once( 'include/BroadcastData.php' );
 		if ( $broadcast_data->is_modified() )
@@ -2464,4 +2476,3 @@ class ThreeWP_Broadcast
 	}
 }
 $threewp_broadcast = new ThreeWP_Broadcast();
-

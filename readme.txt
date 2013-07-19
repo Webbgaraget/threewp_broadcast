@@ -6,11 +6,11 @@ Stable tag: trunk
 Donate link: http://mindreantre.se/donate/
 Contributors: edward mindreantre
 
-Network plugin for PHP v5.4 to broadcast posts to other blogs. Custom post types, custom taxonomies, post meta and attachments are supported.
+Network plugin for PHP v5.4 to broadcast posts to other blogs in the network. Custom post types, custom taxonomies, post meta and attachments are supported.
 
 == Description ==
 
-Network plugin for PHP v5.4 to broadcast posts to other blogs. Custom post types, custom taxonomies, post meta and attachments are supported. A blog whitelist and blacklist exist.
+Network plugin for PHP v5.4 to broadcast posts to other blogs in the network. Custom post types, custom taxonomies, post meta and attachments are supported. A blog whitelist and blacklist exist. Include a plugin that provides nominal support for WPML translations.
 
 Broadcasted posts can be linked to their parents: updated parent posts also update the child posts. Child post permalinks can be overriden with a link to the parent post.
 
@@ -55,6 +55,36 @@ Did I miss anything?
 9. Admin: Uninstall page
 10. Admin: Settings for logging to Activity Monitor
 
+== Actions and filters ==
+
+Broadcast offers some actions/filters for plugin developers with which to interact with Broadcast.
+
+The broadcasting actions use the Broadcasting_Data class to store and transmit information. Documentation for this class can be read in `include\Broadcasting_Data.php`.
+
+= action: threewp_broadcast_add_meta_box( $options ) =
+
+Allows the posting meta box to be modified.
+
+$options is a stdClass.
+$options->post The post that is being edited.
+$options->html The HTML of the meta box.
+
+= action: threewp_brodcast_broadcasting_started( $Broadcasting_Data ) =
+
+Fired just before the loop that broadcasts the post to each selected child blog.
+
+= action: threewp_brodcast_broadcasting_after_switch_to_blog( $Broadcasting_Data ) =
+
+Fired in the broadcast loop, after having switch to the child blog but not done any calculations or posting.
+
+= action: threewp_brodcast_broadcasting_before_restore_current_blog( $Broadcasting_Data ) =
+
+Fired in the broadcast loop, after the child post was created/updated, before restoring back to the original blog.
+
+= action: threewp_brodcast_broadcasting_finished( $Broadcasting_Data ) =
+
+Fired after the broadcast loop, before nulling all broadcast data and returning control to the Wordpress save_post function.
+
 == Frequently Asked Questions ==
 
 = Is php v5.4 really necessary? =
@@ -92,10 +122,31 @@ If you have custom post meta boxes via WPAlchemy, you'll probably need to add th
 
 _bcc_
 
+= WPML Sitepress =
+
+There is an included plugin, ThreeWP Broadcast WPML, that provides support for transferring WPML translation data between broadcasted posts.
+
+It works transparently in the background, but in case you've never really used WPML (like myself), here's how I got it working:
+
+1. Enable the Broadcast and Broadcast WPML plugins.
+2. Write a new post in a language. Link and broadcast it to another blog in the network.
+3. The new post should have the same language in the child blog(s).
+4. In the parent blog, create a new translation of the post.
+5. Link and broadcast it to the other blogs in the network.
+6. The other blogs should now have two translations of the same post and the same post overview listing.
+
+Translated categories and tags are untested as of 2013-07-17.
+
 == Changelog ==
 
-= 1.21 2013-xx-xx =
+= 1.21 2013-07-xx =
+* New: WPML support plugin added.
+* Fix: Moved Broadcast settings to the blog's general settings.
+* Fix: Unlinking works again.
+* Fix: Add PHP v5.4 version check.
 * Code: Added broacast_post() method.
+* Code: Added actions.
+* Code: Added broadcasting actions.
 * Code: More documentation for Broadcasting_Data object, together with refactoring of save_post cost.
 
 = 1.20 2013-06-02 =

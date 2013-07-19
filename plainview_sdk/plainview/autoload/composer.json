@@ -1,0 +1,22 @@
+{
+    "name": "plainview/plainview_sdk",
+    "description": "Plainview SDK",
+    "license" : "GPL-3.0",
+    "authors": [
+        {
+            "name": "Edward Plainview",
+            "email": "edward@plainview.se"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0"
+    },
+    "autoload":
+    {
+        "psr-0":
+       {
+       	   "plainview" : "../../"
+        }
+    },
+    "minimum-stability": "dev"
+}
