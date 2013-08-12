@@ -2475,4 +2475,5 @@ class ThreeWP_Broadcast
 		restore_current_blog();
 	}
 }
+
 $threewp_broadcast = new ThreeWP_Broadcast();

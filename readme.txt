@@ -1,12 +1,12 @@
 === ThreeWP Broadcast ===
-Tags: network, wpms, wpmu, broadcast, multipost, blogs, posting, simultaneously, child, parent, permalink, post type, custom post type, threewp
+Tags: network, wpms, wpmu, broadcast, multipost, blogs, posting, simultaneously, child, parent, permalink, post type, custom post type, threewp, wpml, sitepress
 Requires at least: 3.3.1
 Tested up to: 3.5
 Stable tag: trunk
 Donate link: http://mindreantre.se/donate/
 Contributors: edward mindreantre
 
-Network plugin for PHP v5.4 to broadcast posts to other blogs in the network. Custom post types, custom taxonomies, post meta and attachments are supported.
+Network plugin for PHP v5.4 to broadcast posts to other blogs in the network. Custom post types, custom taxonomies, post meta, attachments and WPML are supported.
 
 == Description ==
 
@@ -38,9 +38,8 @@ Did I miss anything?
 
 == Installation ==
 
-1. See that you have PHP v5.4 installed (for traits support)
-1. Unzip and copy the zip contents (including directory) into the `/wp-content/plugins/` directory
-1. Activate the plugin sitewide through the 'Plugins' menu in WordPress.
+1. Check that your web host has PHP v5.4.
+1. Activate the plugin locally or sitewide.
 
 == Screenshots ==
 

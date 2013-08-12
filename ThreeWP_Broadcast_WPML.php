@@ -18,10 +18,10 @@ if ( ! class_exists( '\\plainview\\wordpress\\base' ) )	require_once( __DIR__ . 
 
 	@par		Changelog
 
-	- 20130717	v1.20 \n
+	- 20130812	v1.21 \n
 				Intial version, synched with Broadcast.
 
-	@version	1.20
+	@version	1.21
 **/
 class ThreeWP_Broadcast_WPML
 	extends \plainview\wordpress\base
