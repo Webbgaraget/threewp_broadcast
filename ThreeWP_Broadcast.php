@@ -57,7 +57,6 @@ class ThreeWP_Broadcast
 		$this->add_action( 'admin_menu', 'add_menu' );
 		$this->add_action( 'admin_menu', 'create_meta_box' );
 		$this->add_action( 'admin_print_styles' );
-		$this->add_action( 'network_admin_menu' );
 
 		$this->add_filter( 'threewp_activity_monitor_list_activities' );
 
