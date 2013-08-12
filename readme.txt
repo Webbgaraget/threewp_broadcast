@@ -4,7 +4,7 @@ Requires at least: 3.3.1
 Tested up to: 3.5
 Stable tag: trunk
 Donate link: http://mindreantre.se/donate/
-Contributors: edward mindreantre
+Contributors: edward_plainview, edward mindreantre
 
 Network plugin for PHP v5.4 to broadcast posts to other blogs in the network. Custom post types, custom taxonomies, post meta, attachments and WPML are supported.
 
@@ -140,6 +140,9 @@ It works transparently in the background, but in case you've never really used W
 Translated categories and tags are untested as of 2013-07-17.
 
 == Changelog ==
+
+= 1.22 xxx =
+* Fix: Unlinking works. Again.
 
 = 1.21 2013-08-12 =
 * New: WPML support plugin added.

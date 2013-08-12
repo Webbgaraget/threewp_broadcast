@@ -684,7 +684,7 @@ class ThreeWP_Broadcast
 		$r = '';
 		$form = $this->form();
 
-		$broadcast_data = $this->get_post_broadcast_data( $blog_id, $post_id );
+		$broadcast_data = $this->get_post_broadcast_data( $current_blog_id, $post_id );
 
 		// Get a list of blogs that this user can link to.
 		$user_id = $this->user_id();		// Convenience.
@@ -733,12 +733,12 @@ class ThreeWP_Broadcast
 						unset( $orphans[ $blog ] );		// There can only be one orphan per blog, so we're not interested in the blog anymore.
 
 						$child_broadcast_data = $this->get_post_broadcast_data( $blog, $orphan->ID );
-						$child_broadcast_data->set_linked_parent( $blog_id, $post_id );
+						$child_broadcast_data->set_linked_parent( $current_blog_id, $post_id );
 						$this->set_post_broadcast_data( $blog, $orphan->ID, $child_broadcast_data );
 					}
 				}
 				// Save the broadcast data.
-				$this->set_post_broadcast_data( $blog_id, $post_id, $broadcast_data );
+				$this->set_post_broadcast_data( $current_blog_id, $post_id, $broadcast_data );
 				echo $this->message( 'The selected children were linked!' );
 			}	// link
 		}
