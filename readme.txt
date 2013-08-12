@@ -44,7 +44,7 @@ Did I miss anything?
 
 == Screenshots ==
 
-1. Broadcast box during post editing.
+1. Broadcast box during post editing, with WPML support line at bottom.
 2. Post / page overview with unlink options
 3. Admin: General settings
 4. User: Help page
@@ -53,7 +53,6 @@ Did I miss anything?
 7. Admin: Required blog list
 8. Admin: Blacklist
 9. Admin: Uninstall page
-10. Admin: Settings for logging to Activity Monitor
 
 == Actions and filters ==
 
@@ -116,6 +115,10 @@ That's not possible until ticket 16031, http://core.trac.wordpress.org/ticket/16
 
 I'm not writing a UI for that function when I'll just have to rewrite it when the ticket gets fixed.
 
+= Slugs =
+
+Changed slugs (post names) are not updated in the child posts. This is a bug in Wordpress.
+
 = WPAlchemy =
 
 If you have custom post meta boxes via WPAlchemy, you'll probably need to add the following to the custom field exceptions in the settings:
@@ -139,7 +142,7 @@ Translated categories and tags are untested as of 2013-07-17.
 
 == Changelog ==
 
-= 1.21 2013-07-xx =
+= 1.21 2013-08-12 =
 * New: WPML support plugin added.
 * Fix: Moved Broadcast settings to the blog's general settings.
 * Fix: Unlinking works again.

@@ -9,10 +9,7 @@ Plugin URI:		http://mindreantre.se/program/threewp/threewp-broadcast/
 Version:		1.21
 */
 
-if ( version_compare(PHP_VERSION, '5.4.0') < 0 )
-	die( 'Broadcast requires PHP version 5.4' );
-
-if ( ! class_exists( '\\plainview\\wordpress\\base' ) )	require_once( __DIR__ . '/plainview_sdk/plainview/autoload/vendor/autoload.php' );
+if ( ! class_exists( '\\plainview\\wordpress\\base' ) )	require_once( __DIR__ . '/plainview_sdk/plainview/autoload.php' );
 
 class ThreeWP_Broadcast
 	extends \plainview\wordpress\base
@@ -1641,6 +1638,10 @@ class ThreeWP_Broadcast
 		$bcd = $this->broadcasting_data;						// Convenience.
 		$bcd->_POST( $options->_POST );
 
+		// If there is no post parent set, set a dummy one.
+		if ( ! isset( $bcd->_POST[ 'post_parent' ] ) )
+			$bcd->_POST[ 'post_parent' ] = null;
+
 		$bcd->blog_id->parent = get_current_blog_id();
 		$bcd->blog_id->children = $options->blogs;
 		$bcd->post = $options->post;
@@ -1690,14 +1691,13 @@ class ThreeWP_Broadcast
 					'taxonomy' => $taxonomy,
 					'terms'    => $this->get_current_blog_taxonomy_terms( $source_blog_taxonomy ),
 				);
-
 				$source_post_taxonomies[ $source_blog_taxonomy ] = get_the_terms( $bcd->post->ID, $source_blog_taxonomy );
 			}
 		}
 
 		require_once( 'include/AttachmentData.php' );
 		$bcd->attachment_data = array();
-		$attached_files =& get_children( 'post_parent='.$bcd->post->ID.'&post_type=attachment' );
+		$attached_files = get_children( 'post_parent='.$bcd->post->ID.'&post_type=attachment' );
 		$has_attached_files = count( $attached_files) > 0;
 		if ( $has_attached_files )
 			foreach( $attached_files as $attached_file )
@@ -1867,7 +1867,7 @@ class ThreeWP_Broadcast
 			}
 
 			// Remove the current attachments.
-			$attachments_to_remove =& get_children( 'post_parent='.$bcd->new_post[ 'ID' ].'&post_type=attachment' );
+			$attachments_to_remove = get_children( 'post_parent='.$bcd->new_post[ 'ID' ].'&post_type=attachment' );
 			foreach ( $attachments_to_remove as $attachment_to_remove )
 				wp_delete_attachment( $attachment_to_remove->ID );
 

@@ -9,10 +9,7 @@ Plugin URI:		http://mindreantre.se/program/threewp/threewp-broadcast/
 Version:		1.21
 */
 
-if ( version_compare(PHP_VERSION, '5.4.0') < 0 )
-	die( 'Broadcast WPML requires PHP version 5.4' );
-
-if ( ! class_exists( '\\plainview\\wordpress\\base' ) )	require_once( __DIR__ . '/plainview_sdk/plainview/autoload/vendor/autoload.php' );
+if ( ! class_exists( '\\plainview\\wordpress\\base' ) )	require_once( __DIR__ . '/plainview_sdk/plainview/autoload.php' );
 
 /**
 	@brief		Adds WPML support to ThreeWP Broadcast.
@@ -42,7 +39,6 @@ class ThreeWP_Broadcast_WPML
 		if( $this->is_wpml() )
 		{
 			$this->add_action( 'threewp_brodcast_broadcasting_before_restore_current_blog' );
-			$this->add_action( 'threewp_brodcast_broadcasting_finished' );
 			$this->add_action( 'threewp_brodcast_broadcasting_started' );
 		}
 	}
