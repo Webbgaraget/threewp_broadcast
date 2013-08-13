@@ -141,7 +141,7 @@ Translated categories and tags are untested as of 2013-07-17.
 
 == Changelog ==
 
-= 1.22 xxx =
+= 1.22 20130813 =
 * Fix: Unlinking works. Again.
 * Code: Removed network_admin_menu code.
 
