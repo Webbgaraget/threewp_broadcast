@@ -1886,28 +1886,38 @@ class ThreeWP_Broadcast extends ThreeWP_Broadcast_Base
 			
 			if (count( $children) < 0)
 				return;
-				
-			$display = array(); // An array makes it easy to manipulate lists
-			$blogs = $this->cached_blog_list();
-			foreach( $children as $blogID => $postID)
+			
+			$display_children_url = add_query_arg( 'broadcast-display-children', $post_id );
+			echo 'Broadcasted to: <strong>' . count( $children ) . ' sites</strong><br>';
+
+			if ( isset( $_GET['broadcast-display-children'] ) && $_GET['broadcast-display-children'] == $post_id )
 			{
-				switch_to_blog( $blogID );
-				$url_child = get_permalink( $postID );
-				restore_current_blog();
-				// The post id is for the current blog, not the target blog.
-				$url_unlink = wp_nonce_url("profile.php?page=ThreeWP_Broadcast&amp;action=unlink&amp;post=$post_id&amp;child=$blogID", 'broadcast_unlink_' . $blogID . '_' . $post_id );
-				$url_trash = wp_nonce_url("profile.php?page=ThreeWP_Broadcast&amp;action=trash&amp;post=$post_id&amp;child=$blogID", 'broadcast_trash_' . $blogID . '_' . $post_id );
-				$display[] = '<div class="broadcasted_blog"><a class="broadcasted_child" href="'.$url_child.'">'.$blogs[$blogID]['blogname'].'</a>
-					<div class="row-actions broadcasted_blog_actions">
-						<small>
-						<a href="'.$url_unlink.'" title="'.$this->_( 'Remove links to this broadcasted child' ).'">'.$this->_( 'Unlink' ).'</a>
-						| <span class="trash"><a href="'.$url_trash.'" title="'.$this->_( 'Put this broadcasted child in the trash' ).'">'.$this->_( 'Trash' ).'</a></span>
-						</small>
+				$display = array(); // An array makes it easy to manipulate lists
+				$blogs = $this->cached_blog_list();
+				foreach( $children as $blogID => $postID)
+				{
+					switch_to_blog( $blogID );
+					$url_child = get_permalink( $postID );
+					restore_current_blog();
+					// The post id is for the current blog, not the target blog.
+					$url_unlink = wp_nonce_url("profile.php?page=ThreeWP_Broadcast&amp;action=unlink&amp;post=$post_id&amp;child=$blogID", 'broadcast_unlink_' . $blogID . '_' . $post_id );
+					$url_trash = wp_nonce_url("profile.php?page=ThreeWP_Broadcast&amp;action=trash&amp;post=$post_id&amp;child=$blogID", 'broadcast_trash_' . $blogID . '_' . $post_id );
+					$display[] = '<div class="broadcasted_blog"><a class="broadcasted_child" href="'.$url_child.'">'.$blogs[$blogID]['blogname'].'</a>
+						<div class="row-actions broadcasted_blog_actions">
+							<small>
+							<a href="'.$url_unlink.'" title="'.$this->_( 'Remove links to this broadcasted child' ).'">'.$this->_( 'Unlink' ).'</a>
+							| <span class="trash"><a href="'.$url_trash.'" title="'.$this->_( 'Put this broadcasted child in the trash' ).'">'.$this->_( 'Trash' ).'</a></span>
+							</small>
+						</div>
 					</div>
-				</div>
-				';
+					';
+				}
+				echo '<a href="' . remove_query_arg( 'broadcast-display-children' ) . '"><em>Hide children</em></a><ul><li>' . implode( '</li><li>', $display) . '</li></ul>';
 			}
-			echo '<ul><li>' . implode( '</li><li>', $display) . '</li></ul>';
+			else
+			{
+				echo '<a href="' . $display_children_url . '"><em>Display children</em></a>';
+			}
 		}
 		else
 			echo '&nbsp;';
