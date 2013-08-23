@@ -49,10 +49,8 @@ class ThreeWP_Broadcast
 		'role_custom_fields' => 'super_admin',				// Role required to broadcast the custom fields
 	);
 
-	public function __construct()
+	public function _construct()
 	{
-		parent::__construct( __FILE__ );
-
 		if ( ! $this->is_network )
 			wp_die( $this->_( 'Broadcast requires a Wordpress network to function.' ) );
 
