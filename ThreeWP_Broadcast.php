@@ -6,7 +6,7 @@ Author URI:		http://www.plainview.se
 Description:	Network plugin to broadcast a post to other blogs. Whitelist, blacklist, groups and automatic category+tag+custom field posting/creation available.
 Plugin Name:	ThreeWP Broadcast
 Plugin URI:		http://plainview.se/wordpress/threewp-broadcast/
-Version:		1.22
+Version:		1.23
 */
 
 if ( ! class_exists( '\\plainview\\wordpress\\base' ) )	require_once( __DIR__ . '/plainview_sdk/plainview/autoload.php' );
@@ -1880,10 +1880,10 @@ class ThreeWP_Broadcast
 					$o->attachment_data = $attachment;
 					$o->post_id = $bcd->new_post[ 'ID' ];
 					$new_attachment_id = $this->copy_attachment( $o );
-					$c = new stdClass();
-					$c->old = $attachment;
-					$c->new = get_post( $new_attachment_id );
-					$bcd->copied_attachments[] = $c;
+					$a = new stdClass();
+					$a->old = $attachment;
+					$a->new = get_post( $new_attachment_id );
+					$bcd->copied_attachments[] = $a;
 				}
 			}
 
@@ -1892,14 +1892,14 @@ class ThreeWP_Broadcast
 			{
 				// Update the URLs in the post to point to the new images.
 				$new_upload_dir = wp_upload_dir();
-				$unmodified_post = get_post( $bcd->new_post[ 'ID' ] );
+				$unmodified_post = (object)$bcd->new_post;
 				$modified_post = clone( $unmodified_post );
 				foreach( $bcd->copied_attachments as $a )
 				{
 					// Replace the GUID with the new one.
 					$modified_post->post_content = str_replace( $a->old->guid, $a->new->guid, $modified_post->post_content );
 					// And replace the IDs present in any image captions.
-					$modified_post->post_content = str_replace( 'id="attachment_' . $a->old->ID . '"', 'id="attachment_' . $o->new->ID . '"', $modified_post->post_content );
+					$modified_post->post_content = str_replace( 'id="attachment_' . $a->old->id . '"', 'id="attachment_' . $a->new->id . '"', $modified_post->post_content );
 				}
 
 				// Update any [gallery] shortcodes found.
@@ -1923,8 +1923,10 @@ class ThreeWP_Broadcast
 					// If no attachment found
 					foreach( explode( ',', $ids ) as $old_id )
 						foreach( $bcd->copied_attachments as $a )
+						{
 							if ( $old_id == $a->old->id )
-								$new_ids[] = $a->new->id;
+								$new_ids[] = $a->new->ID;
+						}
 					$new_shortcode = str_replace( $ids, implode( ',', $new_ids ) , $old_shortcode );
 					$modified_post->post_content = str_replace( $old_shortcode, $new_shortcode, $modified_post->post_content );
 				}

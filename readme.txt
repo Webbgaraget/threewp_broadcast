@@ -151,6 +151,10 @@ Translated categories and tags are untested as of 2013-07-17.
 
 == Changelog ==
 
+= 1.23 20130828 =
+* Fix: Image broadcasting works again.
+* Fix: Gallery shortcodes are updated.
+
 = 1.22 20130813 =
 * Fix: Unlinking works. Again.
 * Code: Removed network_admin_menu code.
