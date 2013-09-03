@@ -9,6 +9,8 @@ Plugin URI:		http://mindreantre.se/program/threewp/threewp-broadcast/
 Version:		1.22
 */
 
+namespace threewp_broadcast;
+
 if ( ! class_exists( '\\plainview\\wordpress\\base' ) )	require_once( __DIR__ . '/plainview_sdk/plainview/autoload.php' );
 
 /**

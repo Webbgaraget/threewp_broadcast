@@ -9,6 +9,8 @@ Plugin URI:		http://plainview.se/wordpress/threewp-broadcast/
 Version:		1.23
 */
 
+namespace threewp_broadcast;
+
 if ( ! class_exists( '\\plainview\\wordpress\\base' ) )	require_once( __DIR__ . '/plainview_sdk/plainview/autoload.php' );
 
 class ThreeWP_Broadcast
@@ -26,7 +28,7 @@ class ThreeWP_Broadcast
 	**/
 	public $broadcasting_data = null;
 
-	public $plugin_version = 20130813;
+	public $plugin_version = 20130903;
 
 	protected $sdk_version_required = 20130505;		// add_action / add_filter
 

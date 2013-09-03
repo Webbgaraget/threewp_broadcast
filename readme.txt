@@ -1,7 +1,7 @@
 === ThreeWP Broadcast ===
 Tags: network, wpms, wpmu, broadcast, multipost, blogs, posting, simultaneously, child, parent, permalink, post type, custom post type, threewp, wpml, sitepress
 Requires at least: 3.3.1
-Tested up to: 3.5
+Tested up to: 3.6
 Stable tag: trunk
 Donate link: http://plainview.se/donate/
 Contributors: edward_plainview, edward mindreantre
@@ -151,7 +151,7 @@ Translated categories and tags are untested as of 2013-07-17.
 
 == Changelog ==
 
-= 1.23 20130828 =
+= 1.23 20130903 =
 * Fix: Image broadcasting works again.
 * Fix: Gallery shortcodes are updated.
 
