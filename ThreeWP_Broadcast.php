@@ -1469,7 +1469,7 @@ class ThreeWP_Broadcast
 		}
 	}
 
-	public function manage_posts_columns( $defaults)
+	public function manage_posts_columns( $defaults )
 	{
 		$defaults['3wp_broadcast'] = '<span title="'.$this->_( 'Shows which blogs have posts linked to this one' ).'">'.$this->_( 'Broadcasted' ).'</span>';
 		return $defaults;
