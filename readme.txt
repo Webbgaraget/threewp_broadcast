@@ -158,6 +158,9 @@ Users are requested to check their post type and custom field exception settings
 
 == Changelog ==
 
+= 1.32 20131003 =
+* Fix: Broadcasting of featured images, attachments and galleries works much better.
+
 = 1.31 20130929 =
 * Fix: Taxonomies are sometimes missed if uncategorized is used.
 
