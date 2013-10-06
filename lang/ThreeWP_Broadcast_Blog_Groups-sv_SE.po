@@ -12,9 +12,41 @@ msgstr ""
 "X-Poedit-Language: Swedish\n"
 "X-Poedit-Country: SWEDEN\n"
 
+#: ThreeWP_Broadcast_Blog_Groups.php:388
+msgid "Blog group saved!"
+msgstr "Gruppen har sparats!"
+
+#: ThreeWP_Broadcast_Blog_Groups.php:255
+#: ThreeWP_Broadcast_Blog_Groups.php:278
+#: ThreeWP_Broadcast_Blog_Groups.php:279
+msgid "Blog groups"
+msgstr "Bloggrupper"
+
+#: ThreeWP_Broadcast_Blog_Groups.php:111
+msgid "Blog groups help you to quickly add blogs to the broadcast. First create a blog group and select the blogs you want. When broadcasting the list of blog groups will appear above the blog list."
+msgstr "Bloggrupper hjälper dig att snabbt lägga till bloggar till multipostningen. Skapa först en bloggrupp och välj vilka bloggar du vill ha i gruppen. När du sedan mutlipostar ett inlägg kommer bloggruppen att synas i rutan ovanför blogglistan."
+
+#: ThreeWP_Broadcast_Blog_Groups.php:128
+#: ThreeWP_Broadcast_Blog_Groups.php:355
+msgid "Blogs"
+msgstr "Bloggar"
+
+#: ThreeWP_Broadcast_Blog_Groups.php:119
+msgid "Click on the group name to edit or delete it."
+msgstr "Klicka på gruppnamnet för att redigera eller ta bort det."
+
 #: plainview_sdk/plainview/form.php:909
 msgid "Could not parse date"
 msgstr "Kunde inte tolka datumet"
+
+#. Form to add a new blog group.
+#: ThreeWP_Broadcast_Blog_Groups.php:168
+msgid "Create a new blog group"
+msgstr "Skapa en ny grupp"
+
+#: ThreeWP_Broadcast_Blog_Groups.php:88
+msgid "Create the blog group"
+msgstr "Skapa gruppen"
 
 #: plainview_sdk/plainview/form.php:396
 msgid "DD"
@@ -24,13 +56,42 @@ msgstr "DD"
 msgid "Date format"
 msgstr "Datumformat"
 
+#: ThreeWP_Broadcast_Blog_Groups.php:407
+msgid "Delete the group"
+msgstr "Ta bort gruppen"
+
+#: ThreeWP_Broadcast_Blog_Groups.php:400
+msgid "Delete this blog group"
+msgstr "Ta bort den här gruppen"
+
 #: plainview_sdk/plainview/form.php:368
 msgid "Description"
 msgstr "Beskrivning"
 
+#: ThreeWP_Broadcast_Blog_Groups.php:227
+msgid "Edit blog group"
+msgstr "Redigera gruppen"
+
+#: ThreeWP_Broadcast_Blog_Groups.php:138
+msgid "Edit or delete this blog group"
+msgstr "Redigera eller ta bort gruppen"
+
+#: ThreeWP_Broadcast_Blog_Groups.php:340
+msgid "General settings"
+msgstr "Allmänna inställningar"
+
+#: ThreeWP_Broadcast_Blog_Groups.php:82
+#: ThreeWP_Broadcast_Blog_Groups.php:343
+msgid "Group name"
+msgstr "Gruppnamn"
+
 #: plainview_sdk/plainview/form.php:397
 msgid "HH"
 msgstr "HH"
+
+#: ThreeWP_Broadcast_Blog_Groups.php:403
+msgid "I want to delete this blog group"
+msgstr "Jag vill ta bort den här gruppen"
 
 #: plainview_sdk/plainview/form.php:916
 msgid "Invalid date"
@@ -53,6 +114,22 @@ msgstr "MM"
 msgid "Minimum length"
 msgstr "Minimumlängd"
 
+#: ThreeWP_Broadcast_Blog_Groups.php:127
+msgid "Name"
+msgstr "Namn"
+
+#: ThreeWP_Broadcast_Blog_Groups.php:145
+msgid "No group has no blogs assigned."
+msgstr "Inga bloggar har lagts till i gruppen."
+
+#: ThreeWP_Broadcast_Blog_Groups.php:256
+msgid "No group selected"
+msgstr "Ingen grupp vald"
+
+#: ThreeWP_Broadcast_Blog_Groups.php:222
+msgid "Overview"
+msgstr "Översikt"
+
 #: plainview_sdk/plainview/form2/inputs/radios.php:59
 #: plainview_sdk/plainview/form2/inputs/traits/validation.php:182
 #, php-format
@@ -63,9 +140,17 @@ msgstr "Du måste fylla i %s."
 msgid "Required field"
 msgstr "Måste fyllas i"
 
+#: ThreeWP_Broadcast_Blog_Groups.php:184
+msgid "Roles"
+msgstr "Roller"
+
 #: plainview_sdk/plainview/form.php:399
 msgid "SS"
 msgstr "SS"
+
+#: ThreeWP_Broadcast_Blog_Groups.php:194
+msgid "Save settings"
+msgstr "Spara inställningar"
 
 #. Else return a manual table th.
 #: plainview_sdk/plainview/wordpress/base.php:1147
@@ -73,9 +158,22 @@ msgstr "SS"
 msgid "Selected"
 msgstr "Vald"
 
+#: ThreeWP_Broadcast_Blog_Groups.php:232
+msgid "Settings"
+msgstr "Inställningar"
+
 #: plainview_sdk/plainview/wordpress/base.php:518
 msgid "Super admin"
 msgstr "Superadmin"
+
+#: ThreeWP_Broadcast_Blog_Groups.php:100
+#, php-format
+msgid "The blog group %s has been created!"
+msgstr "Gruppen %s har skapats!"
+
+#: ThreeWP_Broadcast_Blog_Groups.php:419
+msgid "The blog group has been deleted. Please return to the overview."
+msgstr "Gruppen har tagits bort. Klicka dig tillbaka till översikten."
 
 #: plainview_sdk/plainview/form2/inputs/email.php:29
 #, php-format
@@ -123,22 +221,25 @@ msgstr "Den här länken tar dig till indexsidan"
 msgid "This page will remove all the plugin tables and settings from the database and then deactivate the plugin."
 msgstr "Den här sidan kommer att ta bort tilläggets databas och inställningar och sedan avaktivera tillägget."
 
+#: ThreeWP_Broadcast_Blog_Groups.php:233
+msgid "Uninstall"
+msgstr "Avinstallera"
+
 #: plainview_sdk/plainview/wordpress/base.php:357
 msgid "Uninstall plugin"
 msgstr "Avinstallera tillägget"
 
+#: ThreeWP_Broadcast_Blog_Groups.php:375
+msgid "Update the blog group"
+msgstr "Uppdatera gruppen"
+
+#: ThreeWP_Broadcast_Blog_Groups.php:189
+msgid "Use groups"
+msgstr "Använd grupper"
+
 #: plainview_sdk/plainview/form.php:388
 msgid "Valid values"
 msgstr "Giltiga värden"
-
-#: ThreeWP_Broadcast_WPML.php:166
-#, php-format
-msgid "WPML v%s detected. Language: %s"
-msgstr "WPML v%s hittades. Språk: %s"
-
-#: ThreeWP_Broadcast_WPML.php:162
-msgid "WPML was not detected."
-msgstr "WPML hittades inte."
 
 #: plainview_sdk/plainview/form.php:400
 msgid "YYYY"
@@ -147,6 +248,10 @@ msgstr "ÅÅÅÅ"
 #: plainview_sdk/plainview/wordpress/base.php:353
 msgid "Yes, I'm sure I want to remove all the plugin tables and settings."
 msgstr "Ja, jag är säker på att jag vill ta bort tilläggets databas och inställningar."
+
+#: ThreeWP_Broadcast_Blog_Groups.php:115
+msgid "You have not created any blog groups yet."
+msgstr "Du har inte skapat några grupper än."
 
 #: plainview_sdk/plainview/wordpress/base.php:365
 msgid "You have to check the checkbox in order to uninstall the plugin."
