@@ -20,6 +20,7 @@ return array(
     'threewp_broadcast\\blog_collection' => $baseDir . '/threewp_broadcast/blog_collection.php',
     'threewp_broadcast\\blog_groups\\blog_group' => $baseDir . '/threewp_broadcast/blog_groups/blog_group.php',
     'threewp_broadcast\\broadcast_data\\blog' => $baseDir . '/threewp_broadcast/blog.php',
+    'threewp_broadcast\\broadcast_data\\cache' => $baseDir . '/threewp_broadcast/broadcast_data/broadcast_data_cache.php',
     'threewp_broadcast\\broadcasting_data' => $baseDir . '/threewp_broadcast/broadcasting_data.php',
     'threewp_broadcast\\db_object' => $baseDir . '/threewp_broadcast/db_object.php',
     'threewp_broadcast\\filters\\filter' => $baseDir . '/threewp_broadcast/filters/filter.php',

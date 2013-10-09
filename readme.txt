@@ -170,6 +170,9 @@ Users are requested to check their post type and custom field exception settings
 
 == Changelog ==
 
+= 2.3 201310xx =
+* New: Caching of BroadcastData speeds up the post overview.
+
 = 2.2 20131007 =
 * New: Custom field exceptions are now separated into a blacklist and a whitelist.
 

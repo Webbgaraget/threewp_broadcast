@@ -870,13 +870,19 @@ class ThreeWP_Broadcast
 		if ( $column_name != '3wp_broadcast' )
 			return;
 
-		global $post;
+		$blog_id = get_current_blog_id();
 
+		// Prep the bcd cache.
+		$broadcast_data = $this->broadcast_data_cache()
+			->expect_from_wp_query()
+			->get_for( $blog_id, $parent_post_id );
+
+		global $post;
 		$action = new actions\manage_posts_custom_column();
 		$action->post = $post;
-		$action->parent_blog_id = get_current_blog_id();
+		$action->parent_blog_id = $blog_id;
 		$action->parent_post_id = $parent_post_id;
-		$action->broadcast_data = $this->get_post_broadcast_data( $action->parent_blog_id , $parent_post_id );
+		$action->broadcast_data = $broadcast_data;
 		$action->apply();
 
 		echo $action->render();
@@ -919,6 +925,8 @@ class ThreeWP_Broadcast
 
 	public function post_row_actions( $actions, $post )
 	{
+		$this->broadcast_data_cache()->expect_from_wp_query();
+
 		global $blog_id;
 		$broadcast_data = $this->get_post_broadcast_data( $blog_id, $post->ID );
 		if ( $broadcast_data->has_linked_children() )
@@ -1444,6 +1452,19 @@ class ThreeWP_Broadcast
 	// --------------------------------------------------------------------------------------------
 
 	/**
+		@brief		Returns the current broadcast_data cache object.
+		@return		broadcast_data_cache		A newly-created or old cache object.
+		@since		201301009
+	**/
+	public function broadcast_data_cache()
+	{
+		$property = 'broadcast_data_cache';
+		if ( ! property_exists( $this, 'broadcast_data_cache' ) )
+			$this->$property = new \threewp_broadcast\broadcast_data\cache;
+		return $this->$property;
+	}
+
+	/**
 		@brief		Broadcast a post.
 		@details	The BC data parameter contains all necessary information about what is being broadcasted, to which blogs, options, etc.
 		@param		broadcasting_data		$broadcasting_data		The broadcasting data object.
@@ -1928,6 +1949,7 @@ class ThreeWP_Broadcast
 	*/
 	public function delete_post_broadcast_data( $blog_id, $post_id)
 	{
+		$this->broadcast_data_cache()->set_for( $blog_id, $post_id, new BroadcastData );
 		$this->sql_delete_broadcast_data( $blog_id, $post_id );
 	}
 
@@ -1984,11 +2006,7 @@ class ThreeWP_Broadcast
 	 */
 	public function get_post_broadcast_data( $blog_id, $post_id )
 	{
-		$r = $this->sql_get_broadcast_data( $blog_id, $post_id );
-
-		if ( count( $r ) < 1 )
-			return new BroadcastData( [] );
-		return new BroadcastData( $r );
+		return $this->broadcast_data_cache()->get_for( $blog_id, $post_id );
 	}
 
 	/**
@@ -2238,6 +2256,9 @@ class ThreeWP_Broadcast
 	 */
 	public function set_post_broadcast_data( $blog_id, $post_id, $broadcast_data )
 	{
+		// Update the cache.
+		$this->broadcast_data_cache()->set_for( $blog_id, $post_id, $broadcast_data );
+
 		if ( $broadcast_data->is_modified() )
 			if ( $broadcast_data->is_empty() )
 				$this->sql_delete_broadcast_data( $blog_id, $post_id );
@@ -2313,7 +2334,7 @@ class ThreeWP_Broadcast
 	 *
 	 * Returns an array of user data.
 	 */
-	private function sql_user_get( $user_id)
+	public function sql_user_get( $user_id)
 	{
 		$r = $this->query("SELECT * FROM `".$this->wpdb->base_prefix."_3wp_broadcast` WHERE user_id = '$user_id'");
 		$r = @unserialize( base64_decode( $r[0][ 'data' ] ) );		// Unserialize the data column of the first row.
@@ -2329,7 +2350,7 @@ class ThreeWP_Broadcast
 	/**
 	 * Saves the user data.
 	 */
-	private function sql_user_set( $user_id, $data)
+	public function sql_user_set( $user_id, $data)
 	{
 		$data = serialize( $data);
 		$data = base64_encode( $data);
@@ -2337,21 +2358,42 @@ class ThreeWP_Broadcast
 		$this->query("INSERT INTO `".$this->wpdb->base_prefix."_3wp_broadcast` (user_id, data) VALUES ( '$user_id', '$data' )");
 	}
 
-	private function sql_get_broadcast_data( $blog_id, $post_id )
+	/**
+		@brief		Returns an array of SQL rows for these post_ids.
+		@param		int		$blog_id		ID of blog for which to fetch the datas
+		@param		mixed	$post_ids		An array of ints or a string signifying which datas to retrieve.
+		@return		array					An array of database rows. Each row has a BroadcastData object in the data column.
+		@since		20131009
+	**/
+	public function sql_get_broadcast_datas( $blog_id, $post_ids )
 	{
-		$r = $this->query("SELECT data FROM `".$this->wpdb->base_prefix."_3wp_broadcast_broadcastdata` WHERE blog_id = '$blog_id' AND post_id = '$post_id'");
-		$r = @unserialize( base64_decode( $r[0][ 'data' ] ) );		// Unserialize the data column of the first row.
-		if ( $r === false)
-			$r = [];
-		return $r;
+		if ( ! is_array( $post_ids ) )
+			$post_ids = [ $post_ids ];
+
+		$query = sprintf( "SELECT * FROM `%s` WHERE `blog_id` = '%s' AND `post_id` IN ('%s')",
+			$this->wpdb->base_prefix . '_3wp_broadcast_broadcastdata',
+			$blog_id,
+			implode( "', '", $post_ids )
+		);
+		$results = $this->query( $query );
+		foreach( $results as $index => $result )
+		{
+			$data = @ unserialize( base64_decode( $result[ 'data' ] ) );
+			if ( ! $data )
+				$data = new BroadcastData;
+			else
+				$data = new BroadcastData( $data );
+			$results[ $index ][ 'data' ] = $data;
+		}
+		return $results;
 	}
 
-	private function sql_delete_broadcast_data( $blog_id, $post_id )
+	public function sql_delete_broadcast_data( $blog_id, $post_id )
 	{
 		$this->query("DELETE FROM `".$this->wpdb->base_prefix."_3wp_broadcast_broadcastdata` WHERE blog_id = '$blog_id' AND post_id = '$post_id'");
 	}
 
-	private function sql_update_broadcast_data( $blog_id, $post_id, $data )
+	public function sql_update_broadcast_data( $blog_id, $post_id, $data )
 	{
 		$data = serialize( $data);
 		$data = base64_encode( $data);
