@@ -62,7 +62,7 @@ class ThreeWP_Broadcast
 		'canonical_url' => true,							// Override the canonical URLs with the parent post's.
 		'custom_field_whitelist' => '_wp_page_template _wplp_ _aioseop_',				// Internal custom fields that should be broadcasted.
 		'custom_field_blacklist' => '',						// Internal custom fields that should not be broadcasted.
-		'database_version' => 1,							// Version of database and settings
+		'database_version' => 0,							// Version of database and settings
 		'save_post_priority' => 640,						// Priority of save_post action. Higher = lets other plugins do their stuff first
 		'override_child_permalinks' => false,				// Make the child's permalinks link back to the parent item?
 		'post_types' => 'post page',						// Custom post types which use broadcasting
@@ -186,36 +186,40 @@ class ThreeWP_Broadcast
 		if ( !$this->is_network )
 			wp_die("This plugin requires a Wordpress Network installation.");
 
-		// Remove old options
-		$this->delete_site_option( 'requirewhenbroadcasting' );
+		$db_ver = $this->get_site_option( 'database_version', 0 );
 
-		// Removed 1.5
-		$this->delete_site_option( 'activity_monitor_broadcasts' );
-		$this->delete_site_option( 'activity_monitor_group_changes' );
-		$this->delete_site_option( 'activity_monitor_unlinks' );
+		if ( $db_ver < 1 )
+		{
+			// Remove old options
+			$this->delete_site_option( 'requirewhenbroadcasting' );
 
-		$this->query("CREATE TABLE IF NOT EXISTS `".$this->wpdb->base_prefix."_3wp_broadcast` (
-		  `user_id` int(11) NOT NULL COMMENT 'User ID',
-		  `data` text NOT NULL COMMENT 'User''s data',
-		  PRIMARY KEY (`user_id`)
-		) ENGINE=MyISAM DEFAULT CHARSET=latin1 COMMENT='Contains the group settings for all the users';
-		");
+			// Removed 1.5
+			$this->delete_site_option( 'activity_monitor_broadcasts' );
+			$this->delete_site_option( 'activity_monitor_group_changes' );
+			$this->delete_site_option( 'activity_monitor_unlinks' );
 
-		$this->query("CREATE TABLE IF NOT EXISTS `".$this->wpdb->base_prefix."_3wp_broadcast_broadcastdata` (
-		  `blog_id` int(11) NOT NULL COMMENT 'Blog ID',
-		  `post_id` int(11) NOT NULL COMMENT 'Post ID',
-		  `data` text NOT NULL COMMENT 'Serialized BroadcastData',
-		  KEY `blog_id` (`blog_id`,`post_id`)
-		) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-		");
+			$this->query("CREATE TABLE IF NOT EXISTS `".$this->wpdb->base_prefix."_3wp_broadcast` (
+			  `user_id` int(11) NOT NULL COMMENT 'User ID',
+			  `data` text NOT NULL COMMENT 'User''s data',
+			  PRIMARY KEY (`user_id`)
+			) ENGINE=MyISAM DEFAULT CHARSET=latin1 COMMENT='Contains the group settings for all the users';
+			");
 
-		// Cats and tags replaced by taxonomy support. Version 1.5
-		$this->delete_site_option( 'role_categories' );
-		$this->delete_site_option( 'role_categories_create' );
-		$this->delete_site_option( 'role_tags' );
-		$this->delete_site_option( 'role_tags_create' );
+			$this->query("CREATE TABLE IF NOT EXISTS `".$this->wpdb->base_prefix."_3wp_broadcast_broadcastdata` (
+			  `blog_id` int(11) NOT NULL COMMENT 'Blog ID',
+			  `post_id` int(11) NOT NULL COMMENT 'Post ID',
+			  `data` text NOT NULL COMMENT 'Serialized BroadcastData',
+			  KEY `blog_id` (`blog_id`,`post_id`)
+			) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+			");
 
-		$db_ver = $this->get_site_option( 'database_version', 1 );
+			// Cats and tags replaced by taxonomy support. Version 1.5
+			$this->delete_site_option( 'role_categories' );
+			$this->delete_site_option( 'role_categories_create' );
+			$this->delete_site_option( 'role_tags' );
+			$this->delete_site_option( 'role_tags_create' );
+			$db_ver = 1;
+		}
 
 		if ( $db_ver < 2 )
 		{
@@ -1838,7 +1842,7 @@ class ThreeWP_Broadcast
 			if ( ! $bcd->post_is_sticky && $child_post_is_sticky )
 				unstick_post( $bcd->new_post[ 'ID' ] );
 
-			if ( $bcd->link)
+			if ( $bcd->link )
 			{
 				$new_post_broadcast_data = $this->get_post_broadcast_data( $bcd->parent_blog_id, $bcd->new_post[ 'ID' ] );
 				$new_post_broadcast_data->set_linked_parent( $bcd->parent_blog_id, $bcd->post->ID );
