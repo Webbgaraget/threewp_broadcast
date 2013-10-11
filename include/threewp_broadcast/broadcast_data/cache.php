@@ -9,62 +9,25 @@ use threewp_broadcast\BroadcastData;
 	@since		20131009
 **/
 class cache
-	extends \plainview\collections\collection
+	extends \threewp_broadcast\cache\posts_cache
 {
-	public function expect( $blog_id, $post_ids )
+
+	/**
+		@brief		Store an empty broadcast data object.
+		@since		20131010
+	**/
+	public function cache_no_data( $blog_id, $post_id )
 	{
-		if ( ! is_array( $post_ids ) )
-			$post_ids = [ $post_ids ];
-
-		$missing_post_ids = [];
-		foreach( $post_ids as $post_id )
-		{
-			$key = $this->key( $blog_id, $post_id );
-			if ( $this->has( $key ) )
-				continue;
-			$missing_post_ids []= $post_id;
-		}
-
-		// Are we missing anything?
-		if ( count( $missing_post_ids ) < 1 )
-			return;
-
-		// Fetch them!
-		$results = \threewp_broadcast\ThreeWP_Broadcast::instance()->sql_get_broadcast_datas( $blog_id, $missing_post_ids );
-
-		// Since not all requested post IDs have broadcast data, foreach the missing post ids, not the results, and add them to the cache.
-		foreach( $missing_post_ids as $post_id )
-		{
-			$data = null;
-			foreach( $results as $result )
-			{
-				if ( $result[ 'post_id' ] == $post_id )
-				{
-					$data = $result[ 'data' ];
-					break;
-				}
-			}
-
-			if ( ! $data )
-				$data = new BroadcastData;
-
-			$key = $this->key( $blog_id, $post_id );
-			$this->set( $key, $data );
-		}
-		return $this;
+		$key = $this->key( $blog_id, $post_id );
+		$this->set( $key, new BroadcastData );
 	}
 
-	public function expect_from_wp_query()
-	{
-		global $wp_query;
-		$blog_id = get_current_blog_id();
-		$post_ids = [];
-		foreach( $wp_query->posts as $post )
-			$post_ids []= $post->ID;
-		$this->expect( $blog_id, $post_ids );
-		return $this;
-	}
-
+	/**
+		@brief		Gets the broadcast data of a blog+post combo.
+		@details 	Will always return a broadcast_data object.
+		@return		broadcast_data		Broadcast data object.
+		@since		20131010
+	**/
 	public function get_for( $blog_id, $post_id )
 	{
 		$key = $this->key( $blog_id, $post_id );
@@ -72,7 +35,7 @@ class cache
 		if ( ! $this->has( $key ) )
 		{
 			// Retrieve the post data for this solitary post.
-			$results = \threewp_broadcast\ThreeWP_Broadcast::instance()->sql_get_broadcast_datas( $blog_id, $post_id );
+			$results = $this->lookup( $blog_id, $post_id );
 			if ( count( $results ) == 1 )
 			{
 				$results = reset( $results );
@@ -82,19 +45,15 @@ class cache
 				$bcd = new BroadcastData;
 			$this->set_for( $blog_id, $post_id, $bcd );
 		}
-
 		return $this->get( $key );
 	}
 
-	public function key( $blog_id, $post_id )
+	/**
+		@brief		Asks ThreeWP_Broadcast to look up some broadcast datas.
+		@since		20131010
+	**/
+	public function lookup( $blog_id, $post_ids )
 	{
-		return sprintf( '%s_%s', $blog_id, $post_id );
+		return \threewp_broadcast\ThreeWP_Broadcast::instance()->sql_get_broadcast_datas( $blog_id, $post_ids );
 	}
-
-	public function set_for( $blog_id, $post_id, $broadcast_data )
-	{
-		$key = $this->key( $blog_id, $post_id );
-		$this->set( $key, $broadcast_data );
-	}
-
 }

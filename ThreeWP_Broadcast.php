@@ -6,7 +6,7 @@ Author URI:		http://www.plainview.se
 Description:	Broadcast / multipost a post, with attachments, custom fields, tags and other taxonomies to other blogs in the network.
 Plugin Name:	ThreeWP Broadcast
 Plugin URI:		http://plainview.se/wordpress/threewp-broadcast/
-Version:		2.2
+Version:		2.3
 */
 
 namespace threewp_broadcast;
@@ -92,6 +92,8 @@ class ThreeWP_Broadcast
 		}
 
 		$this->add_filter( 'threewp_broadcast_add_meta_box' );
+		$this->add_filter( 'threewp_broadcast_prepare_meta_box', 9 );
+		$this->add_filter( 'threewp_broadcast_prepare_meta_box', 'threewp_broadcast_prepared_meta_box', 100 );
 		$this->add_filter( 'threewp_broadcast_broadcast_post' );
 		$this->add_filter( 'threewp_broadcast_get_user_writable_blogs' );
 		$this->add_action( 'threewp_broadcast_manage_posts_custom_column', 9 );		// Just before the standard 10.
@@ -174,7 +176,7 @@ class ThreeWP_Broadcast
 			return;
 
 		$this->enqueue_js();
-		wp_enqueue_style( '3wp_broadcast', '/' . $this->paths[ 'path_from_base_directory' ] . '/css/ThreeWP_Broadcast.scss.min.css', false, '20131003', 'screen' );
+		wp_enqueue_style( 'threewp_broadcast', '/' . $this->paths[ 'path_from_base_directory' ] . '/css/css.scss.min.css'  );
 	}
 
 	// --------------------------------------------------------------------------------------------
@@ -1008,38 +1010,56 @@ class ThreeWP_Broadcast
 	**/
 	public function threewp_broadcast_add_meta_box( $post )
 	{
-		// Pre
-		// Has this meta data
-		global $blog_id;
-
-		// Find out if this post is already linked
-		$broadcast_data = $this->get_post_broadcast_data( $blog_id, $post->ID );
-
-		if ( $broadcast_data->get_linked_parent() !== false)
-		{
-			echo sprintf( '<p>%s</p>',
-				$this->_( 'This post is broadcasted child post. It cannot be broadcasted further.' )
-			);
-			return;
-		}
-
 		$meta_box_data = new meta_box\data;
-		$meta_box_data->blog_id = $blog_id;
+		$meta_box_data->blog_id = get_current_blog_id();
+		$meta_box_data->broadcast_data = $this->get_post_broadcast_data( $meta_box_data->blog_id, $post->ID );
 		$meta_box_data->form = $this->form2();
 		$meta_box_data->post = $post;
 		$meta_box_data->post_id = $post->ID;
 
+		// Allow plugins to modify the meta box with their own info.
+		$action = new actions\prepare_meta_box;
+		$action->meta_box_data = $meta_box_data;
+		$action->apply();
+
+		foreach( $meta_box_data->css as $key => $value )
+			wp_enqueue_style( $key, $value );
+		foreach( $meta_box_data->js as $key => $value )
+			wp_enqueue_script( $key, $value );
+
+		echo $meta_box_data->html;
+	}
+
+	/**
+		@brief		Prepare and display the meta box data.
+		@since		20131010
+	**/
+	public function threewp_broadcast_prepare_meta_box( $action )
+	{
+		if ( $action->is_applied() )
+			return;
+
+		$meta_box_data = $action->meta_box_data;	// Convenience.
+
+		if ( $meta_box_data->broadcast_data->get_linked_parent() !== false)
+		{
+			$meta_box_data->html->put( 'already_broadcasted',  sprintf( '<p>%s</p>',
+				$this->_( 'This post is broadcasted child post. It cannot be broadcasted further.' )
+			) );
+			$action->applied();
+			return;
+		}
 
 		$form = $meta_box_data->form;		// Convenience
 		$form->prefix( 'broadcast' );		// Create all inputs with this prefix.
 
-		$published = $post->post_status == 'publish';
+		$published = $meta_box_data->post->post_status == 'publish';
 
-		$has_linked_children = $broadcast_data->has_linked_children();
+		$has_linked_children = $meta_box_data->broadcast_data->has_linked_children();
 
 		$last_used_settings = $this->load_last_used_settings( $this->user_id() );
 
-		$post_type = $post->post_type;
+		$post_type = $meta_box_data->post->post_type;
 		$post_type_object = get_post_type_object( $post_type );
 		$post_type_supports_thumbnails = post_type_supports( $post_type, 'thumbnail' );
 		$post_type_supports_custom_fields = post_type_supports( $post_type, 'custom-fields' );
@@ -1049,7 +1069,7 @@ class ThreeWP_Broadcast
 		{
 			// Check the link box is the post has been published and has children OR it isn't published yet.
 			$linked = (
-				( $published && $broadcast_data->has_linked_children() )
+				( $published && $meta_box_data->broadcast_data->has_linked_children() )
 				||
 				! $published
 			);
@@ -1109,14 +1129,14 @@ class ThreeWP_Broadcast
 		$filter = new filters\get_user_writable_blogs( $this->user_id() );
 		$blogs = $filter->apply()->blogs;
 		// Remove the blog we're currently working on from the list of writable blogs.
-		$blogs->forget( $blog_id );
+		$blogs->forget( $meta_box_data->blog_id );
 
 		$blogs_input = $form->checkboxes( 'blogs' )
 			->label( 'Broadcast to' )
 			->prefix( 'blogs' );
 
 		// Preselect those children that this post has.
-		$linked_children = $broadcast_data->get_linked_children();
+		$linked_children = $meta_box_data->broadcast_data->get_linked_children();
 		foreach( $linked_children as $blog_id => $ignore )
 		{
 			$blog = $blogs->get( $blog_id );
@@ -1151,12 +1171,23 @@ class ThreeWP_Broadcast
 			'</a>'
 		) );
 
-		// Allow plugins to modify the meta box with their own info.
-		// The string, $box, must be modified or appended to using string search and replace.
-		$action = new actions\added_meta_box;
-		$action->meta_box_data = $meta_box_data;
-		$action->apply();
+		// We require some js.
+		$meta_box_data->js->put( 'threewp_broadcast', '/' . $this->paths[ 'path_from_base_directory' ] . '/js/user.min.js' );
+		// And some CSS
+		$meta_box_data->css->put( 'threewp_broadcast', '/' . $this->paths[ 'path_from_base_directory' ] . '/css/css.scss.min.css'  );
 
+		$action->applied();
+	}
+
+	/**
+		@brief		Fix up the inputs.
+		@since		20131010
+	**/
+	public function threewp_broadcast_prepared_meta_box( $action )
+	{
+		$meta_box_data = $action->meta_box_data;
+
+		// If our places in the html are still left, insert the inputs.
 		foreach( [
 			'link',
 			'custom_fields',
@@ -1165,9 +1196,10 @@ class ThreeWP_Broadcast
 			'blogs'
 		] as $type )
 			if ( $meta_box_data->html->has( $type ) )
-				$meta_box_data->html->put( $type, ${ $type . '_input' } );
-
-		echo $meta_box_data->html;
+			{
+				$input = $meta_box_data->form->input( $type );
+				$meta_box_data->html->put( $type, $input );
+			}
 	}
 
 	/**
@@ -1333,7 +1365,9 @@ class ThreeWP_Broadcast
 		$bcd->taxonomies = isset( $POST[ 'taxonomies' ] )
 			&& ( is_super_admin() || $this->role_at_least( $this->get_site_option( 'role_taxonomies' ) ) );
 
-		$bcd->post_is_sticky = @( $POST[ 'sticky' ] == 'sticky' );		// Sticky isn't a tag, taxonomy or custom_field.
+		// Is this post sticky? This info is hidden in a blog option.
+		$stickies = get_option( 'sticky_posts' );
+		$bcd->post_is_sticky = in_array( $bcd->post->ID, $stickies );
 	}
 
 	public function trash_post( $post_id)
@@ -1457,7 +1491,7 @@ class ThreeWP_Broadcast
 
 	/**
 		@brief		Returns the current broadcast_data cache object.
-		@return		broadcast_data_cache		A newly-created or old cache object.
+		@return		broadcast_data\\cache		A newly-created or old cache object.
 		@since		201301009
 	**/
 	public function broadcast_data_cache()
@@ -1965,7 +1999,7 @@ class ThreeWP_Broadcast
 	{
 		if ( isset( $this->_js_enqueued ) )
 			return;
-		wp_enqueue_script( '3wp_broadcast', '/' . $this->paths[ 'path_from_base_directory' ] . '/js/user.min.js' );
+		wp_enqueue_script( 'threewp_broadcast', '/' . $this->paths[ 'path_from_base_directory' ] . '/js/user.min.js' );
 		$this->_js_enqueued = true;
 	}
 
