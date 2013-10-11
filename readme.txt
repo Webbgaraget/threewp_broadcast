@@ -157,6 +157,9 @@ Translated categories and tags are untested as of 2013-07-17.
 
 == Changelog ==
 
+= 2.4 201310xx =
+* Fix: Better JS and CSS loading for subdirectory installs
+
 = 2.3 20131011 =
 * New: Caching of BroadcastData speeds up the post overview.
 * Fix: More than one blog group is visible.
