@@ -31,7 +31,7 @@ Broadcasted posts can be linked to their parents, which updates child posts when
 
 = Other features =
 
-* Blogs plugin enables blog grouping for easy selection
+* Groups plugin enables blog grouping for easy selection
 * Custom field blacklist and whitelist
 * Last used settings are remembered
 * User role access granularity
@@ -40,13 +40,11 @@ Broadcasted posts can be linked to their parents, which updates child posts when
 
 The <a href="http://plainview.se/wordpress/threewp-broadcast-premium-pack/" title="Premium Pack's page on the web"><em>Broadcast Premium Pack</em></a> is an actively maintained collection of plugins that expand the functionality of Broadcast.
 
-For a complete list of features and more information, see <a href="http://plainview.se/wordpress/threewp-broadcast-premium-pack/" title="Premium Pack's page on the web"><em>Broadcast Premium Pack</em>'s page on the web</a>.
+For a complete list of features and more information, see <a href="http://plainview.se/wordpress/threewp-broadcast-premium-pack/" title="Premium Pack's page on the web"><em>Broadcast Premium Pack</em>'s page on the web</a>. Currently the Premium Pack offers:
 
-Currently the Premium Pack offers:
-
-* Queue adds a broadcast queue which helps to broadcast posts to tens / hundreds / more blogs.
-* Send To Many broadcasts many posts to several blogs at once, instead of individually editing and broadcasting each post.
-* Views adds support for WP Types and Views content templates.
+* <strong>Queue</strong> adds a broadcast queue which helps to broadcast posts to tens / hundreds / more blogs.
+* <strong>Send To Many</strong> broadcasts many posts to several blogs at once, instead of individually editing and broadcasting each post.
+* <strong>Views</strong> adds support for WP Types and Views content templates.
 
 = Misc =
 
@@ -158,7 +156,9 @@ Translated categories and tags are untested as of 2013-07-17.
 == Changelog ==
 
 = 2.4 201310xx =
+* Fix: Selected blogs are shown after selecting a group
 * Fix: Better JS and CSS loading for subdirectory installs
+* Fix: Allow editing of slugs when overriding child permalinks
 
 = 2.3 20131011 =
 * New: Caching of BroadcastData speeds up the post overview.

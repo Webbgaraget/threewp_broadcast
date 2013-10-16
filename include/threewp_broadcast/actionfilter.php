@@ -4,7 +4,7 @@ namespace threewp_broadcast;
 
 abstract class actionfilter
 {
-	use \plainview\traits\method_chaining;
+	use \plainview\sdk\traits\method_chaining;
 
 	/**
 		@brief		Has the actionfilter been applied enough to be considered done?

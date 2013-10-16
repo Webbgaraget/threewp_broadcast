@@ -4,7 +4,7 @@ namespace threewp_broadcast\broadcast_data;
 
 class blog
 {
-	use \plainview\traits\method_chaining;
+	use \plainview\sdk\traits\method_chaining;
 
 	public $id;
 
