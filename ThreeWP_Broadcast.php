@@ -15,7 +15,7 @@ if ( ! class_exists( '\\threewp_broadcast\\base' ) )	require_once( __DIR__ . '/T
 
 require_once( 'include/vendor/autoload.php' );
 
-use \plainview\collections\collection;
+use \plainview\sdk\collections\collection;
 use \threewp_broadcast\broadcast_data\blog;
 
 class ThreeWP_Broadcast
@@ -59,7 +59,7 @@ class ThreeWP_Broadcast
 		@since		20131015
 		@var		$display_broadcast_meta_box
 	**/
-	public	$display_broadcast_meta_box = null;
+	public	$display_broadcast_meta_box = true;
 
 	/**
 		@brief	Display information in the menu about the premium pack?
@@ -568,10 +568,10 @@ class ThreeWP_Broadcast
 		$broadcast_data = $this->get_post_broadcast_data( $blog_id, $post_id );
 		switch_to_blog( $child_blog_id );
 		$broadcasted_post_id = $broadcast_data->get_linked_child_on_this_blog();
+		if ( $broadcasted_post_id === null )
+			wp_die( 'No broadcasted child post found on this blog!' );
 		wp_delete_post( $broadcasted_post_id, true );
-		$broadcast_data->remove_linked_child( $blog_id );
 		restore_current_blog();
-		$this->set_post_broadcast_data( $blog_id, $post_id, $broadcast_data );
 
 		$message = $this->_( 'The broadcasted child post has been deleted.' );
 
@@ -893,7 +893,7 @@ class ThreeWP_Broadcast
 	{
 		// Don't overwrite the permalink if we're in the editing window.
 		// This allows the user to change the permalink.
-		if ( isset( $post->filter ) && $post->filter == 'sample' )
+		if ( $_SERVER[ 'SCRIPT_NAME' ] == '/wp-admin/post.php' )
 			return $link;
 
 		$blog_id = get_current_blog_id();
@@ -1277,7 +1277,7 @@ class ThreeWP_Broadcast
 
 			if ( count( $children ) > 0 )
 			{
-				$blogs = new \plainview\collections\collection;
+				$blogs = new \plainview\sdk\collections\collection;
 				$output = '';
 
 				foreach( $children as $child_blog_id => $child_post_id )
@@ -2078,6 +2078,7 @@ class ThreeWP_Broadcast
 	**/
 	public function enqueue_js()
 	{
+		return;
 		if ( isset( $this->_js_enqueued ) )
 			return;
 		wp_enqueue_script( 'threewp_broadcast', '/' . $this->paths[ 'path_from_base_directory' ] . '/js/user.min.js' );

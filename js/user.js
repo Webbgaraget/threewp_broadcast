@@ -110,6 +110,9 @@ jQuery(document).ready(function($) {
 			{
 				var $this = $( this );
 				var checked = $this.prop( 'checked' );
+				// Ignore inputs that are supposed to be hidden.
+				if ( $this.prop( 'hidden' ) === true )
+					return;
 				if ( ! checked )
 					$this.parent().hide();
 			});
@@ -152,7 +155,13 @@ jQuery(document).ready(function($) {
 		{
 			window.broadcast.$blogs_html.removeClass( 'closed' ).addClass( 'opened' );
 			this.$arrow.html( broadcast_strings.hide_all );
-			this.$broadcast_blogs_htmls.parent().show();
+			$.each( this.$broadcast_blogs_htmls, function( index, item )
+			{
+				var $this = $( this );
+				if ( $this.prop( 'hidden' ) === true )
+					return;
+				$this.parent().show();
+			});
 		}
 	};
 
