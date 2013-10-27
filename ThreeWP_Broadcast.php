@@ -1369,15 +1369,6 @@ class ThreeWP_Broadcast
 		// Is this post sticky? This info is hidden in a blog option.
 		$stickies = get_option( 'sticky_posts' );
 		$bcd->post_is_sticky = in_array( $bcd->post->ID, $stickies );
-
-		return;
-
-		ddd( $bcd->blogs );
-		ddd( $bcd->link );
-		ddd( $bcd->custom_fields );
-		ddd( $bcd->taxonomies );
-		ddd( 'noooooooooooo mooooooooooooooooooreeeeeeeeee' );
-		exit;
 	}
 
 	public function trash_post( $post_id)
