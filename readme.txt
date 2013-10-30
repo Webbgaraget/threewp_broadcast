@@ -172,6 +172,11 @@ Translated categories and tags are untested as of 2013-07-17.
 
 == Changelog ==
 
+= 2.7 201310xx =
+* Fix: Settings are ajaxified again.
+* Fix: Group selection works again.
+* Fix: Fewer warnings when using empty custom field blacklist / whitelists.
+
 = 2.6 20131028 =
 * Fix: Broadcasted featured image is attached to post if necessary.
 * Fix: List of attachments when broadcasting is not allowed to be cached anymore.

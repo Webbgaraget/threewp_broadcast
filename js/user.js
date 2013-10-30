@@ -86,7 +86,7 @@ jQuery(document).ready(function($) {
 				var $this = $( this );
 				var blogs = $this.val().split(' ');
 				for ( var counter=0; counter < blogs.length; counter++)
-					$( "#plainview_form2_inputs_checkboxes_blogs_" + blogs[counter], window.broadcast.$broadcast ).prop( 'checked', true );
+					$( "#plainview_sdk_form2_inputs_checkboxes_blogs_" + blogs[counter], window.broadcast.$broadcast ).prop( 'checked', true );
 				// Select the "no value" option.
 				$this.val( '' );
 
@@ -126,9 +126,9 @@ jQuery(document).ready(function($) {
 				return;
 
 			// Ajaxify the whitelist / blacklist
-			this.$settings_form.$broadcast_internal_fields = $( '#plainview_form2_inputs_checkbox_broadcast_internal_custom_fields', this.$settings_form );
-			this.$settings_form.$blacklist = $( '#plainview_form2_inputs_textarea_custom_field_blacklist', this.$settings_form );
-			this.$settings_form.$whitelist = $( '#plainview_form2_inputs_textarea_custom_field_whitelist', this.$settings_form );
+			this.$settings_form.$broadcast_internal_fields = $( '#plainview_sdk_form2_inputs_checkbox_broadcast_internal_custom_fields', this.$settings_form );
+			this.$settings_form.$blacklist = $( '#plainview_sdk_form2_inputs_textarea_custom_field_blacklist', this.$settings_form );
+			this.$settings_form.$whitelist = $( '#plainview_sdk_form2_inputs_textarea_custom_field_whitelist', this.$settings_form );
 
 			// Fade in the respective settings when the internal fields box is clicked.
 			this.$settings_form.$broadcast_internal_fields.change( function()

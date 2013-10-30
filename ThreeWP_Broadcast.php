@@ -2059,7 +2059,6 @@ class ThreeWP_Broadcast
 	**/
 	public function enqueue_js()
 	{
-		return;
 		if ( isset( $this->_js_enqueued ) )
 			return;
 		wp_enqueue_script( 'threewp_broadcast', '/' . $this->paths[ 'path_from_base_directory' ] . '/js/user.min.js' );
@@ -2210,7 +2209,7 @@ class ThreeWP_Broadcast
 		{
 			// Prep the cache.
 			if ( ! isset( $this->custom_field_blacklist_cache ) )
-				$this->custom_field_blacklist_cache = explode( ' ', $this->get_site_option( 'custom_field_blacklist' ) );
+				$this->custom_field_blacklist_cache = array_filter( explode( ' ', $this->get_site_option( 'custom_field_blacklist' ) ) );
 
 			foreach( $this->custom_field_blacklist_cache as $exception)
 				if ( strpos( $custom_field, $exception) !== false )
@@ -2223,7 +2222,7 @@ class ThreeWP_Broadcast
 		{
 			// Prep the cache.
 			if ( !isset( $this->custom_field_whitelist_cache ) )
-				$this->custom_field_whitelist_cache = explode( ' ', $this->get_site_option( 'custom_field_whitelist' ) );
+				$this->custom_field_whitelist_cache = array_filter( explode( ' ', $this->get_site_option( 'custom_field_whitelist' ) ) );
 
 			foreach( $this->custom_field_whitelist_cache as $exception)
 				if ( strpos( $custom_field, $exception) !== false )
