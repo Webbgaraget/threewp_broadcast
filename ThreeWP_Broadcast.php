@@ -2355,6 +2355,16 @@ class ThreeWP_Broadcast
 	}
 
 	/**
+		@brief		Get some standardizing CSS styles.
+		@return		string		A string containing the CSS <style> data, including the tags.
+		@since		20131031
+	**/
+	public function html_css()
+	{
+		return file_get_contents( __DIR__ . '/html/style.css' );
+	}
+
+	/**
 	 * Retrieves the BroadcastData for this post_id.
 	 *
 	 * Will return a fully functional BroadcastData class even if the post doesn't have BroadcastData.
