@@ -6,7 +6,7 @@ Author URI:		http://www.plainview.se
 Description:	Broadcast / multipost a post, with attachments, custom fields, tags and other taxonomies to other blogs in the network.
 Plugin Name:	ThreeWP Broadcast
 Plugin URI:		http://plainview.se/wordpress/threewp-broadcast/
-Version:		2.6
+Version:		2.7
 */
 
 namespace threewp_broadcast;
@@ -59,7 +59,7 @@ class ThreeWP_Broadcast
 		@since		20131015
 		@var		$display_broadcast_meta_box
 	**/
-	public	$display_broadcast_meta_box = true;
+	public $display_broadcast_meta_box = true;
 
 	/**
 		@brief	Display information in the menu about the premium pack?
@@ -76,7 +76,7 @@ class ThreeWP_Broadcast
 	**/
 	public $permalink_cache;
 
-	public $plugin_version = 2.6;
+	public $plugin_version = 2.7;
 
 	protected $sdk_version_required = 20130505;		// add_action / add_filter
 
@@ -517,7 +517,6 @@ class ThreeWP_Broadcast
 		switch_to_blog( $child_blog_id );
 		$broadcasted_post_id = $broadcast_data->get_linked_child_on_this_blog();
 
-
 		if ( $broadcasted_post_id === null )
 			wp_die( 'No broadcasted child post found on this blog!' );
 		wp_delete_post( $broadcasted_post_id, true );
@@ -701,6 +700,13 @@ class ThreeWP_Broadcast
 			'</a>',
 			$this->plugin_version
 		);
+		$object = new \ReflectionObject( new \plainview\sdk\wordpress\base );
+		$r .= $this->p( 'Using %sPlainview Wordpress SDK%s version %s from %s.',
+			'<a href="https://github.com/the-plainview/sdk">',
+			'</a>',
+			$this->sdk_version,
+			$object->getFilename()
+		);
 		echo $r;
 	}
 
@@ -750,12 +756,12 @@ class ThreeWP_Broadcast
 						->name_( 'Trash all children' );
 					break;
 				case 'user_unlink':
-					$tabs->tab( 'unlink' )
+					$tabs->tab( 'user_unlink' )
 						->heading_( 'Unlink the child post' )
 						->name_( 'Unlink child' );
 					break;
 				case 'user_unlink_all':
-					$tab = $tabs->tab( 'unlink' )
+					$tab = $tabs->tab( 'user_unlink_all' )
 						->callback_this( 'user_unlink' )
 						->heading_( 'Unlink all child posts' )
 						->name_( 'Unlink all children' );
@@ -918,9 +924,11 @@ class ThreeWP_Broadcast
 			$child_blog_id = $_GET[ 'child' ];
 
 		// Generate the nonce key to check against.
-		$nonce_key = 'user_unlink';
+		$nonce_key = 'broadcast_unlink';
 		if ( isset( $child_blog_id) )
 			$nonce_key .= '_' . $child_blog_id;
+		else
+			$nonce_key .= '_all';
 		$nonce_key .= '_' . $post_id;
 
 		if ( ! wp_verify_nonce( $nonce, $nonce_key) )
@@ -1125,7 +1133,7 @@ class ThreeWP_Broadcast
 		if ( $broadcast_data->get_linked_parent() === false )
 		{
 			$url = sprintf( 'admin.php?page=threewp_broadcast&amp;action=user_find_orphans&amp;post=%s', $post->ID );
-			$url = wp_nonce_url( $url, 'user_find_orphans_' . $post->ID );
+			$url = wp_nonce_url( $url, 'broadcast_find_orphans_' . $post->ID );
 			$actions[ 'broadcast_find_orphans' ] =
 				sprintf( '<a href="%s" title="%s">%s</a>',
 					$url ,
@@ -1500,7 +1508,7 @@ class ThreeWP_Broadcast
 
 					$string = sprintf( '
 						<div class="row-actions broadcasted_blog_actions">
-							All:
+							%s:
 							<small>
 								<a href="%s" title="%s">%s</a>
 								| <a href="%s" title="%s">%s</a>
@@ -1509,6 +1517,7 @@ class ThreeWP_Broadcast
 							</small>
 						</div>
 					',
+						$this->_( 'All' ),
 						$url_restore_all,
 						$this->_( 'Restore all of the children from the trash' ),
 						$this->_( 'Restore' ),
@@ -1526,7 +1535,7 @@ class ThreeWP_Broadcast
 				}
 
 				$blogs = new \plainview\sdk\collections\collection;
-				$output = '';
+				$output = [];
 
 				foreach( $children as $child_blog_id => $child_post_id )
 				{
@@ -1580,11 +1589,12 @@ class ThreeWP_Broadcast
 						$this->_( 'Delete' )
 					);
 
-					restore_current_blog();
 					$blogs->put( $child_blog_id, $string );
-					$output .= $string;
+					$output[ get_bloginfo( 'blogname' ) ] = $string;
+					restore_current_blog();
 				}
-				$filter->html->put( 'broadcasted_to', $output );
+				ksort( $output );
+				$filter->html->put( 'broadcasted_to', implode( '', $output ) );
 				$filter->blogs = $blogs;
 			}
 		}

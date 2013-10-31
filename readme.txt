@@ -149,12 +149,6 @@ Make sure that:
 4. The correct post type(s) have been selected
 5. <em>User & Blog Settings</em> is not set to hide the meta box from the user / role / blog
 
-= WPAlchemy =
-
-If you have custom post meta boxes via WPAlchemy, you'll probably need to add the following to the custom field inclusions in the settings:
-
-	_bcc_
-
 = WPML Sitepress =
 
 There is an included plugin, ThreeWP Broadcast WPML, that provides support for transferring WPML translation data between broadcasted posts.
@@ -172,10 +166,13 @@ Translated categories and tags are untested as of 2013-07-17.
 
 == Changelog ==
 
-= 2.7 201310xx =
+= 2.7 20131101 =
+* New: All-links in post overview.
+* New: Linked posts can be deleted, trashed, restored and unlinked.
 * Fix: Settings are ajaxified again.
 * Fix: Group selection works again.
 * Fix: Fewer warnings when using empty custom field blacklist / whitelists.
+* Advanced Custom Fields plugin is now available in the premium pack.
 
 = 2.6 20131028 =
 * Fix: Broadcasted featured image is attached to post if necessary.
