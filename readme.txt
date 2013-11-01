@@ -42,6 +42,8 @@ The <a href="http://plainview.se/wordpress/threewp-broadcast-premium-pack/" titl
 
 For a complete list of features and more information, see <a href="http://plainview.se/wordpress/threewp-broadcast-premium-pack/" title="Premium Pack's page on the web"><em>Broadcast Premium Pack</em>'s page on the web</a>. Currently the Premium Pack offers:
 
+* <strong>Advanced Custom Fields</strong> adds support for correctly broadcasting image field types using the ACF plugin.
+* <strong>Local Links</strong> automatically updates links to local posts on each child blog.
 * <strong>Queue</strong> adds a broadcast queue which helps to broadcast posts to tens / hundreds / more blogs.
 * <strong>Send To Many</strong> broadcasts many posts to several blogs at once, instead of individually editing and broadcasting each post.
 * <strong>User & Blog Settings</strong> can hide the broadcast meta box and/or menu, modify the meta box to force/prevent broadcast to blogs, with separate settings for users / blogs / roles.
@@ -92,6 +94,7 @@ Broadcast offers some actions/filters for plugin developers with which to intera
 16. Premium Pack: Showing how to hide Broadcast from the users (Blog & User Settings plugin)
 17. Premium Pack: Showing a modification, info and to whom the modification applies (Blog & User Settings plugin)
 18. Premium Pack: Adding one row of criteria for a modification (Blog & User Settings plugin)
+19. Premium Pack: Advanced Custom Fields image support
 
 == Frequently Asked Questions ==
 
@@ -171,7 +174,7 @@ Translated categories and tags are untested as of 2013-07-17.
 * New: Linked posts can be deleted, trashed, restored and unlinked.
 * Fix: Settings are ajaxified again.
 * Fix: Group selection works again.
-* Fix: Fewer warnings when using empty custom field blacklist / whitelists.
+* Fix: No more warnings when using empty custom field blacklist / whitelists.
 * Advanced Custom Fields plugin is now available in the premium pack.
 
 = 2.6 20131028 =

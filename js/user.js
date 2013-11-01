@@ -121,7 +121,7 @@ jQuery(document).ready(function($) {
 		// Ajaxify the settings page.
 		init_settings_page : function()
 		{
-			this.$settings_form = $( 'body.broadcast_page_threewp_broadcast_admin_menu form#broadcast_settings' );
+			this.$settings_form = $( 'form#broadcast_settings' );
 			if ( this.$settings_form.length < 1 )
 				return;
 
