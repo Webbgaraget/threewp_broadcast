@@ -6,10 +6,14 @@ class data
 {
 	public $checks;
 
-	public function __construct()
+	public $controller;
+
+	public function __construct( $controller )
 	{
+		$this->controller = $controller;
 		$this->checks = new checks\container;
-//		$this->checks->maintenance_data = $this;
+		$this->checks->controller = $controller;
+		$this->checks->maintenance_data = $this;
 		$this->checks->add_check( new checks\broadcast_data\check );
 		$this->checks->add_check( new checks\view_broadcast_data\check );
 	}
@@ -28,7 +32,7 @@ class data
 		@details	The serialized object is stored in the temp directory and is unique for each logged-in admin.
 		@since		20131101
 	**/
-	public static function load()
+	public static function load( $controller )
 	{
 		$bc = self::broadcast();
 		$user_id = $bc->user_id();
@@ -38,7 +42,7 @@ class data
 		$data = file_get_contents( $filename );
 		$data = unserialize( $data );
 		if ( ! $data )
-			$data = new data;
+			$data = new data( $controller );
 		return $data;
 	}
 
@@ -59,7 +63,7 @@ class data
 
 		unlink( $filename );
 
-		return self::load();
+		return self::load( $this->controller );
 	}
 
 	public function save()

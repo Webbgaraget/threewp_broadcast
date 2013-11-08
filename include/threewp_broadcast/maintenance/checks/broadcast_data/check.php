@@ -32,6 +32,16 @@ extends \threewp_broadcast\maintenance\checks\check
 		return new data;
 	}
 
+	public function get_actions()
+	{
+		$r = [];
+
+		// Add a "view help" link
+		$url = $this->get_action_url( 'view_help' );
+		$r [ 'view_help' ]= sprintf( '<a href="%s">View help and troubleshooting guide</a>', $url );
+
+		return $r;
+	}
 	public function get_description()
 	{
 		return 'Checks and optionally repairs missing broadcast data, parents and children found in the database table.';
@@ -277,5 +287,13 @@ extends \threewp_broadcast\maintenance\checks\check
 		}
 		restore_current_blog();
 		return $ok;
+	}
+
+	public function view_help()
+	{
+		$r = $this->broadcast()->html_css();
+		$filename = dirname( $this->broadcast()->paths[ '__FILE__' ] );
+		$r .= file_get_contents( $filename . '/html/maintenance_broadcast_data.html' );
+		return $r;
 	}
 }

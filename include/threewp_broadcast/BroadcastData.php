@@ -139,8 +139,9 @@ class BroadcastData
 	public function remove_linked_child( $blog_id )
 	{
 		unset($this->data[ 'linked_children' ][$blog_id]);
-		if ( count($this->data[ 'linked_children' ]) < 1)
-			unset( $this->data[ 'linked_children' ] );
+		if ( isset( $this->data[ 'linked_children' ] ) )
+			if ( count($this->data[ 'linked_children' ]) < 1)
+				unset( $this->data[ 'linked_children' ] );
 
 		$this->modified();
 	}

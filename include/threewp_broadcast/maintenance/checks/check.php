@@ -9,13 +9,6 @@ namespace threewp_broadcast\maintenance\checks;
 class check
 {
 	/**
-		@brief		Which step the check is on.
-		@details	Is the name of the function to call: step_$STEP()
-		@since		20131104
-	**/
-	public $step = 'start';
-
-	/**
 		@brief		Has this check been processed?
 		@since		20131101
 	**/
@@ -32,6 +25,13 @@ class check
 		@since		20131104
 	**/
 	public $maintenance_data;
+
+	/**
+		@brief		Which step the check is on.
+		@details	Is the name of the function to call: step_$STEP()
+		@since		20131104
+	**/
+	public $step = 'start';
 
 	public function __construct()
 	{
@@ -54,6 +54,24 @@ class check
 	public static function data()
 	{
 		return new data;
+	}
+
+	/**
+		@brief		Return an array of action links
+		@since		20131108
+	**/
+	public function get_actions()
+	{
+		return [];
+	}
+
+	/**
+		@brief		Return a URL for a check's action.
+		@since		20131108
+	**/
+	public function get_action_url( $action_name )
+	{
+		return $this->controller->get_action_url( $this, $action_name );
 	}
 
 	/**

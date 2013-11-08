@@ -681,19 +681,49 @@ class ThreeWP_Broadcast
 
 	public function user_broadcast_info()
 	{
-		$r = $this->p_( '%sThreeWP Broadcast%s version %s is installed.',
+		$table = $this->table();
+		$table->caption()->text( 'Information' );
+
+		$row = $table->head()->row();
+		$row->th()->text( 'Key' );
+		$row->th()->text( 'Value' );
+
+		// Broadcast version
+		$row = $table->body()->row();
+		$row->td()->text( 'Broadcast version' );
+		$text = sprintf( '%sVersion %s%s is installed.',
 			sprintf( '<a href="%s">', 'http://wordpress.org/plugins/threewp-broadcast/' ),
-			'</a>',
-			$this->plugin_version
+			$this->plugin_version,
+			'</a>'
 		);
-		$object = new \ReflectionObject( new \plainview\sdk\wordpress\base );
-		$r .= $this->p( 'Using %sPlainview Wordpress SDK%s version %s from %s.',
+		$row->td()->text( $text );
+
+		// SDK version
+		$row = $table->body()->row();
+		$text = sprintf( '%sPlainview Wordpress SDK%s',
 			'<a href="https://github.com/the-plainview/sdk">',
-			'</a>',
-			$this->sdk_version,
-			$object->getFilename()
+			'</a>'
 		);
-		echo $r;
+		$row->td()->text( $text );
+		$object = new \ReflectionObject( new \plainview\sdk\wordpress\base );
+		$text = sprintf( 'Version %s',
+			$this->sdk_version
+		);
+		$row->td()->text( $text );
+
+		// SDK path
+		$row = $table->body()->row();
+		$row->td()->text( 'Plainview Wordpress SDK path' );
+		$object = new \ReflectionObject( new \plainview\sdk\wordpress\base );
+		$row->td()->text( $object->getFilename() );
+
+		// PHP maximum execution time
+		$row = $table->body()->row();
+		$row->td()->text( 'PHP maximum execution time' );
+		$text = sprintf( '%s seconds', ini_get ( 'max_execution_time' ) );
+		$row->td()->text( $text );
+
+		echo $table;
 	}
 
 	public function user_menu_tabs()
@@ -2268,6 +2298,7 @@ class ThreeWP_Broadcast
 		$attachment = [
 			'guid' => $upload_dir[ 'url' ] . '/' . $o->attachment_data->filename_base,
 			'menu_order' => $o->attachment_data->post->menu_order,
+			'post_author' => $o->attachment_data->post->post_author,
 			'post_excerpt' => $o->attachment_data->post->post_excerpt,
 			'post_mime_type' => $wp_filetype[ 'type' ],
 			'post_title' => $o->attachment_data->post->post_title,
@@ -2580,12 +2611,12 @@ class ThreeWP_Broadcast
 
 		// Is there an existing media file?
 		// Try to find the filename in the GUID.
-		foreach( $attachment_posts as $post )
+		foreach( $attachment_posts as $attachment_post )
 		{
-			if ( $post->post_name !== $attachment_data->post->post_name )
+			if ( $attachment_post->post_name !== $attachment_data->post->post_name )
 				continue;
 			// The ID is the important part.
-			$options->attachment_id = $post->ID;
+			$options->attachment_id = $attachment_post->ID;
 			return $options;
 		}
 

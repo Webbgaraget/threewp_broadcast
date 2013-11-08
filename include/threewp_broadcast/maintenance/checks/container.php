@@ -6,6 +6,12 @@ class container
 extends \plainview\sdk\collections\collection
 {
 	/**
+		@brief		Link back to the controller.
+		@since		20131108
+	**/
+	public $controller;
+
+	/**
 		@brief		The maintenance data object.
 		@since		20131104
 	**/
@@ -18,6 +24,7 @@ extends \plainview\sdk\collections\collection
 	**/
 	public function add_check( $check )
 	{
+		$check->controller = $this->controller;
 		$check->maintenance_data = $this->maintenance_data;
 		$this->set( $check->get_id(), $check );
 		return $this;

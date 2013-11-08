@@ -17,12 +17,30 @@ class controller
 
 	public function __toString()
 	{
-		$this->data = data::load();
+		$this->data = data::load( $this );
 		$r = '';
 
 		if ( isset( $_GET[ 'check' ] ) )
 		{
 			$id = $_GET[ 'check' ];
+			if ( ! $this->data->checks->has( $id ) )
+				wp_die( 'Invalid check ID!' );
+
+			$check = $this->data->checks->get( $id );
+
+			if ( isset( $_GET[ 'action' ] ) )
+			{
+				$action = $_GET[ 'action' ];
+				$actions = $check->get_actions();
+				if ( ! isset( $actions[ $action ] ) )
+					wp_die( 'Invalid check action!' );
+
+				return call_user_func( [ $check, $action ] );
+			}
+		}
+		if ( isset( $_GET[ 'do_check' ] ) )
+		{
+			$id = $_GET[ 'do_check' ];
 			if ( $this->data->checks->has( $id ) )
 			{
 				$check = $this->data->checks->get( $id );
@@ -56,17 +74,25 @@ class controller
 		$row = $table->head()->row();
 		$row->th()->text( 'Check' );
 		$row->th()->text( 'Description' );
+		$row->th()->text( 'Actions' );
 
 		foreach( $this->data->checks as $check )
 		{
 			$check->next_step( 'start' );
 			$row = $table->body()->row();
 			$name = sprintf( '<a href="%s">%s</a>',
-				add_query_arg( [ 'check' => $check->get_id() ] ),
+				add_query_arg( [ 'do_check' => $check->get_id() ] ),
 				$check->get_name()
 			);
 			$row->td()->text( $name );
 			$row->td()->text( $check->get_description() );
+
+			$actions = $check->get_actions();
+			$text = [];
+			foreach( $actions as $action )
+				$text []= $action;
+			$text = $this->broadcast->implode_html( $text );
+			$row->td()->text( '<ul>' . $text . '</ul>' );
 		}
 
 		$this->data->save();
@@ -80,5 +106,17 @@ class controller
 		$r .= $form->close_tag();
 
 		return $r;
+	}
+
+	/**
+		@brief		Return a URL for a check's action.
+		@since		20131108
+	**/
+	public function get_action_url( $check, $action_name )
+	{
+		return add_query_arg( [
+			'check' => $check->get_id(),
+			'action' => $action_name,
+		] );
 	}
 }

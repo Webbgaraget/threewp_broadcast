@@ -170,8 +170,9 @@ Translated categories and tags are untested as of 2013-07-17.
 
 == Changelog ==
 
-= 2.8 201311xx =
-* New: Database maintenace admin tab. Experimental. Make a backup first.
+= 2.8 20131109 =
+* New: Attachments are attributed to the original author, instead of the person doing the broadcasting.
+* New: Database maintenace admin tab. Experimental. Make a backup first. Has help text.
 * Code: Broadcast data table has unique row numbers.
 
 = 2.7 20131101 =
