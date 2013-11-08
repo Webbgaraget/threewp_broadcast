@@ -4,8 +4,8 @@ Donate link: http://plainview.se/donate/
 License: GPLv3
 Requires at least: 3.3.1
 Stable tag: trunk
-Tags: broadcast, multipost, duplicate, posts, sitepress, threewp, linking, posts, multiple, blogs
-Tested up to: 3.6.1
+Tags: broadcast, multipost, duplicate, posts, sitepress, threewp, linking, posts, multiple, blogs, woocommerce, wpml
+Tested up to: 3.7.1
 
 Network plugin for PHP v5.4+ to broadcast posts to other blogs in the network. Custom post types, taxonomies, attachments and WPML are supported.
 
@@ -20,6 +20,7 @@ Network plugin for PHP v5.4 to broadcast posts to other blogs in the network. Br
 * Attached images
 * Featured images
 * Galleries
+* Woocommerce support (add "product" as a custom post type to broadcast)
 * WPML support
 
 Broadcasted posts can be linked to their parents, which updates child posts when the parent post is updated. This includes all data: title, slug, content, custom fields, attachments, etc.
@@ -168,6 +169,10 @@ It works transparently in the background, but in case you've never really used W
 Translated categories and tags are untested as of 2013-07-17.
 
 == Changelog ==
+
+= 2.8 201311xx =
+* New: Database maintenace admin tab. Experimental. Make a backup first.
+* Code: Broadcast data table has unique row numbers.
 
 = 2.7 20131101 =
 * New: All-links in post overview.
