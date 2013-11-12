@@ -97,6 +97,7 @@ Broadcast offers some actions/filters for plugin developers with which to intera
 17. Premium Pack: Showing a modification, info and to whom the modification applies (Blog & User Settings plugin)
 18. Premium Pack: Adding one row of criteria for a modification (Blog & User Settings plugin)
 19. Premium Pack: Advanced Custom Fields image support
+20. Premium Pack: Make the child posts have a different status from the parent (Keep Child Status plugin)
 
 == Frequently Asked Questions ==
 
