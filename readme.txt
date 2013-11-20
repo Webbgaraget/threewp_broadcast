@@ -50,6 +50,7 @@ For a complete list of features and more information, see <a href="http://plainv
 * <strong>Send To Many</strong> broadcasts many posts to several blogs at once, instead of individually editing and broadcasting each post.
 * <strong>User & Blog Settings</strong> can hide the broadcast meta box and/or menu, modify the meta box to force/prevent broadcast to blogs, with separate settings for users / blogs / roles.
 * <strong>Views</strong> adds support for WP Types and Views content templates.
+* <strong>WooCommerce</strong> allows product variations to be broadcasted.
 
 = Misc =
 
@@ -98,6 +99,7 @@ Broadcast offers some actions/filters for plugin developers with which to intera
 18. Premium Pack: Adding one row of criteria for a modification (Blog & User Settings plugin)
 19. Premium Pack: Advanced Custom Fields image support
 20. Premium Pack: Make the child posts have a different status from the parent (Keep Child Status plugin)
+21. Premium Pack: The WooCommerce plugin enables broadcasting of product variations as well
 
 == Frequently Asked Questions ==
 
@@ -165,7 +167,7 @@ Broadcast is capable of handling WooCommerce products.
 
 This will broadcast all normal product settings: SKU, price, etc.
 
-If you want to broadcast the product variations, then you'll be wanting the WooCommerce plugin from the premium pack.
+If your products have variations, you'll be wanting the WooCommerce plugin from the premium pack.
 
 = WPML Sitepress =
 
@@ -184,7 +186,7 @@ Translated categories and tags are untested as of 2013-07-17.
 
 == Changelog ==
 
-= 2.10 201311xx =
+= 2.10 20131121 =
 * New: WooCommerce plugin is now available in the premium pack.
 * New: Duplicate broadcasting data check in maintenance.
 * Fix: Loading of CSS and JS from non-standard path.
