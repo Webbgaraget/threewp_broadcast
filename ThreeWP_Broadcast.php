@@ -1423,15 +1423,6 @@ class ThreeWP_Broadcast
 
 		$meta_box_data->html->put( 'blogs', '' );
 
-		// Advertize the premium plugins.
-		$queue_url = add_query_arg( 'page', 'threewp_broadcast_premium_pack_info', 'admin.php' );
-		$meta_box_data->html->put( 'broadcast_queue', $this->_( '%sQueue%s not available.',
-			sprintf( '<a href="%s" title="%s">',
-				$queue_url,
-				$this->_( 'Information about the Broadcast Queue Plugin' )
-			),
-			'</a>'
-		) );
 		$js = sprintf( '<script type="">var broadcast_blogs_to_hide = %s;</script>', $this->get_site_option( 'blogs_to_hide', 5 ) );
 		$meta_box_data->html->put( 'blogs_js', $js );
 
