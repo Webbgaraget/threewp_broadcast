@@ -20,7 +20,7 @@ Network plugin for PHP v5.4 to broadcast posts to other blogs in the network. Br
 * Attached images
 * Featured images
 * Galleries
-* Woocommerce support (add "product" as a custom post type to broadcast)
+* Woocommerce support (see FAQ)
 * WPML support
 
 Broadcasted posts can be linked to their parents, which updates child posts when the parent post is updated. This includes all data: title, slug, content, custom fields, attachments, etc.
@@ -155,6 +155,18 @@ Make sure that:
 4. The correct post type(s) have been selected
 5. <em>User & Blog Settings</em> is not set to hide the meta box from the user / role / blog
 
+= WooCommerce =
+
+Broadcast is capable of handling WooCommerce products.
+
+1. In the custom post type settings: Add "product"
+2. In the settings: select broadcast internal custom fields.
+3. When broadcasting, select custom fields and taxonomies.
+
+This will broadcast all normal product settings: SKU, price, etc.
+
+If you want to broadcast the product variations, then you'll be wanting the WooCommerce plugin from the premium pack.
+
 = WPML Sitepress =
 
 There is an included plugin, ThreeWP Broadcast WPML, that provides support for transferring WPML translation data between broadcasted posts.
@@ -171,6 +183,14 @@ It works transparently in the background, but in case you've never really used W
 Translated categories and tags are untested as of 2013-07-17.
 
 == Changelog ==
+
+= 2.10 201311xx =
+* New: WooCommerce plugin is now available in the premium pack.
+* New: Duplicate broadcasting data check in maintenance.
+* Fix: Loading of CSS and JS from non-standard path.
+* Fix: Check that the thumbnail is an image before setting it.
+* Code: No more global broadcasting_data property.
+* Code: broadcasting_data can be used as call stack.
 
 = 2.9 20131113 =
 * New: Add "blogs to hide" setting.
