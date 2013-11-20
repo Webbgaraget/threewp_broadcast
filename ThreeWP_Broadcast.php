@@ -21,7 +21,15 @@ use \threewp_broadcast\broadcast_data\blog;
 class ThreeWP_Broadcast
 	extends \threewp_broadcast\ThreeWP_Broadcast_Base
 {
-	private $broadcasting = false;
+	/**
+		@brief		Broadcasting stack.
+		@details
+
+		An array of broadcasting_data objects, the latest being at the end.
+
+		@since		20131120
+	**/
+	private $broadcasting = [];
 
 	/**
 		@brief	Public property used during the broadcast process.
@@ -1863,8 +1871,7 @@ class ThreeWP_Broadcast
 	**/
 	public function broadcast_post( $broadcasting_data )
 	{
-		$this->broadcasting_data = $broadcasting_data;					// Global copy.
-		$bcd = $this->broadcasting_data;								// Convenience.
+		$bcd = $broadcasting_data;
 
 		if ( $bcd->link )
 		{
@@ -1905,6 +1912,10 @@ class ThreeWP_Broadcast
 			$bcd->post_custom_fields = get_post_custom( $bcd->post->ID );
 
 			$bcd->has_thumbnail = isset( $bcd->post_custom_fields[ '_thumbnail_id' ] );
+
+			// Check that the thumbnail ID is > 0
+			$bcd->has_thumbnail = $bcd->has_thumbnail && ( reset( $bcd->post_custom_fields[ '_thumbnail_id' ] ) > 0 );
+
 			if ( $bcd->has_thumbnail )
 			{
 				$bcd->thumbnail_id = $bcd->post_custom_fields[ '_thumbnail_id' ][0];
@@ -1954,7 +1965,10 @@ class ThreeWP_Broadcast
 		$to_broadcasted_blog_details = []; 		// Array of blog and post IDs that we're broadcasting to. To be used for the activity monitor action.
 
 		// To prevent recursion
-		$this->broadcasting = true;
+		array_push( $this->broadcasting, $bcd );
+
+		// POST is no longer needed. Remove it so that other plugins don't use it.
+		unset( $_POST );
 
 		$action = new actions\broadcasting_started;
 		$action->broadcasting_data = $bcd;
@@ -2257,8 +2271,7 @@ class ThreeWP_Broadcast
 		$action->apply();
 
 		// Finished broadcasting.
-		$this->broadcasting = false;
-		$this->broadcasting_data = null;
+		array_pop( $this->broadcasting );
 
 		$this->load_language();
 
@@ -2499,7 +2512,7 @@ class ThreeWP_Broadcast
 	*/
 	public function is_broadcasting()
 	{
-		return $this->broadcasting !== false;
+		return count( $this->broadcasting ) > 0;
 	}
 
 	/**
