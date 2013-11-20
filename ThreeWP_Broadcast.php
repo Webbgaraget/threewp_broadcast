@@ -759,7 +759,7 @@ class ThreeWP_Broadcast
 				case 'user_delete_all':
 					$tabs->tab( 'user_delete_all' )
 						->heading_( 'Delete all child posts' )
-						->name_( 'Dell all children' );
+						->name_( 'Delete all children' );
 					break;
 				case 'user_find_orphans':
 					$tabs->tab( 'user_find_orphans' )
