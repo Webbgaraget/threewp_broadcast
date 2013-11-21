@@ -187,8 +187,8 @@ Translated categories and tags are untested as of 2013-07-17.
 == Changelog ==
 
 = 2.10 20131121 =
-* New: WooCommerce plugin is now available in the premium pack.
 * New: Duplicate broadcasting data check in maintenance.
+* New: WooCommerce plugin is now available in the premium pack.
 * Fix: Loading of CSS and JS from non-standard path.
 * Fix: Check that the thumbnail is an image before setting it.
 * Code: No more global broadcasting_data property.
