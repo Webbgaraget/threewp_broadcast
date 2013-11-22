@@ -186,6 +186,9 @@ Translated categories and tags are untested as of 2013-07-17.
 
 == Changelog ==
 
+= 2.11 201311xx =
+* Fix: Nested broadcasting changes blogs to parent blog.
+
 = 2.10 20131121 =
 * New: Duplicate broadcast data check in maintenance.
 * New: WooCommerce plugin is now available in the premium pack.
