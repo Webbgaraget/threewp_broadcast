@@ -188,6 +188,7 @@ Translated categories and tags are untested as of 2013-07-17.
 
 = 2.11 201311xx =
 * Fix: Nested broadcasting changes blogs to parent blog.
+* Fix: Scripts and CSS get version numbers.
 
 = 2.10 20131121 =
 * New: Duplicate broadcast data check in maintenance.

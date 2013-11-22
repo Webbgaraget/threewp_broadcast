@@ -171,7 +171,7 @@ class ThreeWP_Broadcast
 			return;
 
 		$this->enqueue_js();
-		wp_enqueue_style( 'threewp_broadcast', $this->paths[ 'url' ] . '/css/css.scss.min.css'  );
+		wp_enqueue_style( 'threewp_broadcast', $this->paths[ 'url' ] . '/css/css.scss.min.css', '', $this->plugin_version  );
 	}
 
 	// --------------------------------------------------------------------------------------------
@@ -1263,9 +1263,9 @@ class ThreeWP_Broadcast
 		$action->apply();
 
 		foreach( $meta_box_data->css as $key => $value )
-			wp_enqueue_style( $key, $value );
+			wp_enqueue_style( $key, $value, '', $this->plugin_version );
 		foreach( $meta_box_data->js as $key => $value )
-			wp_enqueue_script( $key, $value );
+			wp_enqueue_script( $key, $value, '', $this->plugin_version );
 
 		echo $meta_box_data->html->render();
 	}
@@ -2380,7 +2380,7 @@ class ThreeWP_Broadcast
 	{
 		if ( isset( $this->_js_enqueued ) )
 			return;
-		wp_enqueue_script( 'threewp_broadcast', $this->paths[ 'url' ] . '/js/user.min.js' );
+		wp_enqueue_script( 'threewp_broadcast', $this->paths[ 'url' ] . '/js/user.min.js', '', $this->plugin_version );
 		$this->_js_enqueued = true;
 	}
 
