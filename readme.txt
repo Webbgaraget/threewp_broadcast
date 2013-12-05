@@ -187,6 +187,7 @@ Translated categories and tags are untested as of 2013-07-17.
 == Changelog ==
 
 = 2.11 201311xx =
+* New: Custom post types tab shows the available post types on the current blog.
 * Fix: Nested broadcasting changes blogs to parent blog.
 * Fix: Scripts and CSS get version numbers.
 

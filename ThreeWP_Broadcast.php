@@ -373,6 +373,7 @@ And I wrote the following message:
 	public function admin_menu_post_types()
 	{
 		$form = $this->form2();
+		$r = '';
 
 		$post_types = $this->get_site_option( 'post_types' );
 		$post_types = str_replace( ' ', "\n", $post_types );
@@ -396,16 +397,16 @@ And I wrote the following message:
 			$this->message( 'Custom post types saved!' );
 		}
 
-		echo '
+		$r .= $this->p_( 'Custom post types must be specified using their internal Wordpress names with a space between each. It is not possible to automatically make a list of available post types on the whole network because of a limitation within Wordpress (the current blog knows only of its own custom post types).' );
 
-		<p>' . $this->_( 'Custom post types must be specified using their internal Wordpress names with a space between each. It is not possible to automatically make a list of available post types on the whole network because of a limitation within Wordpress (the current blog knows only of its own custom post types).' ) . '</p>
+		$blog_post_types = get_post_types();
+		$blog_post_types = array_keys( $blog_post_types );
+		$r .= $this->p_( 'The custom post types registered on <em>this</em> blog are: <code>%s</code>', implode( ', ', $blog_post_types ) );
 
-		'.$form->open_tag().'
-
-		' . $form->display_form_table() .'
-
-		'.$form->close_tag().'
-		';
+		$r .= $form->open_tag();
+		$r .= $form->display_form_table();
+		$r .= $form->close_tag();
+		echo $r;
 	}
 
 	public function admin_menu_premium_pack_info()
@@ -1494,7 +1495,8 @@ And I wrote the following message:
 		foreach( $blogs as $blog )
 		{
 			$blogs_input->option( $blog->blogname, $blog->id );
-			$option = $blogs_input->input( 'blogs_' . $blog->id );
+			$input_name = 'blogs_' . $blog->id;
+			$option = $blogs_input->input( $input_name );
 			$option->get_label()->content = $form::unfilter_text( $blog->blogname );
 			if ( $blog->is_disabled() )
 				$option->disabled()->css_class( 'disabled' );
