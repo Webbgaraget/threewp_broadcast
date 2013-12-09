@@ -1479,6 +1479,7 @@ And I wrote the following message:
 		$blogs = $filter->apply()->blogs;
 
 		$blogs_input = $form->checkboxes( 'blogs' )
+			->css_class( 'blogs checkboxes' )
 			->label( 'Broadcast to' )
 			->prefix( 'blogs' );
 
@@ -1498,6 +1499,7 @@ And I wrote the following message:
 			$input_name = 'blogs_' . $blog->id;
 			$option = $blogs_input->input( $input_name );
 			$option->get_label()->content = $form::unfilter_text( $blog->blogname );
+			$option->css_class( 'blog ' . $blog->id );
 			if ( $blog->is_disabled() )
 				$option->disabled()->css_class( 'disabled' );
 			if ( $blog->is_linked() )
@@ -2474,7 +2476,7 @@ And I wrote the following message:
 		$this->_js_enqueued = true;
 	}
 
-	private function get_current_blog_taxonomy_terms( $taxonomy )
+	public function get_current_blog_taxonomy_terms( $taxonomy )
 	{
 		$terms = get_terms( $taxonomy, array(
 			'hide_empty' => false,
