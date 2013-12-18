@@ -191,6 +191,7 @@ Translated categories and tags are untested as of 2013-07-17.
 == Changelog ==
 
 = 2.11 20131218 =
+* New: WordPress v3.8 support.
 * New: Custom post types tab shows the available post types on the current blog.
 * New: Per Blog Taxonomies plugin is now available in the premium pack.
 * New: Permalinks plugin is now available in the premium pack.
