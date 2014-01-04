@@ -127,7 +127,7 @@ class ThreeWP_Broadcast
 		$this->add_filter( 'threewp_broadcast_add_meta_box' );
 		$this->add_filter( 'threewp_broadcast_admin_menu', 100 );
 		$this->add_filter( 'threewp_broadcast_broadcast_post' );
-		$this->add_filter( 'threewp_broadcast_get_user_writable_blogs' );
+		$this->add_filter( 'threewp_broadcast_get_user_writable_blogs', 11 );		// Allow other plugins to do this first.
 		$this->add_action( 'threewp_broadcast_manage_posts_custom_column', 9 );		// Just before the standard 10.
 		$this->add_action( 'threewp_broadcast_menu', 9 );
 		$this->add_action( 'threewp_broadcast_menu', 'threewp_broadcast_menu_final', 100 );
@@ -1570,6 +1570,7 @@ And I wrote the following message:
 
 		$filter->blogs->sort_logically();
 		$filter->applied();
+		return $filter;
 	}
 
 	/**
@@ -2053,8 +2054,8 @@ And I wrote the following message:
 		// To prevent recursion
 		array_push( $this->broadcasting, $bcd );
 
-		// POST is no longer needed. Remove it so that other plugins don't use it.
-		unset( $_POST );
+		// POST is no longer needed. Empty it so that other plugins don't use it.
+		$_POST = [];
 
 		$action = new actions\broadcasting_started;
 		$action->broadcasting_data = $bcd;
