@@ -191,10 +191,11 @@ Translated categories and tags are untested as of 2013-07-17.
 
 == Changelog ==
 
-= 2.12 201312xx =
+= 2.12 20140112 =
 * New: Maintenance: View Blog Access check added.
 * Code: get_user_writable_blogs filter moved to priority 11.
 * Code: $_POST is now emptied, not removed.
+* WPML plugin will be obsoleted soon. A more functional premium plugin will be available.
 
 = 2.11 20131218 =
 * New: WordPress v3.8 support.

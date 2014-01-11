@@ -3,10 +3,10 @@
 Author:			edward_plainview
 Author Email:	edward@plainview.se
 Author URI:		http://www.plainview.se
-Description:	Add WPML support to ThreeWP Broadcast.
+Description:	Add simple WPML support to ThreeWP Broadcast.
 Plugin Name:	ThreeWP Broadcast WPML support
 Plugin URI:		http://plainview.se/wordpress/threewp-broadcast/
-Version:		2.11
+Version:		2.12
 */
 
 namespace threewp_broadcast;
