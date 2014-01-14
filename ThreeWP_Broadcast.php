@@ -84,7 +84,7 @@ class ThreeWP_Broadcast
 	**/
 	public $permalink_cache;
 
-	public $plugin_version = 2.11;
+	public $plugin_version = 2.12;
 
 	protected $sdk_version_required = 20130505;		// add_action / add_filter
 
@@ -1296,8 +1296,11 @@ And I wrote the following message:
 		$action->apply();
 
 		// Post the form.
-		$meta_box_data->form->post();
-		$meta_box_data->form->use_post_values();
+		if ( ! $meta_box_data->form->has_posted )
+		{
+			$meta_box_data->form->post();
+			$meta_box_data->form->use_post_values();
+		}
 
 		$broadcasting_data = new broadcasting_data( [
 			'_POST' => $_POST,
@@ -1741,7 +1744,8 @@ And I wrote the following message:
 			return;
 
 		$form = $bcd->meta_box_data->form;
-		$form->post();
+		if ( $form->is_posting() && ! $form->has_posted )
+				$form->post();
 
 		// Collect the list of blogs from the meta box.
 		$blogs_input = $form->input( 'blogs' );
