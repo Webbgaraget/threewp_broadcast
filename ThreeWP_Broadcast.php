@@ -476,7 +476,7 @@ And I wrote the following message:
 
 		$canonical_url = $fs->checkbox( 'canonical_url' )
 			->checked( $this->get_site_option( 'canonical_url' ) )
-			->description_( 'Child posts have their canonical URLs pointed to the URL of the parent post.' )
+			->description_( "Child posts have their canonical URLs pointed to the URL of the parent post. This automatically disables the canonical URL from Yoast's Wordpress SEO plugin." )
 			->label_( 'Canonical URL' );
 
 		$fs = $form->fieldset( 'custom_field_handling' )
