@@ -198,9 +198,12 @@ This plugin will soon be replaced by a WPML premium plugin that enables broadcas
 
 == Changelog ==
 
-= 2.13 2014xxxx =
+= 2.14 20140117 =
 * New: Canonical URL detects and disables the canonical link from Yoast's Wordpress SEO plugin.
 * Fix: Better compatability with User Blog Settings and Keep Child Settings plugins.
+
+= 2.13 =
+Skipping version 13.
 
 = 2.12 20140112 =
 * New: Maintenance: View Blog Access check added.
