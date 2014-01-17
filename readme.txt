@@ -202,6 +202,7 @@ This plugin will soon be replaced by a WPML premium plugin that enables broadcas
 * New: Canonical URL detects and disables the canonical link from Yoast's Wordpress SEO plugin.
 * Fix: Better compatability with User Blog Settings and Keep Child Settings plugins.
 * Fix: Better support for Microsoft IIS.
+* Removed obsolescence message - all of the features are needed by at least one person.
 
 = 2.13 =
 Skipping version 13.
