@@ -827,6 +827,18 @@ And I wrote the following message:
 		$text = sprintf( '%s seconds', ini_get ( 'max_execution_time' ) );
 		$row->td()->text( $text );
 
+		// PHP maximum memory limit
+		$row = $table->body()->row();
+		$row->td()->text( 'PHP memory limit' );
+		$text = ini_get( 'memory_limit' );
+		$row->td()->text( $text );
+
+		// WP maximum memory limit
+		$row = $table->body()->row();
+		$row->td()->text( 'Wordpress memory limit' );
+		$text = WP_MEMORY_LIMIT;
+		$row->td()->text( $text );
+
 		echo $table;
 	}
 
@@ -1923,6 +1935,20 @@ And I wrote the following message:
 
 		// Prevent Wordpress from outputting its own canonical.
 		remove_action( 'wp_head', 'rel_canonical' );
+
+		// Remove Canonical Link Added By Yoast WordPress SEO Plugin
+		$this->add_filter( 'wpseo_canonical', 'wp_head_remove_wordpress_seo_canonical' );;
+	}
+
+	/**
+		@brief		Remove Wordpress SEO canonical link so that it doesn't conflict with the parent link.
+		@since		2014-01-16 00:36:15
+	**/
+
+	public function wp_head_remove_wordpress_seo_canonical()
+	{
+		// Tip seen here: http://wordpress.org/support/topic/plugin-wordpress-seo-by-yoast-remove-canonical-tags-in-header?replies=10
+		return false;
 	}
 
 	// --------------------------------------------------------------------------------------------
