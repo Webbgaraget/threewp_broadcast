@@ -2010,7 +2010,7 @@ class ThreeWP_Broadcast
 
 			// Create new post data from the original stuff.
 			$bcd->new_post = (array) $bcd->post;
-			foreach( array( 'comment_count', 'guid', 'ID', 'menu_order', 'post_parent' ) as $key )
+			foreach( [ 'comment_count', 'guid', 'ID', 'post_parent' ] as $key )
 				unset( $bcd->new_post[ $key ] );
 
 			$action = new actions\broadcasting_after_switch_to_blog;
