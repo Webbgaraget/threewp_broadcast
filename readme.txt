@@ -198,7 +198,7 @@ This plugin will soon be replaced by a WPML premium plugin that enables broadcas
 
 == Changelog ==
 
-= 2.15 2014xxxx =
+= 2.15 20140123 =
 * Fix: Menu order is now also broadcasted.
 
 = 2.14 20140117 =
