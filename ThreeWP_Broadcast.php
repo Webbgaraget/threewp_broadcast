@@ -1514,7 +1514,9 @@ This can be increased by adding the following to your wp-config.php:
 
 		if ( $this->debugging() )
 		{
-			$meta_box_data->html->put( 'debug_info_1', sprintf( '<ul>
+			$meta_box_data->html->put( 'debug_info_1', sprintf( '
+				<h3>Debug info</h3>
+				<ul>
 				<li>High enough role to link: %s</li>
 				<li>Post supports custom fields: %s</li>
 				<li>Post supports thumbnails: %s</li>
@@ -2019,11 +2021,16 @@ This can be increased by adding the following to your wp-config.php:
 	{
 		$bcd = $broadcasting_data;
 
+		$this->debug( 'Broadcasting the post %s <pre>%s</pre>', $bcd->post->ID, var_export( $bcd->post, true ) );
+
+		$this->debug( 'The POST was <pre>%s</pre>', var_export( $bcd->_POST, true ) );
+
 		// For nested broadcasts. Just in case.
 		switch_to_blog( $bcd->parent_blog_id );
 
 		if ( $bcd->link )
 		{
+			$this->debug( 'Linking is enabled.' );
 			// Prepare the broadcast data for linked children.
 			$broadcast_data = $this->get_post_broadcast_data( $bcd->parent_blog_id, $bcd->post->ID );
 
@@ -2032,10 +2039,14 @@ This can be increased by adding the following to your wp-config.php:
 			{
 				$parent_broadcast_data = $this->get_post_broadcast_data( $bcd->parent_blog_id, $bcd->post->post_parent );
 			}
+			$this->debug( 'Post type is hierarchical: %s', $this->yes_no( $bcd->post_type_is_hierarchical ) );
 		}
+		else
+			$this->debug( 'Linking is disabled.' );
 
 		if ( $bcd->taxonomies )
 		{
+			$this->debug( 'Will broadcast taxonomies.' );
 			$bcd->parent_blog_taxonomies = get_object_taxonomies( [ 'object_type' => $bcd->post->post_type ], 'array' );
 			$bcd->parent_post_taxonomies = [];
 			foreach( $bcd->parent_blog_taxonomies as $parent_blog_taxonomy => $taxonomy )
@@ -2048,16 +2059,25 @@ This can be increased by adding the following to your wp-config.php:
 				$bcd->parent_post_taxonomies[ $parent_blog_taxonomy ] = get_the_terms( $bcd->post->ID, $parent_blog_taxonomy );
 			}
 		}
+		else
+			$this->debug( 'Will not broadcast taxonomies.' );
 
 		$bcd->attachment_data = [];
 		$attached_files = get_children( 'post_parent='.$bcd->post->ID.'&post_type=attachment' );
 		$has_attached_files = count( $attached_files) > 0;
 		if ( $has_attached_files )
+		{
+			$this->debug( 'Has %s attachments.', $has_attached_files );
 			foreach( $attached_files as $attached_file )
+			{
 				$bcd->attachment_data[ $attached_file->ID ] = attachment_data::from_attachment_id( $attached_file, $bcd->upload_dir );
+				$this->debug( 'Attachment %s found.', $attached_file->ID );
+			}
+		}
 
 		if ( $bcd->custom_fields )
 		{
+			$this->debug( 'Will broadcast custom fields.' );
 			$bcd->post_custom_fields = get_post_custom( $bcd->post->ID );
 
 			$bcd->has_thumbnail = isset( $bcd->post_custom_fields[ '_thumbnail_id' ] );
@@ -2067,6 +2087,7 @@ This can be increased by adding the following to your wp-config.php:
 
 			if ( $bcd->has_thumbnail )
 			{
+				$this->debug( 'Post has a thumbnail (featured image).' );
 				$bcd->thumbnail_id = $bcd->post_custom_fields[ '_thumbnail_id' ][0];
 				$bcd->thumbnail = get_post( $bcd->thumbnail_id );
 				unset( $bcd->post_custom_fields[ '_thumbnail_id' ] ); // There is a new thumbnail id for each blog.
@@ -2074,10 +2095,14 @@ This can be increased by adding the following to your wp-config.php:
 				// Now that we know what the attachment id the thumbnail has, we must remove it from the attached files to avoid duplicates.
 				unset( $bcd->attachment_data[ $bcd->thumbnail_id ] );
 			}
+			else
+				$this->debug( 'Post does not have a thumbnail (featured image).' );
 
 			// Remove all the _internal custom fields.
 			$bcd->post_custom_fields = $this->keep_valid_custom_fields( $bcd->post_custom_fields );
 		}
+		else
+			$this->debug( 'Will not broadcast custom fields.' );
 
 		// Handle any galleries.
 		$bcd->galleries = new collection;
@@ -2092,6 +2117,7 @@ This can be increased by adding the following to your wp-config.php:
 			if ( $key !== 'gallery' )
 				continue;
 
+			$this->debug( 'Found a gallery: ', $matches[ 0 ][ $index ] );
 			// We've found a gallery!
 			$bcd->has_galleries = true;
 			$gallery = new \stdClass;
@@ -2105,6 +2131,7 @@ This can be increased by adding the following to your wp-config.php:
 			$gallery->ids_array = explode( ',', $gallery->ids_string );
 			foreach( $gallery->ids_array as $id )
 			{
+				$this->debug( 'Gallery has attachment %s.', $id );
 				$ad = attachment_data::from_attachment_id( $id, $bcd->upload_dir );
 				$bcd->attachment_data[ $id ] = $ad;
 			}
@@ -2123,10 +2150,13 @@ This can be increased by adding the following to your wp-config.php:
 		$action->broadcasting_data = $bcd;
 		$action->apply();
 
+		$this->debug( 'Beginning child broadcast loop.' );
+
 		foreach( $bcd->blogs as $child_blog )
 		{
 			$child_blog->switch_to();
 			$bcd->current_child_blog_id = $child_blog->get_id();
+			$this->debug( 'Switched to blog %s', $bcd->current_child_blog_id );
 
 			// Create new post data from the original stuff.
 			$bcd->new_post = (array) $bcd->post;
@@ -2151,6 +2181,7 @@ This can be increased by adding the following to your wp-config.php:
 				if ( $broadcast_data->has_linked_child_on_this_blog() )
 				{
 					$child_post_id = $broadcast_data->get_linked_child_on_this_blog();
+					$this->debug( 'There is already a child post on this blog: %s', $child_post_id );
 
 					// Does this child post still exist?
 					$child_post = get_post( $child_post_id );
@@ -2165,17 +2196,26 @@ This can be increased by adding the following to your wp-config.php:
 
 			if ( $need_to_insert_post )
 			{
+				$this->debug( 'Creating a new post.' );
 				$temp_post_data = $bcd->new_post;
 				unset( $temp_post_data[ 'ID' ] );
 				$result = wp_insert_post( $temp_post_data, true );
 				// Did we manage to insert the post properly?
 				if ( intval( $result ) < 1 )
+				{
+					$this->debug( 'Unable to insert the child post.' );
 					continue;
+				}
 				// Yes we did.
 				$bcd->new_post[ 'ID' ] = $result;
 
+				$this->debug( 'New child created: %s', $result );
+
 				if ( $bcd->link )
+				{
+					$this->debug( 'Adding link to child.' );
 					$broadcast_data->add_linked_child( $bcd->current_child_blog_id, $bcd->new_post[ 'ID' ] );
+				}
 			}
 
 			if ( $bcd->taxonomies )
@@ -2253,6 +2293,7 @@ This can be increased by adding the following to your wp-config.php:
 						}
 					}
 
+					$this->debug( 'Syncing terms.' );
 					$this->sync_terms( $bcd, $parent_post_taxonomy );
 
 					if ( count( $taxonomies_to_add_to) > 0 )
@@ -2268,7 +2309,10 @@ This can be increased by adding the following to your wp-config.php:
 			// Remove the current attachments.
 			$attachments_to_remove = get_children( 'post_parent='.$bcd->new_post[ 'ID' ] . '&post_type=attachment' );
 			foreach ( $attachments_to_remove as $attachment_to_remove )
+			{
+				$this->debug( 'Deleting existing attachment: %s', $attachment_to_remove->ID );
 				wp_delete_attachment( $attachment_to_remove->ID );
+			}
 
 			// Copy the attachments
 			$bcd->copied_attachments = [];
@@ -2285,6 +2329,7 @@ This can be increased by adding the following to your wp-config.php:
 					$a->old = $attachment;
 					$a->new = get_post( $o->attachment_id );
 					$bcd->copied_attachments[] = $a;
+					$this->debug( 'Copied attachment %s to %s', $a->old->id, $o->new->id );
 				}
 			}
 
@@ -2303,6 +2348,7 @@ This can be increased by adding the following to your wp-config.php:
 					$modified_post->post_content = str_replace( $a->old->guid, $a->new->guid, $modified_post->post_content );
 					// And replace the IDs present in any image captions.
 					$modified_post->post_content = str_replace( 'id="attachment_' . $a->old->id . '"', 'id="attachment_' . $a->new->ID . '"', $modified_post->post_content );
+					$this->debug( 'Modifying attachment link from %s to %s', $a->old->id, $a->new->id );
 				}
 			}
 
@@ -2388,7 +2434,10 @@ This can be increased by adding the following to your wp-config.php:
 
 					$this->maybe_copy_attachment( $o );
 					if ( $o->attachment_id !== false )
+					{
+						$this->debug( 'Handling post thumbnail: %s %s', $bcd->new_post[ 'ID' ], '_thumbnail_id', $o->attachment_id );
 						update_post_meta( $bcd->new_post[ 'ID' ], '_thumbnail_id', $o->attachment_id );
+					}
 				}
 			}
 
@@ -2401,6 +2450,7 @@ This can be increased by adding the following to your wp-config.php:
 
 			if ( $bcd->link )
 			{
+				$this->debug( 'Saving broadcast data of child.' );
 				$new_post_broadcast_data = $this->get_post_broadcast_data( $bcd->current_child_blog_id, $bcd->new_post[ 'ID' ] );
 				$new_post_broadcast_data->set_linked_parent( $bcd->parent_blog_id, $bcd->post->ID );
 				$this->set_post_broadcast_data( $bcd->current_child_blog_id, $bcd->new_post[ 'ID' ], $new_post_broadcast_data );
@@ -2421,11 +2471,18 @@ This can be increased by adding the following to your wp-config.php:
 
 		// Save the post broadcast data.
 		if ( $bcd->link )
+		{
+			$this->debug( 'Saving broadcast data.' );
 			$this->set_post_broadcast_data( $bcd->parent_blog_id, $bcd->post->ID, $broadcast_data );
+		}
 
 		$action = new actions\broadcasting_finished;
 		$action->broadcasting_data = $bcd;
 		$action->apply();
+
+		$this->debug( 'Finished broadcasting. Now stopping Wordpress.' );
+		if ( $this->debugging() )
+			exit;
 
 		// Finished broadcasting.
 		array_pop( $this->broadcasting );
@@ -2521,6 +2578,22 @@ This can be increased by adding the following to your wp-config.php:
 		$meta_box_data->post = $post;
 		$meta_box_data->post_id = $post->ID;
 		return $meta_box_data;
+	}
+
+	/**
+		@brief		Output a string if in debug mode.
+		@since		20140220
+	*/
+	public function debug( $string )
+	{
+		if ( ! $this->debugging() )
+			return;
+
+		$text = call_user_func_array( 'sprintf', func_get_args() );
+		if ( $text == '' )
+			$text = $string;
+		$text = sprintf( '%s %s<br/>', $this->now(), $text );
+		echo $text;
 	}
 
 	/**
@@ -2909,6 +2982,15 @@ This can be increased by adding the following to your wp-config.php:
 				delete_option( 'category_children' );
 			}
 		}
+	}
+
+	/**
+		@brief		Return yes / no, depending on value.
+		@since		20140220
+	**/
+	public function yes_no( $value )
+	{
+		return $value ? 'yes' : 'no';
 	}
 
 	// --------------------------------------------------------------------------------------------
