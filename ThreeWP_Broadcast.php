@@ -2220,8 +2220,10 @@ This can be increased by adding the following to your wp-config.php:
 
 			if ( $bcd->taxonomies )
 			{
+				$this->debug( 'Taxonomies: Starting.' );
 				foreach( $bcd->parent_post_taxonomies as $parent_post_taxonomy => $parent_post_terms )
 				{
+					$this->debug( 'Taxonomies: %s', $parent_post_taxonomy );
 					// If we're updating a linked post, remove all the taxonomies and start from the top.
 					if ( $bcd->link )
 						if ( $broadcast_data->has_linked_child_on_this_blog() )
@@ -2229,7 +2231,10 @@ This can be increased by adding the following to your wp-config.php:
 
 					// Skip this iteration if there are no terms
 					if ( ! is_array( $parent_post_terms ) )
+					{
+						$this->debug( 'Taxonomies: Skipping %s because the parent post does not have any terms set for this taxonomy.', $parent_post_taxonomy );
 						continue;
+					}
 
 					// Get a list of terms that the target blog has.
 					$target_blog_terms = $this->get_current_blog_taxonomy_terms( $parent_post_taxonomy );
@@ -2244,6 +2249,7 @@ This can be increased by adding the following to your wp-config.php:
 						{
 							if ( $target_blog_term[ 'slug' ] == $parent_slug )
 							{
+								$this->debug( 'Taxonomies: Found existing taxonomy %s.', $parent_slug );
 								$found = true;
 								$taxonomies_to_add_to[] = intval( $target_blog_term[ 'term_id' ] );
 								break;
@@ -2288,12 +2294,13 @@ This can be increased by adding the following to your wp-config.php:
 							{
 								$term_taxonomy_id = $new_taxonomy[ 'term_taxonomy_id' ];
 							}
+							$this->debug( 'Taxonomies: Created taxonomy %s (%s).', $parent_post_term->name, $term_taxonomy_id );
 
 							$taxonomies_to_add_to []= intval( $term_taxonomy_id );
 						}
 					}
 
-					$this->debug( 'Syncing terms.' );
+					$this->debug( 'Taxonomies: Syncing terms.' );
 					$this->sync_terms( $bcd, $parent_post_taxonomy );
 
 					if ( count( $taxonomies_to_add_to) > 0 )
@@ -2304,6 +2311,7 @@ This can be increased by adding the following to your wp-config.php:
 						wp_set_object_terms( $bcd->new_post[ 'ID' ], $taxonomies_to_add_to, $parent_post_taxonomy );
 					}
 				}
+				$this->debug( 'Taxonomies: Finished.' );
 			}
 
 			// Remove the current attachments.
@@ -2965,15 +2973,24 @@ This can be increased by adding the following to your wp-config.php:
 			$parent_of_target_term = $target_terms[ $target_term_id ][ 'parent' ];
 			$parent_of_equivalent_source_term = $source_terms[ $source_term_id ][ 'parent' ];
 
-			if ( $parent_of_target_term != $parent_of_equivalent_source_term &&
-				(isset( $found_sources[ $parent_of_equivalent_source_term ] ) || $parent_of_equivalent_source_term == 0 )
-			)
+			// Do the parents "match".
+			$needs_updating = ( $parent_of_target_term != $parent_of_equivalent_source_term &&
+				( isset( $found_sources[ $parent_of_equivalent_source_term ] ) || $parent_of_equivalent_source_term == 0 )
+			);
+
+			// Same name?
+			$needs_updating |= ( $source_terms[ $source_term_id ][ 'name' ] != $target_terms[ $target_term_id ][ 'name' ] );
+
+			if ( $needs_updating )
 			{
-				if ( $parent_of_equivalent_source_term != 0)
+				if ( $parent_of_equivalent_source_term != 0 )
 					$new_term_parent = $found_sources[ $parent_of_equivalent_source_term ];
 				else
 					$new_term_parent = 0;
+
+				// Update the name and the parent.
 				wp_update_term( $target_term_id, $taxonomy, array(
+					'name' => $source_terms[ $source_term_id ][ 'name' ],
 					'parent' => $new_term_parent,
 				) );
 
