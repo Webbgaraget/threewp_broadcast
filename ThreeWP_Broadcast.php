@@ -95,6 +95,7 @@ class ThreeWP_Broadcast
 		'custom_field_whitelist' => '_wp_page_template _wplp_ _aioseop_',				// Internal custom fields that should be broadcasted.
 		'custom_field_blacklist' => '',						// Internal custom fields that should not be broadcasted.
 		'database_version' => 0,							// Version of database and settings
+		'debug' => false,									// Display debug information
 		'save_post_priority' => 640,						// Priority of save_post action. Higher = lets other plugins do their stuff first
 		'override_child_permalinks' => false,				// Make the child's permalinks link back to the parent item?
 		'post_types' => 'post page',						// Custom post types which use broadcasting
@@ -128,6 +129,7 @@ class ThreeWP_Broadcast
 		$this->add_filter( 'threewp_broadcast_admin_menu', 100 );
 		$this->add_filter( 'threewp_broadcast_broadcast_post' );
 		$this->add_filter( 'threewp_broadcast_get_user_writable_blogs', 11 );		// Allow other plugins to do this first.
+		$this->add_filter( 'threewp_broadcast_get_post_types', 9 );					// Add our custom post types to the array of broadcastable post types.
 		$this->add_action( 'threewp_broadcast_manage_posts_custom_column', 9 );		// Just before the standard 10.
 		$this->add_action( 'threewp_broadcast_menu', 9 );
 		$this->add_action( 'threewp_broadcast_menu', 'threewp_broadcast_menu_final', 100 );
@@ -455,6 +457,11 @@ class ThreeWP_Broadcast
 			->required()
 			->value( $this->get_site_option( 'existing_attachments', 'use' ) );
 
+		$debug = $fs->checkbox( 'debug' )
+			->description_( 'Show debugging information in various places.' )
+			->label_( 'Enable debugging' )
+			->checked( $this->get_site_option( 'debug', false ) );
+
 		$save = $form->primary_button( 'save' )
 			->value_( 'Save settings' );
 
@@ -486,6 +493,9 @@ class ThreeWP_Broadcast
 			$this->update_site_option( 'save_post_priority', $save_post_priority->get_post_value() );
 			$this->update_site_option( 'blogs_to_hide', $blogs_to_hide->get_post_value() );
 			$this->update_site_option( 'existing_attachments', $existing_attachments->get_post_value() );
+
+			$this->update_site_option( 'debug', $debug->is_checked() );
+
 			$this->message( 'Options saved!' );
 		}
 
@@ -717,6 +727,14 @@ class ThreeWP_Broadcast
 		$row = $table->head()->row();
 		$row->th()->text( 'Key' );
 		$row->th()->text( 'Value' );
+
+		if ( $this->debugging() )
+		{
+			// Debug
+			$row = $table->body()->row();
+			$row->td()->text( 'Debugging' );
+			$row->td()->text( 'Enabled' );
+		}
 
 		// Broadcast version
 		$row = $table->body()->row();
@@ -1094,8 +1112,9 @@ This can be increased by adding the following to your wp-config.php:
 		// If it's true, then show it to all post types!
 		if ( $this->display_broadcast_meta_box === true )
 		{
-			$post_types = $this->get_site_option( 'post_types' );
-			foreach( explode( ' ', $post_types ) as $post_type )
+			$action = new actions\get_post_types;
+			$action->apply();
+			foreach( $action->post_types as $post_type )
 				add_meta_box( 'threewp_broadcast', $this->_( 'Broadcast' ), array( &$this, 'threewp_broadcast_add_meta_box' ), $post_type, 'side', 'low' );
 			return;
 		}
@@ -1108,7 +1127,11 @@ This can be increased by adding the following to your wp-config.php:
 		$filter = new filters\get_user_writable_blogs( $this->user_id() );
 		$blogs = $filter->apply()->blogs;
 		if ( count( $blogs ) <= 1 )
-			$this->display_broadcast_meta_box = false;
+		{
+			// If the user is debugging, show the box anyway.
+			if ( ! $this->debugging() )
+				$this->display_broadcast_meta_box = false;
+		}
 
 		// Convert to a bool value
 		$this->display_broadcast_meta_box = ( $this->display_broadcast_meta_box == true );
@@ -1357,10 +1380,17 @@ This can be increased by adding the following to your wp-config.php:
 	**/
 	public function threewp_broadcast_prepare_meta_box( $action )
 	{
-		if ( $action->is_applied() )
-			return;
-
 		$meta_box_data = $action->meta_box_data;	// Convenience.
+
+		if ( $this->debugging() )
+			$meta_box_data->html->put( 'debug', $this->p_( 'Broadcast is in debug mode. More information than usual will be shown.' ) );
+
+		if ( $action->is_applied() )
+		{
+			if ( $this->debugging() )
+				$meta_box_data->html->put( 'debug_applied', $this->p_( 'Broadcast is not preparing the meta box because it has already been applied.' ) );
+			return;
+		}
 
 		if ( $meta_box_data->broadcast_data->get_linked_parent() !== false)
 		{
@@ -1482,6 +1512,52 @@ This can be increased by adding the following to your wp-config.php:
 		// And some CSS
 		$meta_box_data->css->put( 'threewp_broadcast', $this->paths[ 'url' ] . '/css/css.scss.min.css'  );
 
+		if ( $this->debugging() )
+		{
+			$meta_box_data->html->put( 'debug_info_1', sprintf( '<ul>
+				<li>High enough role to link: %s</li>
+				<li>Post supports custom fields: %s</li>
+				<li>Post supports thumbnails: %s</li>
+				<li>High enough role to broadcast custom fields: %s</li>
+				<li>High enough role to broadcast taxonomies: %s</li>
+				<li>Blogs available to user: %s</li>
+				</ul>',
+					( $this->role_at_least( $this->get_site_option( 'role_link' ) ) ? 'yes' : 'no' ),
+					( $post_type_supports_custom_fields ? 'yes' : 'no' ),
+					( $post_type_supports_thumbnails ? 'yes' : 'no' ),
+					( $this->role_at_least( $this->get_site_option( 'role_custom_fields' ) ) ? 'yes' : 'no' ),
+					( $this->role_at_least( $this->get_site_option( 'role_taxonomies' ) ) ? 'yes' : 'no' ),
+					count( $blogs )
+				)
+			);
+
+			// Display a list of actions that have hooked into save_post
+			global $wp_filter;
+			$filters = $wp_filter[ 'save_post' ];
+			ksort( $filters );
+			$save_post_callbacks = [];
+			//$wp_filter[$tag][$priority][$idx] = array('function' => $function_to_add, 'accepted_args' => $accepted_args);
+			foreach( $filters as $priority => $callbacks )
+			{
+				foreach( $callbacks as $callback )
+				{
+					$function = $callback[ 'function' ];
+					if ( is_array( $function ) )
+					{
+						if ( is_object( $function[ 0 ] ) )
+							$function[ 0 ] = get_class( $function[ 0 ] );
+						$function = sprintf( '%s::%s', $function[ 0 ], $function[ 1 ] );
+					}
+					$function = sprintf( '%s %s', $function, $priority );
+					$save_post_callbacks[] = $function;
+				}
+			}
+			$meta_box_data->html->put( 'debug_save_post_callbacks', sprintf( '%s%s',
+				$this->p_( 'Plugins that have hooked into save_post:' ),
+				$this->implode_html( $save_post_callbacks )
+			) );
+		}
+
 		$action->applied();
 	}
 
@@ -1530,6 +1606,18 @@ This can be increased by adding the following to your wp-config.php:
 		$filter->blogs->sort_logically();
 		$filter->applied();
 		return $filter;
+	}
+
+	/**
+		@brief		Convert the post_type site option to an array in the action.
+		@since		2014-02-22 10:33:57
+	**/
+	public function threewp_broadcast_get_post_types( $action )
+	{
+		$post_types = $this->get_site_option( 'post_types' );
+		$post_types = explode( ' ', $post_types );
+		foreach( $post_types as $post_type )
+			$action->post_types[ $post_type ] = $post_type;
 	}
 
 	/**
@@ -2214,7 +2302,7 @@ This can be increased by adding the following to your wp-config.php:
 					// Replace the GUID with the new one.
 					$modified_post->post_content = str_replace( $a->old->guid, $a->new->guid, $modified_post->post_content );
 					// And replace the IDs present in any image captions.
-					$modified_post->post_content = str_replace( 'id="attachment_' . $a->old->id . '"', 'id="attachment_' . $a->new->id . '"', $modified_post->post_content );
+					$modified_post->post_content = str_replace( 'id="attachment_' . $a->old->id . '"', 'id="attachment_' . $a->new->ID . '"', $modified_post->post_content );
 				}
 			}
 
@@ -2241,6 +2329,11 @@ This can be increased by adding the following to your wp-config.php:
 				$new_shortcode = str_replace( $gallery->ids_string, $new_ids_string, $gallery->old_shortcode );
 				$modified_post->post_content = str_replace( $gallery->old_shortcode, $new_shortcode, $modified_post->post_content );
 			}
+
+			$bcd->modified_post = $modified_post;
+			$action = new actions\broadcasting_modify_post;
+			$action->broadcasting_data = $bcd;
+			$action->apply();
 
 			// Maybe updating the post is not necessary.
 			if ( $unmodified_post->post_content != $modified_post->post_content )
@@ -2428,6 +2521,15 @@ This can be increased by adding the following to your wp-config.php:
 		$meta_box_data->post = $post;
 		$meta_box_data->post_id = $post->ID;
 		return $meta_box_data;
+	}
+
+	/**
+		@brief		Is Broadcast in debug mode?
+		@since		20140220
+	*/
+	public function debugging()
+	{
+		return $this->get_site_option( 'debug', false );
 	}
 
 	/**
