@@ -2634,6 +2634,36 @@ This can be increased by adding the following to your wp-config.php:
 		$this->_js_enqueued = true;
 	}
 
+	/**
+		@brief		Find shortcodes in a string.
+		@details	Runs a preg_match_all on a string looking for specific shortcodes.
+					Overrides Wordpress' get_shortcode_regex without own shortcode(s).
+		@since		2014-02-26 22:05:09
+	**/
+	public function find_shortcodes( $string, $shortcodes )
+	{
+		// Make the shortcodes an array
+		if ( ! is_array( $shortcodes ) )
+			$shortcodes = [ $shortcodes ];
+
+		// We use Wordpress' own function to find shortcodes.
+
+		global $shortcode_tags;
+		// Save the old global
+		$old_shortcode_tags = $shortcode_tags;
+		// Replace the shortcode tags with just our own.
+		$shortcode_tags = array_flip( $shortcodes );
+		ddd( $shortcode_tags );
+		$rx = get_shortcode_regex();
+		$shortcode_tags = $old_shortcode_tags;
+
+		// Run the preg_match_all
+		$matches = '';
+		preg_match_all( '/' . $rx . '/', $string, $matches );
+
+		return $matches;
+	}
+
 	public function get_current_blog_taxonomy_terms( $taxonomy )
 	{
 		$terms = get_terms( $taxonomy, array(
