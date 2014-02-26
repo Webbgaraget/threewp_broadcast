@@ -198,6 +198,9 @@ This plugin will soon be replaced by a WPML premium plugin that enables broadcas
 
 == Changelog ==
 
+= 2.18 xxx =
+* Code: Added find_shortcodes method.
+
 = 2.17 20140226 =
 * New: Debug setting and information when broadcasting.
 * Fix: Taxonomy names are now synced.
