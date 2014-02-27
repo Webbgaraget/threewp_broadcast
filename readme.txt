@@ -199,6 +199,8 @@ This plugin will soon be replaced by a WPML premium plugin that enables broadcas
 == Changelog ==
 
 = 2.18 xxx =
+* Fix: Better gallery shortcode detection.
+* Fix: Incorrect debug string during attachment handling.
 * Code: Added find_shortcodes method.
 
 = 2.17 20140226 =

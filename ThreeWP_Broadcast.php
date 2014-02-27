@@ -2106,18 +2106,12 @@ This can be increased by adding the following to your wp-config.php:
 
 		// Handle any galleries.
 		$bcd->galleries = new collection;
-		$rx = get_shortcode_regex();
-		$matches = '';
-		preg_match_all( '/' . $rx . '/', $bcd->post->post_content, $matches );
+		$matches = $this->find_shortcodes( $bcd->post->post_content, 'gallery' );
+		$this->debug( 'Found %s gallery shortcodes. ', count( $matches[ 2 ] ) );
 
 		// [2] contains only the shortcode command / key. No options.
 		foreach( $matches[ 2 ] as $index => $key )
 		{
-			// Look for only the gallery shortcode.
-			if ( $key !== 'gallery' )
-				continue;
-
-			$this->debug( 'Found a gallery: ', $matches[ 0 ][ $index ] );
 			// We've found a gallery!
 			$bcd->has_galleries = true;
 			$gallery = new \stdClass;
@@ -2128,6 +2122,7 @@ This can be increased by adding the following to your wp-config.php:
 
 			// Extract the IDs
 			$gallery->ids_string = preg_replace( '/.*ids=\"([0-9,]*)".*/', '\1', $gallery->old_shortcode );
+			$this->debug( 'Gallery %s has IDs: %s', $gallery->old_shortcode, $gallery->ids_string );
 			$gallery->ids_array = explode( ',', $gallery->ids_string );
 			foreach( $gallery->ids_array as $id )
 			{
@@ -2337,7 +2332,7 @@ This can be increased by adding the following to your wp-config.php:
 					$a->old = $attachment;
 					$a->new = get_post( $o->attachment_id );
 					$bcd->copied_attachments[] = $a;
-					$this->debug( 'Copied attachment %s to %s', $a->old->id, $o->new->id );
+					$this->debug( 'Copied attachment %s to %s', $a->old->id, $a->new->id );
 				}
 			}
 
@@ -2653,7 +2648,6 @@ This can be increased by adding the following to your wp-config.php:
 		$old_shortcode_tags = $shortcode_tags;
 		// Replace the shortcode tags with just our own.
 		$shortcode_tags = array_flip( $shortcodes );
-		ddd( $shortcode_tags );
 		$rx = get_shortcode_regex();
 		$shortcode_tags = $old_shortcode_tags;
 
