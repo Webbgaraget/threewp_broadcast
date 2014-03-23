@@ -204,6 +204,9 @@ This plugin will soon be replaced by a WPML premium plugin that enables broadcas
 
 == Changelog ==
 
+= 2.19 xxx =
+* Fix: Italian translation updated.
+
 = 2.18 20130314 =
 * New: Premium Pack plugins: Attachment Shortcodes and Event Organiser.
 * New: Debugging can be limited to specific IP addresses.
