@@ -92,6 +92,7 @@ class ThreeWP_Broadcast
 		'blogs_to_hide' => 5,								// How many blogs to auto-hide
 		'broadcast_internal_custom_fields' => false,		// Broadcast internal custom fields?
 		'canonical_url' => true,							// Override the canonical URLs with the parent post's.
+		'clear_post' => true,								// Clear the post before broadcasting.
 		'custom_field_whitelist' => '_wp_page_template _wplp_ _aioseop_',				// Internal custom fields that should be broadcasted.
 		'custom_field_blacklist' => '',						// Internal custom fields that should not be broadcasted.
 		'database_version' => 0,							// Version of database and settings
@@ -132,6 +133,7 @@ class ThreeWP_Broadcast
 		$this->add_filter( 'threewp_broadcast_get_user_writable_blogs', 11 );		// Allow other plugins to do this first.
 		$this->add_filter( 'threewp_broadcast_get_post_types', 9 );					// Add our custom post types to the array of broadcastable post types.
 		$this->add_action( 'threewp_broadcast_manage_posts_custom_column', 9 );		// Just before the standard 10.
+		$this->add_action( 'threewp_broadcast_maybe_clear_post', 11 );
 		$this->add_action( 'threewp_broadcast_menu', 9 );
 		$this->add_action( 'threewp_broadcast_menu', 'threewp_broadcast_menu_final', 100 );
 		$this->add_action( 'threewp_broadcast_prepare_broadcasting_data' );
@@ -433,6 +435,11 @@ class ThreeWP_Broadcast
 		$fs = $form->fieldset( 'misc' )
 			->label_( 'Miscellaneous' );
 
+		$clear_post = $fs->checkbox( 'clear_post' )
+			->description_( 'The POST PHP variable is data sent when updating posts. Most plugins are fine if the POST is cleared before broadcasting, while others require that the data remains intact. Uncheck this setting if you notice that child posts are not being treated the same on the child blogs as they are on the parent blog.' )
+			->label_( 'Clear POST' )
+			->checked( $this->get_site_option( 'debug', false ) );
+
 		$save_post_priority = $fs->number( 'save_post_priority' )
 			->description_( 'The priority for the save_post hook. Should be after all other plugins have finished modifying the post. Default is 640.' )
 			->label_( 'save_post priority' )
@@ -504,6 +511,7 @@ class ThreeWP_Broadcast
 			$whitelist = $this->lines_to_string( $whitelist );
 			$this->update_site_option( 'custom_field_whitelist', $whitelist );
 
+			$this->update_site_option( 'clear_post', $clear_post->is_checked() );
 			$this->update_site_option( 'save_post_priority', $save_post_priority->get_post_value() );
 			$this->update_site_option( 'blogs_to_hide', $blogs_to_hide->get_post_value() );
 			$this->update_site_option( 'existing_attachments', $existing_attachments->get_post_value() );
@@ -1779,6 +1787,29 @@ This can be increased by adding the following to your wp-config.php:
 	}
 
 	/**
+		@brief		Decide what to do with the POST.
+		@since		2014-03-23 23:08:31
+	**/
+	public function threewp_broadcast_maybe_clear_post( $action )
+	{
+		if ( $action->is_applied() )
+		{
+			$this->debug( 'Not maybe clearing the POST.' );
+			return;
+		}
+
+		$clear_post = $this->get_site_option( 'clear_post', true );
+		if ( $clear_post )
+		{
+
+			$this->debug( 'Clearing the POST.' );
+			$action->post = [];
+		}
+		else
+			$this->debug( 'Not clearing the POST.' );
+	}
+
+	/**
 		@brief		Fill the broadcasting_data object with information.
 
 		@details
@@ -2154,7 +2185,10 @@ This can be increased by adding the following to your wp-config.php:
 		array_push( $this->broadcasting, $bcd );
 
 		// POST is no longer needed. Empty it so that other plugins don't use it.
-		$_POST = [];
+		$action = new actions\maybe_clear_post;
+		$action->post = $_POST;
+		$action->apply();
+		$_POST = $action->post;
 
 		$action = new actions\broadcasting_started;
 		$action->broadcasting_data = $bcd;
