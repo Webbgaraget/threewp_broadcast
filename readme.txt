@@ -205,6 +205,7 @@ This plugin will soon be replaced by a WPML premium plugin that enables broadcas
 == Changelog ==
 
 = 2.19 xxx =
+* New: Clear POST setting.
 * Fix: Italian translation updated.
 
 = 2.18 20130314 =
