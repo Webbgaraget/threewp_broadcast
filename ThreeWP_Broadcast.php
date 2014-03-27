@@ -1436,8 +1436,11 @@ This can be increased by adding the following to your wp-config.php:
 		$post_type = $meta_box_data->post->post_type;
 		$post_type_object = get_post_type_object( $post_type );
 		$post_type_supports_thumbnails = post_type_supports( $post_type, 'thumbnail' );
-		$post_type_supports_custom_fields = post_type_supports( $post_type, 'custom-fields' );
 		$post_type_is_hierarchical = $post_type_object->hierarchical;
+
+		// 20140327 Because so many plugins create broken post types, assume that all post types support custom fields.
+		// $post_type_supports_custom_fields = post_type_supports( $post_type, 'custom-fields' );
+		$post_type_supports_custom_fields = true;
 
 		if ( is_super_admin() || $this->role_at_least( $this->get_site_option( 'role_link' ) ) )
 		{
@@ -1856,7 +1859,8 @@ This can be increased by adding the following to your wp-config.php:
 
 		$bcd->post_type_object = get_post_type_object( $bcd->post->post_type );
 		$bcd->post_type_supports_thumbnails = post_type_supports( $bcd->post->post_type, 'thumbnail' );
-		$bcd->post_type_supports_custom_fields = post_type_supports( $bcd->post->post_type, 'custom-fields' );
+		//$bcd->post_type_supports_custom_fields = post_type_supports( $bcd->post->post_type, 'custom-fields' );
+		$bcd->post_type_supports_custom_fields = true;
 		$bcd->post_type_is_hierarchical = $bcd->post_type_object->hierarchical;
 
 		$bcd->custom_fields = $form->checkbox( 'custom_fields' )->get_post_value()
@@ -2536,12 +2540,21 @@ This can be increased by adding the following to your wp-config.php:
 		$action->broadcasting_data = $bcd;
 		$action->apply();
 
-		$this->debug( 'Finished broadcasting. Now stopping Wordpress.' );
-		if ( $this->debugging() )
-			exit;
-
 		// Finished broadcasting.
 		array_pop( $this->broadcasting );
+
+		if ( $this->debugging() )
+		{
+			if ( ! $this->is_broadcasting() )
+			{
+				$this->debug( 'Finished broadcasting. Now stopping Wordpress.' );
+				exit;
+			}
+			else
+			{
+				$this->debug( 'Still broadcasting.' );
+			}
+		}
 
 		$this->load_language();
 

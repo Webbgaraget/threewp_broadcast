@@ -206,7 +206,9 @@ This plugin will soon be replaced by a WPML premium plugin that enables broadcas
 
 = 2.19 xxx =
 * New: Clear POST setting.
+* Fix: More tolerant custom field detection for incorrectly set up custom post types.
 * Fix: Italian translation updated.
+* Code: More debugging code.
 
 = 2.18 20130314 =
 * New: Premium Pack plugins: Attachment Shortcodes and Event Organiser.
