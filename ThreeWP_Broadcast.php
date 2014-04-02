@@ -2971,8 +2971,8 @@ This can be increased by adding the following to your wp-config.php:
 		{
 			$attachment_posts = get_posts( [
 				'cache_results' => false,
+				'name' => $attachment_data->post->post_name,
 				'numberposts' => PHP_INT_MAX,
-				'post_name' => $attachment_data->post->post_name,			// Isn't used, though it should be. Maybe a patch is in order...
 				'post_type' => 'attachment',
 
 			] );
