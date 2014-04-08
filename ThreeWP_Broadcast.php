@@ -3081,6 +3081,7 @@ This can be increased by adding the following to your wp-config.php:
 
 	/**
 		@brief		Syncs the terms of a taxonomy from the parent blog in the BCD to the current blog.
+		@details	If $bcd->add_new_taxonomies is set, new taxonomies will be created, else they are ignored.
 		@param		broadcasting_data		$bcd			The broadcasting data.
 		@param		string					$taxonomy		The taxonomy to sync.
 		@since		20131004
@@ -3118,23 +3119,26 @@ This can be increased by adding the following to your wp-config.php:
 			}
 
 		// These sources were not found. Add them.
-		foreach( $unfound_sources as $unfound_source_id => $unfound_source )
+		if ( isset( $bcd->add_new_taxonomies ) && $bcd->add_new_taxonomies )
 		{
-			$unfound_source = (object)$unfound_source;
-			unset( $unfound_source->parent );
-			$this->debug( 'Creating the new taxonomy %s.', $unfound_source->name );
-			$action = new actions\wp_insert_term;
-			$action->taxonomy = $taxonomy;
-			$action->term = $unfound_source;
-			$action->apply();
+			$this->debug( '%s taxonomies are missing on this blog.', count( $unfound_sources ) );
+			foreach( $unfound_sources as $unfound_source_id => $unfound_source )
+			{
+				$unfound_source = (object)$unfound_source;
+				unset( $unfound_source->parent );
+				$action = new actions\wp_insert_term;
+				$action->taxonomy = $taxonomy;
+				$action->term = $unfound_source;
+				$action->apply();
 
-			$new_taxonomy = $action->new_term;
-			$new_taxonomy_id = $new_taxonomy[ 'term_id' ];
-			$target_terms[ $new_taxonomy_id ] = (array)$new_taxonomy;
-			$found_sources[ $unfound_source_id ] = $new_taxonomy_id;
-			$found_targets[ $new_taxonomy_id ] = $unfound_source_id;
+				$new_taxonomy = $action->new_term;
+				$new_taxonomy_id = $new_taxonomy[ 'term_id' ];
+				$target_terms[ $new_taxonomy_id ] = (array)$new_taxonomy;
+				$found_sources[ $unfound_source_id ] = $new_taxonomy_id;
+				$found_targets[ $new_taxonomy_id ] = $unfound_source_id;
 
-			$refresh_cache = true;
+				$refresh_cache = true;
+			}
 		}
 
 		// Now we know which of the terms on our target blog exist on the source blog.
