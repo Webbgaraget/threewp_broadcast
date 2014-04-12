@@ -6,7 +6,7 @@ Author URI:		http://www.plainview.se
 Description:	Broadcast / multipost a post, with attachments, custom fields, tags and other taxonomies to other blogs in the network.
 Plugin Name:	ThreeWP Broadcast
 Plugin URI:		http://plainview.se/wordpress/threewp-broadcast/
-Version:		2.19
+Version:		2.20
 */
 
 namespace threewp_broadcast;
@@ -84,7 +84,7 @@ class ThreeWP_Broadcast
 	**/
 	public $permalink_cache;
 
-	public $plugin_version = 2.19;
+	public $plugin_version = 2.20;
 
 	protected $sdk_version_required = 20130505;		// add_action / add_filter
 
@@ -140,6 +140,7 @@ class ThreeWP_Broadcast
 		$this->add_filter( 'threewp_broadcast_prepare_meta_box', 9 );
 		$this->add_filter( 'threewp_broadcast_prepare_meta_box', 'threewp_broadcast_prepared_meta_box', 100 );
 		$this->add_action( 'threewp_broadcast_wp_insert_term', 9 );
+		$this->add_action( 'threewp_broadcast_wp_update_term', 9 );
 
 		if ( $this->get_site_option( 'canonical_url' ) )
 			$this->add_action( 'wp_head', 1 );
@@ -1668,10 +1669,9 @@ This can be increased by adding the following to your wp-config.php:
 			$parent = $filter->broadcast_data->get_linked_parent();
 			$parent_blog_id = $parent[ 'blog_id' ];
 			switch_to_blog( $parent_blog_id );
-			$filter->html->put(
-				'linked_from',
-				$this->_(sprintf( 'Linked from %s', '<a href="' . get_bloginfo( 'url' ) . '/wp-admin/post.php?post=' .$parent[ 'post_id' ] . '&action=edit">' . get_bloginfo( 'name' ) . '</a>' ) )
-			);
+
+			$html = $this->_(sprintf( 'Linked from %s', '<a href="' . get_bloginfo( 'url' ) . '/wp-admin/post.php?post=' .$parent[ 'post_id' ] . '&action=edit">' . get_bloginfo( 'name' ) . '</a>' ) );
+			$filter->html->put( 'linked_from', $html );
 			restore_current_blog();
 		}
 		elseif ( $filter->broadcast_data->has_linked_children() )
@@ -2020,6 +2020,38 @@ This can be increased by adding the following to your wp-config.php:
 		$this->debug( 'Created the new term %s with the term taxonomy ID of %s.', $action->term->name, $term_taxonomy_id );
 
 		$action->new_term = get_term_by( 'term_taxonomy_id', $term_taxonomy_id, $action->taxonomy, ARRAY_A );
+	}
+
+	/**
+		@brief		[Maybe] update a term.
+		@since		2014-04-10 14:26:23
+	**/
+	public function threewp_broadcast_wp_update_term( $action )
+	{
+		$update = true;
+
+		// If we are given an old term, then we have a chance of checking to see if there should be an update called at all.
+		if ( $action->has_old_term() )
+		{
+			// Assume they match.
+			$update = false;
+			foreach( [ 'name', 'description', 'parent' ] as $key )
+				if ( $action->old_term->$key != $action->new_term->$key )
+					$update = true;
+		}
+
+		if ( $update )
+		{
+			$this->debug( 'Updating the term %s.', $action->new_term->name );
+			wp_update_term( $action->new_term->term_id, $action->taxonomy, array(
+				'description' => $action->new_term->description,
+				'name' => $action->new_term->name,
+				'parent' => $action->new_term->parent,
+			) );
+			$action->updated = true;
+		}
+		else
+			$this->debug( 'Will not update the term %s.', $action->new_term->name );
 	}
 
 	public function untrash_post( $post_id)
@@ -3144,44 +3176,42 @@ This can be increased by adding the following to your wp-config.php:
 		// Now we know which of the terms on our target blog exist on the source blog.
 		// Next step: see if the parents are the same on the target as they are on the source.
 		// "Same" meaning pointing to the same slug.
-		$this->debug( 'Doing parent checking on found terms.' );
+		$this->debug( 'About to update taxonomy terms.' );
 		foreach( $found_targets as $target_term_id => $source_term_id)
 		{
-			$parent_of_target_term = $target_terms[ $target_term_id ][ 'parent' ];
-			$parent_of_equivalent_source_term = $source_terms[ $source_term_id ][ 'parent' ];
-			$source_term_name = $source_terms[ $source_term_id ][ 'name' ];
+			$source_term = (object)$source_terms[ $source_term_id ];
+			$target_term = (object)$target_terms[ $target_term_id ];
 
-			// Do the parents "match".
-			$needs_updating = ( $parent_of_target_term != $parent_of_equivalent_source_term &&
-				( isset( $found_sources[ $parent_of_equivalent_source_term ] ) || $parent_of_equivalent_source_term == 0 )
-			);
+			$action = new actions\wp_update_term;
+			$action->taxonomy = $taxonomy;
 
-			// Same name?
-			$needs_updating |= ( $source_term_name != $target_terms[ $target_term_id ][ 'name' ] );
+			// The old term is the target term, since it contains the old values.
+			$action->old_term = (object)$target_terms[ $target_term_id ];
+			// The new term is the source term, since it has the newer data.
+			$action->new_term = (object)$source_terms[ $source_term_id ];
 
-			// Same description?
-			$needs_updating |= ( $source_terms[ $source_term_id ][ 'description' ] != $target_terms[ $target_term_id ][ 'description' ] );
+			// ... but the IDs have to be switched around, since the target term has the new ID.
+			$action->switch_data();
 
-			$this->debug( 'Does %s need updating? %s', $source_term_name, $this->yes_no( $needs_updating ) );
+			// Update the parent.
+			$parent_of_equivalent_source_term = $source_term->parent;
+			$parent_of_target_term = $target_term->parent;
 
-			if ( $needs_updating )
+			$new_parent = 0;
+			// Does the source term even have a parent?
+			if ( $parent_of_equivalent_source_term > 0 )
 			{
-				if ( $parent_of_equivalent_source_term != 0 )
-					$new_term_parent = $found_sources[ $parent_of_equivalent_source_term ];
-				else
-					$new_term_parent = 0;
-
-				$this->debug( 'Updating %s with new parent %s.', $source_term_name, $new_term_parent );
-
-				// Update the name and the parent.
-				wp_update_term( $target_term_id, $taxonomy, array(
-					'description' => $source_terms[ $source_term_id ][ 'description' ],
-					'name' => $source_terms[ $source_term_id ][ 'name' ],
-					'parent' => $new_term_parent,
-				) );
-
-				$refresh_cache = true;
+				// Did we find the parent term?
+				if ( isset( $found_sources[ $parent_of_equivalent_source_term ] ) )
+					$new_parent = $found_sources[ $parent_of_equivalent_source_term ];
 			}
+			else
+				$new_parent = 0;
+
+			$action->new_term->parent = $new_parent;
+
+			$action->apply();
+			$refresh_cache |= $action->updated;
 		}
 
 		// wp_update_category alone won't work. The "cache" needs to be cleared.

@@ -90,7 +90,7 @@ Broadcast offers some actions/filters for plugin developers with which to intera
 3. Broadcast settings tab
 4. Custom post types tab
 5. Uninstall tab
-6. Broadcast and its associated companions in the plugin list
+6. Broadcast Premium Pack plugins
 7. Broadcast menu with groups enabled
 8. Broadcast meta box with groups enabled
 9. Blog group overview
@@ -203,6 +203,12 @@ It works transparently in the background, but in case you've never really used W
 This plugin will soon be replaced by a WPML premium plugin that enables broadcasting from the translation manager. 2014-01-12.
 
 == Changelog ==
+
+= 2.20 20140412 =
+* New: Premium Pack plugins: Custom Field Attachments, Sync Taxonomies.
+* More debug information when syncing taxonomies.
+* Code: collect_post_type_taxonomies for Sync Taxonomies plugin.
+* Code: wp_insert_term and wp_update_term hooks, for Sync Taxonomies plugin.
 
 = 2.19 20140402 =
 * New: Clear POST setting.
