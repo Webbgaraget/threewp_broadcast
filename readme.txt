@@ -208,6 +208,10 @@ This plugin will soon be replaced by a WPML premium plugin that enables broadcas
 
 == Changelog ==
 
+= 2.21 201404xx =
+* New: Custom roles are accepted.
+* Fix: Fatal error when syncing taxonomies. Sometimes.
+
 = 2.20 20140412 =
 * New: Premium Pack plugins: Custom Field Attachments, Sync Taxonomies.
 * More debug information when syncing taxonomies.
