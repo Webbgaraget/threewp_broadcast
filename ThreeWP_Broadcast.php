@@ -263,10 +263,7 @@ class ThreeWP_Broadcast
 
 		if ( $db_ver < 5 )
 		{
-			$query = sprintf( "ALTER TABLE `%s` ADD `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT 'ID of row' FIRST;",
-				$this->broadcast_data_table()
-			);
-			$this->query( $query );
+			$this->create_broadcast_data_id_column();
 			$db_ver = 5;
 		}
 
@@ -2026,12 +2023,21 @@ This can be increased by adding the following to your wp-config.php:
 		// WP will complain and give us the term tax id.
 		if ( is_wp_error( $term ) )
 		{
-			$wp_error = $action->new_term;
+			$wp_error = $term;
+			$this->debug( 'Error creating the term: %s. Error was: %s', $action->term->name, serialize( $wp_error->error_data ) );
 			if ( isset( $wp_error->error_data[ 'term_exists' ] ) )
-				$term_taxonomy_id = $wp_error->error_data[ 'term_exists' ];
+			{
+				$term_id = $wp_error->error_data[ 'term_exists' ];
+				$this->debug( 'Term exists already with the term ID: %s', $term_id );
+				$term = get_term_by( 'id', $term_id, $action->taxonomy, ARRAY_A );
+			}
+			else
+			{
+				throw new Exception( 'Unable to create a new term.' );
+			}
 		}
-		else
-			$term_taxonomy_id = $term[ 'term_taxonomy_id' ];
+
+		$term_taxonomy_id = $term[ 'term_taxonomy_id' ];
 
 		$this->debug( 'Created the new term %s with the term taxonomy ID of %s.', $action->term->name, $term_taxonomy_id );
 
@@ -2724,6 +2730,18 @@ This can be increased by adding the following to your wp-config.php:
 			// 3. Overwrite the metadata that needs to be overwritten with fresh data.
 			wp_update_attachment_metadata( $o->attachment_id,  $attach_data );
 		}
+	}
+
+	/**
+		@brief		Creates the ID column in the broadcast data table.
+		@since		2014-04-20 20:19:45
+	**/
+	public function create_broadcast_data_id_column()
+	{
+		$query = sprintf( "ALTER TABLE `%s` ADD `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT 'ID of row' FIRST;",
+			$this->broadcast_data_table()
+		);
+		$this->query( $query );
 	}
 
 	/**
