@@ -1294,6 +1294,8 @@ This can be increased by adding the following to your wp-config.php:
 		if ( isset( $_POST[ 'broadcast' ] ) )
 			$this->save_last_used_settings( $this->user_id(), $_POST[ 'broadcast' ] );
 
+		$this->debug( 'We are currently on blog %s (%s).', get_bloginfo( 'blogname' ), get_current_blog_id() );
+
 		$post = get_post( $post_id );
 
 		$meta_box_data = $this->create_meta_box( $post );
@@ -2237,7 +2239,7 @@ This can be increased by adding the following to your wp-config.php:
 		// Handle any galleries.
 		$bcd->galleries = new collection;
 		$matches = $this->find_shortcodes( $bcd->post->post_content, 'gallery' );
-		$this->debug( 'Found %s gallery shortcodes. ', count( $matches[ 2 ] ) );
+		$this->debug( 'Found %s gallery shortcodes.', count( $matches[ 2 ] ) );
 
 		// [2] contains only the shortcode command / key. No options.
 		foreach( $matches[ 2 ] as $index => $key )
@@ -2288,6 +2290,7 @@ This can be increased by adding the following to your wp-config.php:
 
 			// Create new post data from the original stuff.
 			$bcd->new_post = (array) $bcd->post;
+
 			foreach( [ 'comment_count', 'guid', 'ID', 'post_parent' ] as $key )
 				unset( $bcd->new_post[ $key ] );
 
@@ -2327,7 +2330,9 @@ This can be increased by adding the following to your wp-config.php:
 				$this->debug( 'Creating a new post.' );
 				$temp_post_data = $bcd->new_post;
 				unset( $temp_post_data[ 'ID' ] );
+
 				$result = wp_insert_post( $temp_post_data, true );
+
 				// Did we manage to insert the post properly?
 				if ( intval( $result ) < 1 )
 				{
