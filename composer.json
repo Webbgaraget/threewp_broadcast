@@ -1,6 +1,6 @@
 {
 	"name": "plainview/threewp_broadcast",
-	"description": "ThreeWP Broadcast",
+	"description": "ThreeWP Broadcast Wordpress plugin for broadcasting / multiposting posts to the blogs in the network.",
 	"license" : "GPL-3.0",
 	"authors": [ {
 		"name": "Edward Plainview",
