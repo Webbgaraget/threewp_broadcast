@@ -209,6 +209,9 @@ This plugin will soon be replaced by a WPML premium plugin that enables broadcas
 
 == Changelog ==
 
+= 2.22 20140xxx =
+* New: Broadcast file checksum info, for debugging purposes.
+
 = 2.21 20140422 =
 * New: Custom roles are accepted.
 * New: Broadcast Data check checks that the table has the ID column.

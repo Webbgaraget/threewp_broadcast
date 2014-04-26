@@ -1,0 +1,43 @@
+[
+    {
+        "name": "plainview/sdk",
+        "version": "dev-master",
+        "version_normalized": "9999999-dev",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/the-plainview/sdk.git",
+            "reference": "b1d350b6a3d8b4896cf72837f6c029aa450ad6bf"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/the-plainview/sdk/zipball/b1d350b6a3d8b4896cf72837f6c029aa450ad6bf",
+            "reference": "b1d350b6a3d8b4896cf72837f6c029aa450ad6bf",
+            "shasum": ""
+        },
+        "require": {
+            "php": ">=5.4.0"
+        },
+        "time": "2014-04-26 07:50:49",
+        "type": "library",
+        "installation-source": "source",
+        "autoload": {
+            "classmap": [
+                "."
+            ],
+            "psr-0": {
+                "plainview\\sdk": "."
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "GPL-3.0"
+        ],
+        "authors": [
+            {
+                "name": "Edward Plainview",
+                "email": "edward@plainview.se"
+            }
+        ],
+        "description": "Plainview SDK"
+    }
+]

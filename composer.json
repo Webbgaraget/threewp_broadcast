@@ -1,0 +1,41 @@
+{
+	"name": "plainview/threewp_broadcast",
+	"description": "ThreeWP Broadcast",
+	"license" : "GPL-3.0",
+	"authors": [ {
+		"name": "Edward Plainview",
+		"email": "edward@plainview.se"
+	} ],
+	"require": {
+		"php": ">=5.4.0",
+		"plainview/sdk": "dev-master"
+	},
+	"require-dev": {
+		"php": ">=5.4.0",
+		"plainview/sdk": "dev-master"
+	},
+	"autoload":
+	{
+		"psr-0": {
+			"threewp_broadcast": "include/"
+        },
+		"classmap": [ "include" ]
+	},
+	"minimum-stability": "dev",
+	"repositories": [
+		{
+			"type": "package",
+			"package":
+			{
+				"name": "the-plainview/threewp_broadcast",
+				"version": "master",
+				"source":
+				{
+					"url": "https://github.com/the-plainview/threewp_broadcast.git",
+					"type": "git",
+					"reference": "master"
+				}
+			}
+		}
+	]
+}

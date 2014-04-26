@@ -1,3 +1,0 @@
-[submodule "plainview_sdk"]
-	path = plainview_sdk
-	url = https://github.com/the-plainview/sdk.git

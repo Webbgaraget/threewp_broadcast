@@ -13,7 +13,7 @@ namespace threewp_broadcast;
 
 if ( ! class_exists( '\\threewp_broadcast\\base' ) )	require_once( __DIR__ . '/ThreeWP_Broadcast_Base.php' );
 
-require_once( 'include/vendor/autoload.php' );
+require_once( 'vendor/autoload.php' );
 
 use \plainview\sdk\collections\collection;
 use \threewp_broadcast\broadcast_data\blog;
@@ -833,6 +833,12 @@ class ThreeWP_Broadcast
 		$row = $table->body()->row();
 		$row->td()->text( 'Broadcast version' );
 		$row->td()->text( $this->plugin_version );
+
+		// Broadcast file checksum
+		$row = $table->body()->row();
+		$row->td()->text( 'Broadcast file checksum' );
+		$text = md5( file_get_contents( __FILE__ ) );
+		$row->td()->text( $text );
 
 		// PHP version
 		$row = $table->body()->row();

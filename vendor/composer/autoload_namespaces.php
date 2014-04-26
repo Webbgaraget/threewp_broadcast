@@ -6,5 +6,6 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
-    'threewp_broadcast' => array($baseDir . '/'),
+    'threewp_broadcast' => array($baseDir . '/include'),
+    'plainview\\sdk' => array($vendorDir . '/plainview/sdk'),
 );
