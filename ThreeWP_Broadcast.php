@@ -6,7 +6,7 @@ Author URI:		http://www.plainview.se
 Description:	Broadcast / multipost a post, with attachments, custom fields, tags and other taxonomies to other blogs in the network.
 Plugin Name:	ThreeWP Broadcast
 Plugin URI:		http://plainview.se/wordpress/threewp-broadcast/
-Version:		2.20
+Version:		2.21
 */
 
 namespace threewp_broadcast;
@@ -85,7 +85,7 @@ class ThreeWP_Broadcast
 	**/
 	public $permalink_cache;
 
-	public $plugin_version = 2.20;
+	public $plugin_version = 2.21;
 
 	protected $sdk_version_required = 20130505;		// add_action / add_filter
 
