@@ -6,20 +6,15 @@
 		"name": "Edward Plainview",
 		"email": "edward@plainview.se"
 	} ],
-	"require": {
-		"php": ">=5.4.0",
-		"plainview/sdk": "dev-master"
-	},
 	"require-dev": {
 		"php": ">=5.4.0",
 		"plainview/sdk": "dev-master"
 	},
 	"autoload":
 	{
-		"psr-0": {
-			"threewp_broadcast": "include/"
-        },
-		"classmap": [ "include" ]
+		"psr-4": {
+			"threewp_broadcast\\": "include/"
+        }
 	},
 	"minimum-stability": "dev",
 	"repositories": [

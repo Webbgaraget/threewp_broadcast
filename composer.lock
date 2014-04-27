@@ -3,32 +3,35 @@
         "This file locks the dependencies of your project to a known state",
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file"
     ],
-    "hash": "e1c52423980871aef016e2ae620b2153",
+    "hash": "5da93abfa233be60915f139af4c95d8d",
     "packages": [
+
+    ],
+    "packages-dev": [
         {
             "name": "plainview/sdk",
             "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://github.com/the-plainview/sdk.git",
-                "reference": "b1d350b6a3d8b4896cf72837f6c029aa450ad6bf"
+                "reference": "d4ba2d1dd78b4d635aee2b132eb29457b5151fd3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/the-plainview/sdk/zipball/b1d350b6a3d8b4896cf72837f6c029aa450ad6bf",
-                "reference": "b1d350b6a3d8b4896cf72837f6c029aa450ad6bf",
+                "url": "https://api.github.com/repos/the-plainview/sdk/zipball/d4ba2d1dd78b4d635aee2b132eb29457b5151fd3",
+                "reference": "d4ba2d1dd78b4d635aee2b132eb29457b5151fd3",
                 "shasum": ""
             },
             "require": {
                 "php": ">=5.4.0"
             },
+            "require-dev": {
+                "php": ">=5.4.0"
+            },
             "type": "library",
             "autoload": {
-                "classmap": [
-                    "."
-                ],
-                "psr-0": {
-                    "plainview\\sdk": "."
+                "psr-4": {
+                    "plainview\\sdk\\": "."
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -42,11 +45,8 @@
                 }
             ],
             "description": "Plainview SDK",
-            "time": "2014-04-26 07:50:49"
+            "time": "2014-04-27 12:08:25"
         }
-    ],
-    "packages-dev": [
-
     ],
     "aliases": [
 
@@ -55,9 +55,9 @@
     "stability-flags": {
         "plainview/sdk": 20
     },
-    "platform": {
-        "php": ">=5.4.0"
-    },
+    "platform": [
+
+    ],
     "platform-dev": {
         "php": ">=5.4.0"
     }

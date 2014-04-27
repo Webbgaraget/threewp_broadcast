@@ -6,26 +6,26 @@
         "source": {
             "type": "git",
             "url": "https://github.com/the-plainview/sdk.git",
-            "reference": "b1d350b6a3d8b4896cf72837f6c029aa450ad6bf"
+            "reference": "d4ba2d1dd78b4d635aee2b132eb29457b5151fd3"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/the-plainview/sdk/zipball/b1d350b6a3d8b4896cf72837f6c029aa450ad6bf",
-            "reference": "b1d350b6a3d8b4896cf72837f6c029aa450ad6bf",
+            "url": "https://api.github.com/repos/the-plainview/sdk/zipball/d4ba2d1dd78b4d635aee2b132eb29457b5151fd3",
+            "reference": "d4ba2d1dd78b4d635aee2b132eb29457b5151fd3",
             "shasum": ""
         },
         "require": {
             "php": ">=5.4.0"
         },
-        "time": "2014-04-26 07:50:49",
+        "require-dev": {
+            "php": ">=5.4.0"
+        },
+        "time": "2014-04-27 12:08:25",
         "type": "library",
         "installation-source": "source",
         "autoload": {
-            "classmap": [
-                "."
-            ],
-            "psr-0": {
-                "plainview\\sdk": "."
+            "psr-4": {
+                "plainview\\sdk\\": "."
             }
         },
         "notification-url": "https://packagist.org/downloads/",
