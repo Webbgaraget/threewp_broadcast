@@ -162,7 +162,6 @@ class ThreeWP_Broadcast
 
 		// Hook into save_post, no matter is the meta box is displayed or not.
 		$this->add_action( 'save_post', intval( $this->get_site_option( 'save_post_priority' ) ) );
-		//$this->add_action( 'save_post', 10 );
 	}
 
 	public function admin_print_styles()
