@@ -211,6 +211,7 @@ This plugin will soon be replaced by a WPML premium plugin that enables broadcas
 
 = 2.22 20140xxx =
 * New: Broadcast file checksum info, for debugging purposes.
+* Code: code_export removed. Debug methods are now a trait in the SDK.
 
 = 2.21 20140422 =
 * New: Custom roles are accepted.

@@ -3,7 +3,7 @@
         "This file locks the dependencies of your project to a known state",
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file"
     ],
-    "hash": "5da93abfa233be60915f139af4c95d8d",
+    "hash": "b62cb00ad4ca63880e8b88d33fbd3db2",
     "packages": [
 
     ],
@@ -14,12 +14,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/the-plainview/sdk.git",
-                "reference": "d4ba2d1dd78b4d635aee2b132eb29457b5151fd3"
+                "reference": "e10687ed65308c4d0bde46eb4ab351f717c406a3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/the-plainview/sdk/zipball/d4ba2d1dd78b4d635aee2b132eb29457b5151fd3",
-                "reference": "d4ba2d1dd78b4d635aee2b132eb29457b5151fd3",
+                "url": "https://api.github.com/repos/the-plainview/sdk/zipball/e10687ed65308c4d0bde46eb4ab351f717c406a3",
+                "reference": "e10687ed65308c4d0bde46eb4ab351f717c406a3",
                 "shasum": ""
             },
             "require": {
@@ -45,7 +45,7 @@
                 }
             ],
             "description": "Plainview SDK",
-            "time": "2014-04-27 12:08:25"
+            "time": "2014-05-01 08:56:56"
         }
     ],
     "aliases": [
