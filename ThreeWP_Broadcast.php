@@ -162,6 +162,7 @@ class ThreeWP_Broadcast
 
 		// Hook into save_post, no matter is the meta box is displayed or not.
 		$this->add_action( 'save_post', intval( $this->get_site_option( 'save_post_priority' ) ) );
+		//$this->add_action( 'save_post', 10 );
 	}
 
 	public function admin_print_styles()
@@ -1275,17 +1276,35 @@ This can be increased by adding the following to your wp-config.php:
 
 	public function save_post( $post_id )
 	{
+		$this->debug( 'Running save_post hook.' );
+
+		// We must be on the source blog.
+		if ( ms_is_switched() )
+		{
+			$this->debug( 'Not on parent blog.' );
+			return;
+		}
+
 		// Loop check.
 		if ( $this->is_broadcasting() )
+		{
+			$this->debug( 'Already broadcasting.' );
 			return;
+		}
 
 		// No post?
 		if ( count( $_POST ) < 1 )
+		{
+			$this->debug( 'The POST is empty.' );
 			return;
+		}
 
 		// Nothing of interest in the post?
 		if ( ! isset( $_POST[ 'broadcast' ] ) )
+		{
+			$this->debug( 'The POST does not contain any Broadcast data.' );
 			return;
+		}
 
 		// Is this post a child?
 		$broadcast_data = $this->get_post_broadcast_data( get_current_blog_id(), $post_id );
@@ -1294,7 +1313,10 @@ This can be increased by adding the following to your wp-config.php:
 
 		// No permission.
 		if ( ! $this->role_at_least( $this->get_site_option( 'role_broadcast' ) ) )
+		{
+			$this->debug( 'User does not have permission to use Broadcast.' );
 			return;
+		}
 
 		// Save the user's last settings.
 		if ( isset( $_POST[ 'broadcast' ] ) )
@@ -1333,6 +1355,10 @@ This can be increased by adding the following to your wp-config.php:
 
 		if ( $broadcasting_data->has_blogs() )
 			$this->filters( 'threewp_broadcast_broadcast_post', $broadcasting_data );
+		else
+		{
+			$this->debug( 'No blogs are selected. Not broadcasting anything.' );
+		}
 	}
 
 	public function threewp_activity_monitor_list_activities( $activities )
@@ -1574,26 +1600,7 @@ This can be increased by adding the following to your wp-config.php:
 			);
 
 			// Display a list of actions that have hooked into save_post
-			global $wp_filter;
-			$filters = $wp_filter[ 'save_post' ];
-			ksort( $filters );
-			$save_post_callbacks = [];
-			//$wp_filter[$tag][$priority][$idx] = array('function' => $function_to_add, 'accepted_args' => $accepted_args);
-			foreach( $filters as $priority => $callbacks )
-			{
-				foreach( $callbacks as $callback )
-				{
-					$function = $callback[ 'function' ];
-					if ( is_array( $function ) )
-					{
-						if ( is_object( $function[ 0 ] ) )
-							$function[ 0 ] = get_class( $function[ 0 ] );
-						$function = sprintf( '%s::%s', $function[ 0 ], $function[ 1 ] );
-					}
-					$function = sprintf( '%s %s', $function, $priority );
-					$save_post_callbacks[] = $function;
-				}
-			}
+			$save_post_callbacks = $this->get_hooks( 'save_post' );
 			$meta_box_data->html->put( 'debug_save_post_callbacks', sprintf( '%s%s',
 				$this->p_( 'Plugins that have hooked into save_post:' ),
 				$this->implode_html( $save_post_callbacks )
@@ -2872,13 +2879,32 @@ This can be increased by adding the following to your wp-config.php:
 	}
 
 	/**
-		@brief		Get some standardizing CSS styles.
-		@return		string		A string containing the CSS <style> data, including the tags.
-		@since		20131031
+		@brief		Return an array of all callbacks of a hook.
+		@since		2014-04-30 00:11:30
 	**/
-	public function html_css()
+	public function get_hooks( $hook )
 	{
-		return file_get_contents( __DIR__ . '/html/style.css' );
+		global $wp_filter;
+		$filters = $wp_filter[ $hook ];
+		ksort( $filters );
+		$hook_callbacks = [];
+		//$wp_filter[$tag][$priority][$idx] = array('function' => $function_to_add, 'accepted_args' => $accepted_args);
+		foreach( $filters as $priority => $callbacks )
+		{
+			foreach( $callbacks as $callback )
+			{
+				$function = $callback[ 'function' ];
+				if ( is_array( $function ) )
+				{
+					if ( is_object( $function[ 0 ] ) )
+						$function[ 0 ] = get_class( $function[ 0 ] );
+					$function = sprintf( '%s::%s', $function[ 0 ], $function[ 1 ] );
+				}
+				$function = sprintf( '%s %s', $function, $priority );
+				$hook_callbacks[] = $function;
+			}
+		}
+		return $hook_callbacks;
 	}
 
 	/**
@@ -2892,6 +2918,16 @@ This can be increased by adding the following to your wp-config.php:
 	public function get_post_broadcast_data( $blog_id, $post_id )
 	{
 		return $this->broadcast_data_cache()->get_for( $blog_id, $post_id );
+	}
+
+	/**
+		@brief		Get some standardizing CSS styles.
+		@return		string		A string containing the CSS <style> data, including the tags.
+		@since		20131031
+	**/
+	public function html_css()
+	{
+		return file_get_contents( __DIR__ . '/html/style.css' );
 	}
 
 	public function is_blog_user_writable( $user_id, $blog )
@@ -3391,3 +3427,5 @@ This can be increased by adding the following to your wp-config.php:
 }
 
 $threewp_broadcast = new ThreeWP_Broadcast();
+
+require_once( 'test.php' );
