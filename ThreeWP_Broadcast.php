@@ -22,6 +22,8 @@ use \plainview\sdk\html\div;
 class ThreeWP_Broadcast
 	extends \threewp_broadcast\ThreeWP_Broadcast_Base
 {
+	use \plainview\sdk\wordpress\traits\debug;
+
 	/**
 		@brief		Broadcasting stack.
 		@details
@@ -87,7 +89,7 @@ class ThreeWP_Broadcast
 
 	public $plugin_version = 2.21;
 
-	protected $sdk_version_required = 20130505;		// add_action / add_filter
+	protected $sdk_version_required = 20140501;		// add_action / add_filter
 
 	protected $site_options = array(
 		'blogs_to_hide' => 5,								// How many blogs to auto-hide
@@ -97,8 +99,8 @@ class ThreeWP_Broadcast
 		'custom_field_whitelist' => '_wp_page_template _wplp_ _aioseop_',				// Internal custom fields that should be broadcasted.
 		'custom_field_blacklist' => '',						// Internal custom fields that should not be broadcasted.
 		'database_version' => 0,							// Version of database and settings
-		'debug' => false,									// Display debug information
-		'debug_ips' => '',									// List of IP addresses that can see debug information, when enabled.
+		'debug' => false,									// Display debug information?
+		'debug_ips' => '',									// List of IP addresses that can see debug information, when debug is enabled.
 		'save_post_priority' => 640,						// Priority of save_post action. Higher = lets other plugins do their stuff first
 		'override_child_permalinks' => false,				// Make the child's permalinks link back to the parent item?
 		'post_types' => 'post page',						// Custom post types which use broadcasting
@@ -348,8 +350,8 @@ class ThreeWP_Broadcast
 		$roles = $this->roles_as_options();
 		$roles = array_flip( $roles );
 
-		$fs = $form->fieldset( 'roles' )
-			->label_( 'Roles' );
+		$fs = $form->fieldset( 'roles' );
+		$fs->legend->label_( 'Roles' );
 
 		$role_broadcast = $fs->select( 'role_broadcast' )
 			->value( $this->get_site_option( 'role_broadcast' ) )
@@ -387,8 +389,8 @@ class ThreeWP_Broadcast
 			->label_( 'Broadcast scheduled posts' )
 			->options( $roles );
 
-		$fs = $form->fieldset( 'seo' )
-			->label_( 'SEO' );
+		$fs = $form->fieldset( 'seo' );
+		$fs->legend->label_( 'SEO' );
 
 		$override_child_permalinks = $fs->checkbox( 'override_child_permalinks' )
 			->checked( $this->get_site_option( 'override_child_permalinks' ) )
@@ -400,8 +402,8 @@ class ThreeWP_Broadcast
 			->description_( "Child posts have their canonical URLs pointed to the URL of the parent post. This automatically disables the canonical URL from Yoast's Wordpress SEO plugin." )
 			->label_( 'Canonical URL' );
 
-		$fs = $form->fieldset( 'custom_field_handling' )
-			->label_( 'Custom field handling' );
+		$fs = $form->fieldset( 'custom_field_handling' );
+		$fs->legend->label_( 'Custom field handling' );
 
 		$fs->markup( 'internal_field_info' )
 			->p_( 'Some custom fields start with underscores. They are generally Wordpress internal fields and therefore not broadcasted. Some plugins store their information as underscored custom fields. If you wish them, or some of them, to be broadcasted, use either of the options below.' );
@@ -432,8 +434,8 @@ class ThreeWP_Broadcast
 		$fs->markup( 'whitelist_defaults' )
 			->p_( 'The default whitelist is: %s', "<code>\n_wp_page_template\n_wplp_\n_aioseop_</code>" );
 
-		$fs = $form->fieldset( 'misc' )
-			->label_( 'Miscellaneous' );
+		$fs = $form->fieldset( 'misc' );
+		$fs->legend->label_( 'Miscellaneous' );
 
 		$clear_post = $fs->checkbox( 'clear_post' )
 			->description_( 'The POST PHP variable is data sent when updating posts. Most plugins are fine if the POST is cleared before broadcasting, while others require that the data remains intact. Uncheck this setting if you notice that child posts are not being treated the same on the child blogs as they are on the parent blog.' )
@@ -465,23 +467,7 @@ class ThreeWP_Broadcast
 			->required()
 			->value( $this->get_site_option( 'existing_attachments', 'use' ) );
 
-		$fs = $form->fieldset( 'debug' )
-			->label_( 'Debugging' );
-
-		$fs->markup( 'debug_info' )
-			->p_( "According to the settings below, you are currently%s in debug mode. Don't forget to reload this page after saving the settings.", $this->debugging() ? '' : ' <strong>not</strong>' );
-
-		$debug = $fs->checkbox( 'debug' )
-			->description_( 'Show debugging information in various places.' )
-			->label_( 'Enable debugging' )
-			->checked( $this->get_site_option( 'debug', false ) );
-
-		$debug_ips = $fs->textarea( 'debug_ips' )
-			->description_( 'Only show debugging info to specific IP addresses. Use spaces between IPs. You can also specify part of an IP address. Your address is %s', $_SERVER[ 'REMOTE_ADDR' ] )
-			->label_( 'Debug IPs' )
-			->rows( 5, 16 )
-			->trim()
-			->value( $this->get_site_option( 'debug_ips', '' ) );
+		$this->add_debug_settings_to_form( $form );
 
 		$save = $form->primary_button( 'save' )
 			->value_( 'Save settings' );
@@ -516,8 +502,7 @@ class ThreeWP_Broadcast
 			$this->update_site_option( 'blogs_to_hide', $blogs_to_hide->get_post_value() );
 			$this->update_site_option( 'existing_attachments', $existing_attachments->get_post_value() );
 
-			$this->update_site_option( 'debug', $debug->is_checked() );
-			$this->update_site_option( 'debug_ips', $debug_ips->get_filtered_post_value() );
+			$this->save_debug_settings_from_form( $form );
 
 			$this->message( 'Options saved!' );
 		}
@@ -2175,9 +2160,9 @@ This can be increased by adding the following to your wp-config.php:
 	{
 		$bcd = $broadcasting_data;
 
-		$this->debug( 'Broadcasting the post %s <pre>%s</pre>', $bcd->post->ID, $this->code_export( $bcd->post ) );
+		$this->debug( 'Broadcasting the post %s <pre>%s</pre>', $bcd->post->ID, $bcd->post );
 
-		$this->debug( 'The POST was <pre>%s</pre>', $this->code_export( $bcd->_POST ) );
+		$this->debug( 'The POST was <pre>%s</pre>', $bcd->_POST );
 
 		// For nested broadcasts. Just in case.
 		switch_to_blog( $bcd->parent_blog_id );
@@ -2524,7 +2509,7 @@ This can be increased by adding the following to your wp-config.php:
 			// Maybe updating the post is not necessary.
 			if ( $unmodified_post->post_content != $modified_post->post_content )
 			{
-				$this->debug( 'Modifying with new post: %s', $this->code_export( $modified_post->post_content ) );
+				$this->debug( 'Modifying with new post: %s', $modified_post->post_content );
 				wp_update_post( $modified_post );	// Or maybe it is.
 			}
 
@@ -2654,15 +2639,6 @@ This can be increased by adding the following to your wp-config.php:
 	}
 
 	/**
-		@brief		Dump a variable with code tags.
-		@since		2014-04-06 21:49:24
-	**/
-	public function code_export( $variable )
-	{
-		return sprintf( '<pre><code>%s</code></pre>', var_export( $variable, true ) );
-	}
-
-	/**
 		@brief		Collects the post type's taxonomies into the broadcasting data object.
 		@details	Requires only that $bcd->post->post_type be filled in.
 		@since		2014-04-08 13:40:44
@@ -2774,47 +2750,6 @@ This can be increased by adding the following to your wp-config.php:
 		$meta_box_data->post = $post;
 		$meta_box_data->post_id = $post->ID;
 		return $meta_box_data;
-	}
-
-	/**
-		@brief		Output a string if in debug mode.
-		@since		20140220
-	*/
-	public function debug( $string )
-	{
-		if ( ! $this->debugging() )
-			return;
-
-		$text = call_user_func_array( 'sprintf', func_get_args() );
-		if ( $text == '' )
-			$text = $string;
-		$text = sprintf( '%s %s<br/>', $this->now(), $text );
-		echo $text;
-	}
-
-	/**
-		@brief		Is Broadcast in debug mode?
-		@since		20140220
-	*/
-	public function debugging()
-	{
-		$debugging = $this->get_site_option( 'debug', false );
-		if ( ! $debugging )
-			return false;
-
-		// Debugging is enabled. Now check if we should show it to this user.
-		$ips = $this->get_site_option( 'debug_ips', '' );
-		// Empty = no limits.
-		if ( $ips == '' )
-			return true;
-
-		$lines = explode( "\n", $ips );
-		foreach( $lines as $line )
-			if ( strpos( $_SERVER[ 'REMOTE_ADDR' ], $line ) !== false )
-				return true;
-
-		// No match = not debugging for this user.
-		return false;
 	}
 
 	/**
@@ -3202,8 +3137,8 @@ This can be increased by adding the following to your wp-config.php:
 	{
 		$source_terms = $bcd->parent_blog_taxonomies[ $taxonomy ][ 'terms' ];
 		$target_terms = $this->get_current_blog_taxonomy_terms( $taxonomy );
-		$this->debug( 'Source terms for taxonomy %s: %s', $taxonomy, $this->code_export( $source_terms ) );
-		$this->debug( 'Target terms for taxonomy %s: %s', $taxonomy, $this->code_export( $target_terms ) );
+		$this->debug( 'Source terms for taxonomy %s: %s', $taxonomy, $source_terms );
+		$this->debug( 'Target terms for taxonomy %s: %s', $taxonomy, $target_terms );
 
 		$refresh_cache = false;
 
