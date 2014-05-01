@@ -3427,5 +3427,3 @@ This can be increased by adding the following to your wp-config.php:
 }
 
 $threewp_broadcast = new ThreeWP_Broadcast();
-
-require_once( 'test.php' );
