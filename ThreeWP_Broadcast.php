@@ -2432,6 +2432,7 @@ This can be increased by adding the following to your wp-config.php:
 
 			// Remove the current attachments.
 			$attachments_to_remove = get_children( 'post_parent='.$bcd->new_post[ 'ID' ] . '&post_type=attachment' );
+			$this->debug( '%s attachments to remove.', count( $attachments_to_remove ) );
 			foreach ( $attachments_to_remove as $attachment_to_remove )
 			{
 				$this->debug( 'Deleting existing attachment: %s', $attachment_to_remove->ID );
@@ -2440,6 +2441,7 @@ This can be increased by adding the following to your wp-config.php:
 
 			// Copy the attachments
 			$bcd->copied_attachments = [];
+			$this->debug( 'Looking through %s attachments.', count( $bcd->attachment_data ) );
 			foreach( $bcd->attachment_data as $key => $attachment )
 			{
 				if ( $key != 'thumbnail' )
@@ -2465,6 +2467,7 @@ This can be increased by adding the following to your wp-config.php:
 			// If there were any image attachments copied...
 			if ( count( $bcd->copied_attachments ) > 0 )
 			{
+				$this->debug( '%s attachments were copied.', count( $bcd->copied_attachments ) );
 				// Update the URLs in the post to point to the new images.
 				$new_upload_dir = wp_upload_dir();
 				foreach( $bcd->copied_attachments as $a )
@@ -2476,8 +2479,11 @@ This can be increased by adding the following to your wp-config.php:
 					$this->debug( 'Modifying attachment link from %s to %s', $a->old->id, $a->new->id );
 				}
 			}
+			else
+				$this->debug( 'No attachments were copied.' );
 
 			// If there are galleries...
+			$this->debug( '%s galleries are to be handled.', count( $bcd->galleries ) );
 			foreach( $bcd->galleries as $gallery )
 			{
 				// Work on a copy.
@@ -2498,6 +2504,7 @@ This can be increased by adding the following to your wp-config.php:
 				$new_ids_string = implode( ',', $new_ids );
 				$new_shortcode = $gallery->old_shortcode;
 				$new_shortcode = str_replace( $gallery->ids_string, $new_ids_string, $gallery->old_shortcode );
+				$this->debug( 'Replacing gallery shortcode %s with %s.', $gallery->old_shortcode, $new_shortcode );
 				$modified_post->post_content = str_replace( $gallery->old_shortcode, $new_shortcode, $modified_post->post_content );
 			}
 
@@ -2512,9 +2519,12 @@ This can be increased by adding the following to your wp-config.php:
 				$this->debug( 'Modifying with new post: %s', $modified_post->post_content );
 				wp_update_post( $modified_post );	// Or maybe it is.
 			}
+			else
+				$this->debug( 'No need to modify the post.' );
 
 			if ( $bcd->custom_fields )
 			{
+				$this->debug( 'Custom fields: Started.' );
 				// Remove all old custom fields.
 				$old_custom_fields = get_post_custom( $bcd->new_post[ 'ID' ] );
 
@@ -2524,9 +2534,11 @@ This can be increased by adding the following to your wp-config.php:
 					if ( $key == '_thumbnail_id' )
 					{
 						$thumbnail_post = $value[0];
+						$this->debug( 'Custom fields: Deleting thumbnail %s.', $thumbnail_post );
 						wp_delete_post( $thumbnail_post );
 					}
 
+					$this->debug( 'Custom fields: Deleting custom field %s.', $key );
 					delete_post_meta( $bcd->new_post[ 'ID' ], $key );
 				}
 
@@ -2550,23 +2562,30 @@ This can be increased by adding the following to your wp-config.php:
 				// Attached files are custom fields... but special custom fields.
 				if ( $bcd->has_thumbnail )
 				{
+					$this->debug( 'Custom fields: Re-adding thumbnail.' );
 					$o = clone( $bcd );
 					$o->attachment_data = $bcd->attachment_data[ 'thumbnail' ];
 
 					// Clear the attachment cache for this blog because the featured image could have been copied by the file copy.
 					if ( property_exists( $this, 'attachment_cache' ) )
+					{
+						$this->debug( 'Custom fields: Clearing attachment cache.' );
 						$this->attachment_cache->forget( $bcd->current_child_blog_id );
+					}
 
 					if ( $o->attachment_data->post->post_parent > 0 )
 						$o->attachment_data->post->post_parent = $bcd->new_post[ 'ID' ];
 
+					$this->debug( 'Custom fields: Maybe copying attachment.' );
 					$this->maybe_copy_attachment( $o );
+					$this->debug( 'Custom fields: Maybe copied attachment.' );
 					if ( $o->attachment_id !== false )
 					{
 						$this->debug( 'Handling post thumbnail: %s %s', $bcd->new_post[ 'ID' ], '_thumbnail_id', $o->attachment_id );
 						update_post_meta( $bcd->new_post[ 'ID' ], '_thumbnail_id', $o->attachment_id );
 					}
 				}
+				$this->debug( 'Custom fields: finished.' );
 			}
 
 			// Sticky behaviour
@@ -2615,8 +2634,15 @@ This can be increased by adding the following to your wp-config.php:
 		{
 			if ( ! $this->is_broadcasting() )
 			{
-				$this->debug( 'Finished broadcasting. Now stopping Wordpress.' );
-				exit;
+				if ( isset( $bcd->stop_after_broadcast ) && ! $bcd->stop_after_broadcast )
+				{
+					$this->debug( 'Finished broadcasting.' );
+				}
+				else
+				{
+					$this->debug( 'Finished broadcasting. Now stopping Wordpress.' );
+					exit;
+				}
 			}
 			else
 			{
@@ -2676,18 +2702,25 @@ This can be increased by adding the following to your wp-config.php:
 	public function copy_attachment( $o )
 	{
 		if ( ! file_exists( $o->attachment_data->filename_path ) )
+		{
+			$this->debug( 'Copy attachment: File %s does not exist!', $o->attachment_data->filename_path );
 			return false;
+		}
 
 		// Copy the file to the blog's upload directory
 		$upload_dir = wp_upload_dir();
 
-		copy( $o->attachment_data->filename_path, $upload_dir[ 'path' ] . '/' . $o->attachment_data->filename_base );
+		$source = $o->attachment_data->filename_path;
+		$target = $upload_dir[ 'path' ] . '/' . $o->attachment_data->filename_base;
+		$this->debug( 'Copy attachment: Copying from %s to %s', $source, $target );
+		copy( $source, $target );
 
 		// And now create the attachment stuff.
 		// This is taken almost directly from http://codex.wordpress.org/Function_Reference/wp_insert_attachment
-		$wp_filetype = wp_check_filetype( $o->attachment_data->filename_base, null );
+		$this->debug( 'Copy attachment: Checking filetype.' );
+		$wp_filetype = wp_check_filetype( $target, null );
 		$attachment = [
-			'guid' => $upload_dir[ 'url' ] . '/' . $o->attachment_data->filename_base,
+			'guid' => $upload_dir[ 'url' ] . '/' . $target,
 			'menu_order' => $o->attachment_data->post->menu_order,
 			'post_author' => $o->attachment_data->post->post_author,
 			'post_excerpt' => $o->attachment_data->post->post_excerpt,
@@ -2696,14 +2729,19 @@ This can be increased by adding the following to your wp-config.php:
 			'post_content' => '',
 			'post_status' => 'inherit',
 		];
-		$o->attachment_id = wp_insert_attachment( $attachment, $upload_dir[ 'path' ] . '/' . $o->attachment_data->filename_base, $o->attachment_data->post->post_parent );
+		$this->debug( 'Copy attachment: Inserting attachment.' );
+		$o->attachment_id = wp_insert_attachment( $attachment, $target, $o->attachment_data->post->post_parent );
 
 		// Now to maybe handle the metadata.
 		if ( $o->attachment_data->file_metadata )
 		{
+			$this->debug( 'Copy attachment: Handling metadata.' );
 			// 1. Create new metadata for this attachment.
+			$this->debug( 'Copy attachment: Requiring image.php.' );
 			require_once( ABSPATH . "wp-admin" . '/includes/image.php' );
-			$attach_data = wp_generate_attachment_metadata( $o->attachment_id, $upload_dir[ 'path' ] . '/' . $o->attachment_data->filename_base );
+			$this->debug( 'Copy attachment: Generating metadata for %s.', $target );
+			$attach_data = wp_generate_attachment_metadata( $o->attachment_id, $target );
+			$this->debug( 'Copy attachment: Metadata is %s', $this->code_export( $attach_data ) );
 
 			// 2. Write the old metadata first.
 			foreach( $o->attachment_data->post_custom as $key => $value )
@@ -2721,6 +2759,7 @@ This can be increased by adding the following to your wp-config.php:
 			}
 
 			// 3. Overwrite the metadata that needs to be overwritten with fresh data.
+			$this->debug( 'Copy attachment: Updating metadata.' );
 			wp_update_attachment_metadata( $o->attachment_id,  $attach_data );
 		}
 	}
@@ -3056,6 +3095,7 @@ This can be increased by adding the following to your wp-config.php:
 		$attachment_posts = $this->attachment_cache->get( $key, null );
 		if ( $attachment_posts === null )
 		{
+			$this->debug( 'Maybe copy attachment: Searching for attachment posts.' );
 			$attachment_posts = get_posts( [
 				'cache_results' => false,
 				'name' => $attachment_data->post->post_name,
@@ -3063,6 +3103,7 @@ This can be increased by adding the following to your wp-config.php:
 				'post_type' => 'attachment',
 
 			] );
+			$this->debug( 'Maybe copy attachment: Found %s attachment posts.', count( $attachment_posts ) );
 			$this->attachment_cache->put( $key, $attachment_posts );
 		}
 
@@ -3077,23 +3118,27 @@ This can be increased by adding the following to your wp-config.php:
 			{
 				case 'overwrite':
 					// Delete the existing attachment
+					$this->debug( 'Maybe copy attachment: Deleting current attachment %s', $attachment_post->ID );
 					wp_delete_attachment( $attachment_post->ID, true );		// true = Don't go to trash
 					break;
 				case 'randomize':
 					$filename = $options->attachment_data->filename_base;
 					$filename = preg_replace( '/(.*)\./', '\1_' . rand( 1000000, 9999999 ) .'.', $filename );
 					$options->attachment_data->filename_base = $filename;
+					$this->debug( 'Maybe copy attachment: Randomizing new attachment filename to %s.', $options->attachment_data->filename_base );
 					break;
 				case 'use':
 				default:
 					// The ID is the important part.
 					$options->attachment_id = $attachment_post->ID;
+					$this->debug( 'Maybe copy attachment: Using existing attachment %s.', $attachment_post->ID );
 					return $options;
 
 			}
 		}
 
 		// Since it doesn't exist, copy it.
+		$this->debug( 'Maybe copy attachment: Really copying attachment.' );
 		$this->copy_attachment( $options );
 		return $options;
 	}
