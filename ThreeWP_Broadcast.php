@@ -844,6 +844,11 @@ class ThreeWP_Broadcast
 		$object = new \ReflectionObject( new \plainview\sdk\wordpress\base );
 		$row->td()->text( $this->sdk_version );
 
+		// SDK version required
+		$row = $table->body()->row();
+		$row->td()->text( 'SDK version required' );
+		$row->td()->text( $this->sdk_version_required );
+
 		// SDK path
 		$row = $table->body()->row();
 		$row->td()->text( 'Plainview Wordpress SDK path' );
