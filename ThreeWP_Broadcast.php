@@ -22,7 +22,10 @@ use \plainview\sdk\html\div;
 class ThreeWP_Broadcast
 	extends \threewp_broadcast\ThreeWP_Broadcast_Base
 {
-	use \plainview\sdk\wordpress\traits\debug;
+	// Include in the next version or so.
+	//use \plainview\sdk\wordpress\traits\debug;
+
+	use debug;
 
 	/**
 		@brief		Broadcasting stack.
@@ -89,7 +92,8 @@ class ThreeWP_Broadcast
 
 	public $plugin_version = 2.21;
 
-	protected $sdk_version_required = 20140501;		// add_action / add_filter
+	// 20140501 when debug trait is moved to SDK.
+	protected $sdk_version_required = 20130505;		// add_action / add_filter
 
 	protected $site_options = array(
 		'blogs_to_hide' => 5,								// How many blogs to auto-hide
