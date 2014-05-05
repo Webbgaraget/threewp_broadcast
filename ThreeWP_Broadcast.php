@@ -2750,7 +2750,7 @@ This can be increased by adding the following to your wp-config.php:
 			require_once( ABSPATH . "wp-admin" . '/includes/image.php' );
 			$this->debug( 'Copy attachment: Generating metadata for %s.', $target );
 			$attach_data = wp_generate_attachment_metadata( $o->attachment_id, $target );
-			$this->debug( 'Copy attachment: Metadata is %s', $this->code_export( $attach_data ) );
+			$this->debug( 'Copy attachment: Metadata is %s', $attach_data );
 
 			// 2. Write the old metadata first.
 			foreach( $o->attachment_data->post_custom as $key => $value )
