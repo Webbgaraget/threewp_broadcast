@@ -27,8 +27,6 @@ if ( ! class_exists( '\\threewp_broadcast\\ThreeWP_Broadcast_Base' ) )
 class ThreeWP_Broadcast_Blog_Groups
 	extends \threewp_broadcast\ThreeWP_Broadcast_Base
 {
-	public $plugin_version = 2.20;
-
 	protected $sdk_version_required = 20131006;		// tabs->get_is()
 
 	protected $site_options = array(

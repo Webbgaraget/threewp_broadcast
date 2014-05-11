@@ -24,7 +24,6 @@ class ThreeWP_Broadcast
 {
 	// Include in the next version or so.
 	//use \plainview\sdk\wordpress\traits\debug;
-
 	use debug;
 
 	/**
@@ -126,8 +125,6 @@ class ThreeWP_Broadcast
 		$this->add_action( 'admin_menu' );
 		$this->add_action( 'admin_print_styles' );
 
-		$this->add_filter( 'threewp_activity_monitor_list_activities' );
-
 		if ( $this->get_site_option( 'override_child_permalinks' ) )
 		{
 			$this->add_filter( 'post_link', 10, 3 );
@@ -173,11 +170,6 @@ class ThreeWP_Broadcast
 	public function admin_print_styles()
 	{
 		$load = false;
-
-		$pages = array(get_class(), 'ThreeWP_Activity_Monitor' );
-
-		if ( isset( $_GET[ 'page' ] ) )
-			$load |= in_array( $_GET[ 'page' ], $pages);
 
 		foreach(array( 'post-new.php', 'post.php' ) as $string)
 			$load |= strpos( $_SERVER[ 'SCRIPT_FILENAME' ], $string) !== false;
@@ -841,7 +833,6 @@ class ThreeWP_Broadcast
 			'</a>'
 		);
 		$row->td()->text( $text );
-		$object = new \ReflectionObject( new \plainview\sdk\wordpress\base );
 		$row->td()->text( $this->sdk_version );
 
 		// SDK version required
@@ -1060,24 +1051,6 @@ This can be increased by adding the following to your wp-config.php:
 		// Remove just one child?
 		if ( isset( $child_blog_id ) )
 		{
-			// Inform Activity Monitor that a post has been unlinked.
-			// Get the info about this post.
-			$post_data = get_post( $post_id );
-			$post_url = get_permalink( $post_id );
-			$post_url = '<a href="'.$post_url.'">'.$post_data->post_title.'</a>';
-
-			// And about the child blog
-			switch_to_blog( $child_blog_id );
-			$blog_url = '<a href="'.get_bloginfo( 'url' ).'">'.get_bloginfo( 'name' ).'</a>';
-			restore_current_blog();
-
-			do_action( 'threewp_activity_monitor_new_activity', array(
-				'activity_id' => '3broadcast_unlinked',
-				'activity_strings' => array(
-					'' => '%user_display_name_with_link% unlinked ' . $post_url . ' with the child post on ' . $blog_url,
-				),
-			) );
-
 			$this->delete_post_broadcast_data( $child_blog_id, $linked_children[ $child_blog_id ] );
 			$broadcast_data->remove_linked_child( $child_blog_id );
 			$this->set_post_broadcast_data( $blog_id, $post_id, $broadcast_data );
@@ -1094,21 +1067,6 @@ This can be increased by adding the following to your wp-config.php:
 				restore_current_blog();
 				$this->delete_post_broadcast_data( $linked_child_blog_id, $linked_child_post_id );
 			}
-
-			// Inform Activity Monitor
-			// Get the info about this post.
-			$post_data = get_post( $post_id );
-			$post_url = get_permalink( $post_id );
-			$post_url = '<a href="'.$post_url.'">'.$post_data->post_title.'</a>';
-
-			$blogs_url = implode( ', ', $blogs_url);
-
-			do_action( 'threewp_activity_monitor_new_activity', array(
-				'activity_id' => '3broadcast_unlinked',
-				'activity_strings' => array(
-					'' => '%user_display_name_with_link% unlinked ' . $post_url . ' with the child posts on ' . $blogs_url,
-				),
-			) );
 
 			$broadcast_data = $this->get_post_broadcast_data( $blog_id, $post_id );
 			$broadcast_data->remove_linked_children();
@@ -1352,28 +1310,6 @@ This can be increased by adding the following to your wp-config.php:
 		{
 			$this->debug( 'No blogs are selected. Not broadcasting anything.' );
 		}
-	}
-
-	public function threewp_activity_monitor_list_activities( $activities )
-	{
-		// First, fill in our own activities.
-		$this->activities = array(
-			'3broadcast_broadcasted' => array(
-				'name' => $this->_( 'A post was broadcasted.' ),
-			),
-			'3broadcast_unlinked' => array(
-				'name' => $this->_( 'A post was unlinked.' ),
-			),
-		);
-
-		// Insert our module name in all the values.
-		foreach( $this->activities as $index => $activity )
-		{
-			$activity[ 'plugin' ] = 'ThreeWP Broadcast';
-			$activities[ $index ] = $activity;
-		}
-
-		return $activities;
 	}
 
 	/**
@@ -2270,9 +2206,6 @@ This can be increased by adding the following to your wp-config.php:
 			}
 		}
 
-		$to_broadcasted_blogs = [];				// Array of blog names that we're broadcasting to. To be used for the activity monitor action.
-		$to_broadcasted_blog_details = []; 		// Array of blog and post IDs that we're broadcasting to. To be used for the activity monitor action.
-
 		// To prevent recursion
 		array_push( $this->broadcasting, $bcd );
 
@@ -2612,9 +2545,6 @@ This can be increased by adding the following to your wp-config.php:
 				$this->set_post_broadcast_data( $bcd->current_child_blog_id, $bcd->new_post[ 'ID' ], $new_post_broadcast_data );
 			}
 
-			$to_broadcasted_blogs[] = '<a href="' . get_permalink( $bcd->new_post[ 'ID' ] ) . '">' . get_bloginfo( 'name' ) . '</a>';
-			$to_broadcasted_blog_details[] = array( 'blog_id' => $bcd->current_child_blog_id, 'post_id' => $bcd->new_post[ 'ID' ], 'inserted' => $need_to_insert_post );
-
 			$action = new actions\broadcasting_before_restore_current_blog;
 			$action->broadcasting_data = $bcd;
 			$action->apply();
@@ -2660,15 +2590,6 @@ This can be increased by adding the following to your wp-config.php:
 		}
 
 		$this->load_language();
-
-		$post_url_and_name = '<a href="' . get_permalink( $bcd->post->ID ) . '">' . $bcd->post->post_title. '</a>';
-		do_action( 'threewp_activity_monitor_new_activity', [
-			'activity_id' => '3broadcast_broadcasted',
-			'activity_strings' => array(
-				'' => '%user_display_name_with_link% has broadcasted '.$post_url_and_name.' to: ' . implode( ', ', $to_broadcasted_blogs ),
-			),
-			'activity_details' => $to_broadcasted_blog_details,
-		] );
 
 		return $bcd;
 	}

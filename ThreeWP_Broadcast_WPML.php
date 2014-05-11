@@ -28,8 +28,6 @@ if ( ! class_exists( '\\threewp_broadcast\\ThreeWP_Broadcast_Base' ) )
 class ThreeWP_Broadcast_WPML
 	extends \threewp_broadcast\ThreeWP_Broadcast_Base
 {
-	public $plugin_version = 2.20;
-
 	protected $sdk_version_required = 20130505;		// add_action / add_filter
 
 	public function _construct()
