@@ -89,7 +89,7 @@ class ThreeWP_Broadcast
 	**/
 	public $permalink_cache;
 
-	public $plugin_version = 2.21;
+	public $plugin_version = 2.22;
 
 	// 20140501 when debug trait is moved to SDK.
 	protected $sdk_version_required = 20130505;		// add_action / add_filter
