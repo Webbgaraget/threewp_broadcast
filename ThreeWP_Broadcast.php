@@ -1580,7 +1580,7 @@ class ThreeWP_Broadcast extends ThreeWP_Broadcast_Base
 			/**
 				Remove the current attachments.
 			*/
-			$attachments_to_remove =& get_children( 'post_parent='.$new_post_id.'&post_type=attachment' );
+			$attachments_to_remove = get_children( 'post_parent='.$new_post_id.'&post_type=attachment' );
 			foreach ( $attachments_to_remove as $attachment_to_remove )
 				wp_delete_attachment( $attachment_to_remove->ID );
 			
