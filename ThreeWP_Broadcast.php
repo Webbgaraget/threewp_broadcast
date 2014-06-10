@@ -1620,128 +1620,140 @@ This can be increased by adding the following to your wp-config.php:
 
 			if ( count( $children ) > 0 )
 			{
-				// Only display if there is more than one child post
-				if ( count( $children ) > 1 )
+				$filter->html->put( 'broadcasted_to_number', 'Broadcasted to: <strong id="broadcasted-' . $filter->post->ID . '">' . count( $children ) . ' sites</strong><br>' );
+
+				if ( ! isset( $_GET['broadcast-display-children'] ) || $_GET['broadcast-display-children'] != $filter->post->ID )
 				{
-					$strings = new \threewp_broadcast\collections\strings_with_metadata;
-
-					$strings->set( 'div_open', '<div class="row-actions broadcasted_blog_actions">' );
-					$strings->set( 'text_all', $this->_( 'All' ) );
-					$strings->set( 'div_small_open', '<small>' );
-
-					$url = sprintf( "admin.php?page=threewp_broadcast&amp;action=user_restore_all&amp;post=%s", $filter->parent_post_id );
-					$url = wp_nonce_url( $url, 'broadcast_restore_all_' . $filter->parent_post_id );
-					$strings->set( 'restore_all_separator', ' | ' );
-					$strings->set( 'restore_all', sprintf( '<a href="%s" title="%s">%s</a>',
-						$url,
-						$this->_( 'Restore all of the children from the trash' ),
-						$this->_( 'Restore' )
-					) );
-
-					$url = sprintf( "admin.php?page=threewp_broadcast&amp;action=user_trash_all&amp;post=%s", $filter->parent_post_id );
-					$url = wp_nonce_url( $url, 'broadcast_trash_all_' . $filter->parent_post_id );
-					$strings->set( 'trash_all_separator', ' | ' );
-					$strings->set( 'trash_all', sprintf( '<a href="%s" title="%s">%s</a>',
-						$url,
-						$this->_( 'Put all of the children in the trash' ),
-						$this->_( 'Trash' )
-					) );
-
-					$url_unlink_all = sprintf( "admin.php?page=threewp_broadcast&amp;action=user_unlink_all&amp;post=%s", $filter->parent_post_id );
-					$url_unlink_all = wp_nonce_url( $url_unlink_all, 'broadcast_unlink_all_' . $filter->parent_post_id );
-					$strings->set( 'unlink_all_separator', ' | ' );
-					$strings->set( 'unlink_all', sprintf( '<a href="%s" title="%s">%s</a>',
-						$url,
-						$this->_( 'Unlink all of the child posts' ),
-						$this->_( 'Unlink' )
-					) );
-
-					$url = sprintf( "admin.php?page=threewp_broadcast&amp;action=user_delete_all&amp;post=%s", $filter->parent_post_id );
-					$url = wp_nonce_url( $url, 'broadcast_delete_all_' . $filter->parent_post_id );
-					$strings->set( 'delete_all_separator', ' | ' );
-					$strings->set( 'delete_all', sprintf( '<span class="trash"><a href="%s" title="%s">%s</a></span>',
-						$url,
-						$this->_( 'Permanently delete all the broadcasted children' ),
-						$this->_( 'Delete' )
-					) );
-
-					$strings->set( 'div_small_close', '</small>' );
-					$strings->set( 'div_close', '</div>' );
-
-					$filter->html->put( 'delete_all', $strings );
+					$display_children_url = add_query_arg( 'broadcast-display-children', $filter->post->ID ) . '#broadcasted-' . $filter->post->ID;
+					$filter->html->put( 'display_children_link', '<a href="' . $display_children_url . '"><em>Display children</em></a>' );
 				}
-
-				$collection = new \threewp_broadcast\collections\strings;
-
-				foreach( $children as $child_blog_id => $child_post_id )
+				else
 				{
-					$strings = new \threewp_broadcast\collections\strings_with_metadata;
+					// Only display if there is more than one child post
+					if ( count( $children ) > 1 )
+					{
+						$strings = new \threewp_broadcast\collections\strings_with_metadata;
 
-					$url_child = get_blog_permalink( $child_blog_id, $child_post_id );
-					// The post id is for the current blog, not the target blog.
+						$strings->set( 'div_open', '<div class="row-actions broadcasted_blog_actions">' );
+						$strings->set( 'text_all', $this->_( 'All' ) );
+						$strings->set( 'div_small_open', '<small>' );
 
-					// For get_bloginfo.
-					switch_to_blog( $child_blog_id );
-					$blogname = get_bloginfo( 'blogname' );
-					restore_current_blog();
+						$url = sprintf( "admin.php?page=threewp_broadcast&amp;action=user_restore_all&amp;post=%s", $filter->parent_post_id );
+						$url = wp_nonce_url( $url, 'broadcast_restore_all_' . $filter->parent_post_id );
+						$strings->set( 'restore_all_separator', ' | ' );
+						$strings->set( 'restore_all', sprintf( '<a href="%s" title="%s">%s</a>',
+							$url,
+							$this->_( 'Restore all of the children from the trash' ),
+							$this->_( 'Restore' )
+						) );
 
-					$strings->metadata()->set( 'child_blog_id', $child_blog_id );
-					$strings->metadata()->set( 'blogname', $blogname );
+						$url = sprintf( "admin.php?page=threewp_broadcast&amp;action=user_trash_all&amp;post=%s", $filter->parent_post_id );
+						$url = wp_nonce_url( $url, 'broadcast_trash_all_' . $filter->parent_post_id );
+						$strings->set( 'trash_all_separator', ' | ' );
+						$strings->set( 'trash_all', sprintf( '<a href="%s" title="%s">%s</a>',
+							$url,
+							$this->_( 'Put all of the children in the trash' ),
+							$this->_( 'Trash' )
+						) );
 
-					$strings->set( 'div_open', sprintf( '<div class="child_blog_name blog_%s">', $child_blog_id ) );
-					$strings->set( 'a_broadcasted_child', sprintf( '<a class="broadcasted_child" href="%s">%s </a>', $url_child, $blogname ) );
-					$strings->set( 'span_row_actions_open', '<span class="row-actions broadcasted_blog_actions">' );
-					$strings->set( 'small_open', '<small>' );
+						$url_unlink_all = sprintf( "admin.php?page=threewp_broadcast&amp;action=user_unlink_all&amp;post=%s", $filter->parent_post_id );
+						$url_unlink_all = wp_nonce_url( $url_unlink_all, 'broadcast_unlink_all_' . $filter->parent_post_id );
+						$strings->set( 'unlink_all_separator', ' | ' );
+						$strings->set( 'unlink_all', sprintf( '<a href="%s" title="%s">%s</a>',
+							$url,
+							$this->_( 'Unlink all of the child posts' ),
+							$this->_( 'Unlink' )
+						) );
 
-					$url = sprintf( "admin.php?page=threewp_broadcast&amp;action=user_restore&amp;post=%s&amp;child=%s", $filter->parent_post_id, $child_blog_id );
-					$url = wp_nonce_url( $url, 'broadcast_restore_' . $child_blog_id . '_' . $filter->parent_post_id );
-					$strings->set( 'restore_separator', ' | ' );
-					$strings->set( 'restore', sprintf( '<a href="%s" title="%s">%s</a>',
-						$url,
-						$this->_( 'Restore all of the children from the trash' ),
-						$this->_( 'Restore' )
-					) );
+						$url = sprintf( "admin.php?page=threewp_broadcast&amp;action=user_delete_all&amp;post=%s", $filter->parent_post_id );
+						$url = wp_nonce_url( $url, 'broadcast_delete_all_' . $filter->parent_post_id );
+						$strings->set( 'delete_all_separator', ' | ' );
+						$strings->set( 'delete_all', sprintf( '<span class="trash"><a href="%s" title="%s">%s</a></span>',
+							$url,
+							$this->_( 'Permanently delete all the broadcasted children' ),
+							$this->_( 'Delete' )
+						) );
 
-					$url = sprintf( "admin.php?page=threewp_broadcast&amp;action=user_trash&amp;post=%s&amp;child=%s", $filter->parent_post_id, $child_blog_id );
-					$url = wp_nonce_url( $url, 'broadcast_trash_' . $child_blog_id . '_' . $filter->parent_post_id );
-					$strings->set( 'trash_separator', ' | ' );
-					$strings->set( 'trash', sprintf( '<a href="%s" title="%s">%s</a>',
-						$url,
-						$this->_( 'Put this broadcasted child post in the trash' ),
-						$this->_( 'Trash' )
-					) );
+						$strings->set( 'div_small_close', '</small>' );
+						$strings->set( 'div_close', '</div>' );
 
-					$url = sprintf( "admin.php?page=threewp_broadcast&amp;action=user_unlink&amp;post=%s&amp;child=%s", $filter->parent_post_id, $child_blog_id );
-					$url = wp_nonce_url( $url, 'broadcast_unlink_' . $child_blog_id . '_' . $filter->parent_post_id );
-					$strings->set( 'unlink_separator', ' | ' );
-					$strings->set( 'unlink', sprintf( '<a href="%s" title="%s">%s</a>',
-						$url,
-						$this->_( 'Remove link to this broadcasted child post' ),
-						$this->_( 'Unlink' )
-					) );
+						$filter->html->put( 'delete_all', $strings );
+					}
 
-					$url = sprintf( "admin.php?page=threewp_broadcast&amp;action=user_delete&amp;post=%s&amp;child=%s", $filter->parent_post_id, $child_blog_id );
-					$url = wp_nonce_url( $url, 'broadcast_delete_' . $child_blog_id . '_' . $filter->parent_post_id );
-					$strings->set( 'delete_separator', ' | ' );
-					$strings->set( 'delete', sprintf( '<span class="trash"><a href="%s" title="%s">%s</a></span>',
-						$url,
-						$this->_( 'Unlink and delete this broadcasted child post' ),
-						$this->_( 'Delete' )
-					) );
+					$collection = new \threewp_broadcast\collections\strings;
 
-					$strings->set( 'small_close', '</small>' );
-					$strings->set( 'span_row_actions_close', '</span>' );
-					$strings->set( 'div_close', '</div>' );
 
-					$collection->set( $blogname, $strings );
+					foreach( $children as $child_blog_id => $child_post_id )
+					{
+						$strings = new \threewp_broadcast\collections\strings_with_metadata;
+
+						$url_child = get_blog_permalink( $child_blog_id, $child_post_id );
+						// The post id is for the current blog, not the target blog.
+
+						// For get_bloginfo.
+						switch_to_blog( $child_blog_id );
+						$blogname = get_bloginfo( 'blogname' );
+						restore_current_blog();
+
+						$strings->metadata()->set( 'child_blog_id', $child_blog_id );
+						$strings->metadata()->set( 'blogname', $blogname );
+
+						$strings->set( 'div_open', sprintf( '<div class="child_blog_name blog_%s">', $child_blog_id ) );
+						$strings->set( 'a_broadcasted_child', sprintf( '<a class="broadcasted_child" href="%s">%s </a>', $url_child, $blogname ) );
+						$strings->set( 'span_row_actions_open', '<span class="row-actions broadcasted_blog_actions">' );
+						$strings->set( 'small_open', '<small>' );
+
+						$url = sprintf( "admin.php?page=threewp_broadcast&amp;action=user_restore&amp;post=%s&amp;child=%s", $filter->parent_post_id, $child_blog_id );
+						$url = wp_nonce_url( $url, 'broadcast_restore_' . $child_blog_id . '_' . $filter->parent_post_id );
+						$strings->set( 'restore_separator', ' | ' );
+						$strings->set( 'restore', sprintf( '<a href="%s" title="%s">%s</a>',
+							$url,
+							$this->_( 'Restore all of the children from the trash' ),
+							$this->_( 'Restore' )
+						) );
+
+						$url = sprintf( "admin.php?page=threewp_broadcast&amp;action=user_trash&amp;post=%s&amp;child=%s", $filter->parent_post_id, $child_blog_id );
+						$url = wp_nonce_url( $url, 'broadcast_trash_' . $child_blog_id . '_' . $filter->parent_post_id );
+						$strings->set( 'trash_separator', ' | ' );
+						$strings->set( 'trash', sprintf( '<a href="%s" title="%s">%s</a>',
+							$url,
+							$this->_( 'Put this broadcasted child post in the trash' ),
+							$this->_( 'Trash' )
+						) );
+
+						$url = sprintf( "admin.php?page=threewp_broadcast&amp;action=user_unlink&amp;post=%s&amp;child=%s", $filter->parent_post_id, $child_blog_id );
+						$url = wp_nonce_url( $url, 'broadcast_unlink_' . $child_blog_id . '_' . $filter->parent_post_id );
+						$strings->set( 'unlink_separator', ' | ' );
+						$strings->set( 'unlink', sprintf( '<a href="%s" title="%s">%s</a>',
+							$url,
+							$this->_( 'Remove link to this broadcasted child post' ),
+							$this->_( 'Unlink' )
+						) );
+
+						$url = sprintf( "admin.php?page=threewp_broadcast&amp;action=user_delete&amp;post=%s&amp;child=%s", $filter->parent_post_id, $child_blog_id );
+						$url = wp_nonce_url( $url, 'broadcast_delete_' . $child_blog_id . '_' . $filter->parent_post_id );
+						$strings->set( 'delete_separator', ' | ' );
+						$strings->set( 'delete', sprintf( '<span class="trash"><a href="%s" title="%s">%s</a></span>',
+							$url,
+							$this->_( 'Unlink and delete this broadcasted child post' ),
+							$this->_( 'Delete' )
+						) );
+
+						$strings->set( 'small_close', '</small>' );
+						$strings->set( 'span_row_actions_close', '</span>' );
+						$strings->set( 'div_close', '</div>' );
+
+						$collection->set( $blogname, $strings );
+					}
+
+					$collection->sort_by( function( $child )
+					{
+						return $child->metadata()->get( 'blogname' );
+					});
+
+					$filter->html->put( 'broadcasted_to', $collection );
+					$filter->html->put( 'hide_children_link', '<a href="' . remove_query_arg( 'broadcast-display-children' ) . '"><em>Hide children</em></a>' );
 				}
-
-				$collection->sort_by( function( $child )
-				{
-					return $child->metadata()->get( 'blogname' );
-				});
-
-				$filter->html->put( 'broadcasted_to', $collection );
 			}
 		}
 		$filter->applied();
