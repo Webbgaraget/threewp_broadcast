@@ -1,7 +1,8 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file"
+        "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "This file is @generated automatically"
     ],
     "hash": "b62cb00ad4ca63880e8b88d33fbd3db2",
     "packages": [
@@ -14,12 +15,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/the-plainview/sdk.git",
-                "reference": "754680c0bd419ac506334cb5718ff6bd92caad75"
+                "reference": "72520386a3cbc4e0295dbaae0d2a3f1ecbb79b82"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/the-plainview/sdk/zipball/754680c0bd419ac506334cb5718ff6bd92caad75",
-                "reference": "754680c0bd419ac506334cb5718ff6bd92caad75",
+                "url": "https://api.github.com/repos/the-plainview/sdk/zipball/72520386a3cbc4e0295dbaae0d2a3f1ecbb79b82",
+                "reference": "72520386a3cbc4e0295dbaae0d2a3f1ecbb79b82",
                 "shasum": ""
             },
             "require": {
@@ -45,7 +46,7 @@
                 }
             ],
             "description": "Plainview SDK",
-            "time": "2014-05-18 19:29:24"
+            "time": "2014-06-10 13:13:57"
         }
     ],
     "aliases": [
