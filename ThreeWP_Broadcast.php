@@ -2547,15 +2547,13 @@ This can be increased by adding the following to your wp-config.php:
 					$delete = true;
 
 					// For the protectlist to work the custom field has to already exist on the child.
-					foreach( $bcd->custom_fields->protectlist as $protected  )
+					if ( in_array( $key, $bcd->custom_fields->protectlist ) )
 					{
-						if ( $key !== $protected )
+						if ( ! isset( $old_custom_fields[ $key ] ) )
 							continue;
-						if ( ! isset( $old_custom_fields[ $protected ] ) )
+						if ( ! isset( $bcd->post_custom_fields[ $key ] ) )
 							continue;
-						if ( ! isset( $bcd->post_custom_fields[ $protected ] ) )
-							continue;
-						$protected_field[ $protected ] = true;
+						$protected_field[ $key ] = true;
 						$delete = false;
 					}
 
@@ -2571,7 +2569,7 @@ This can be increased by adding the following to your wp-config.php:
 				foreach( $bcd->post_custom_fields as $meta_key => $meta_value )
 				{
 					// Protected = ignore.
-					if ( isset( $protected_field[ $protected ] ) )
+					if ( isset( $protected_field[ $meta_key ] ) )
 						continue;
 
 					if ( is_array( $meta_value ) )
@@ -2579,12 +2577,14 @@ This can be increased by adding the following to your wp-config.php:
 						foreach( $meta_value as $single_meta_value )
 						{
 							$single_meta_value = maybe_unserialize( $single_meta_value );
+							$this->debug( 'Custom fields: Adding array value %s', $meta_key );
 							add_post_meta( $bcd->new_post[ 'ID' ], $meta_key, $single_meta_value );
 						}
 					}
 					else
 					{
 						$meta_value = maybe_unserialize( $meta_value );
+						$this->debug( 'Custom fields: Adding value %s', $meta_key );
 						add_post_meta( $bcd->new_post[ 'ID' ], $meta_key, $meta_value );
 					}
 				}
@@ -2615,7 +2615,7 @@ This can be increased by adding the following to your wp-config.php:
 						update_post_meta( $bcd->new_post[ 'ID' ], '_thumbnail_id', $o->attachment_id );
 					}
 				}
-				$this->debug( 'Custom fields: finished.' );
+				$this->debug( 'Custom fields: Finished.' );
 			}
 
 			// Sticky behaviour
