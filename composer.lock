@@ -15,12 +15,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/the-plainview/sdk.git",
-                "reference": "76b7bf4ca1d357fc0784f8fbe06b1fd7434766f7"
+                "reference": "5c98342a1b47f3ae5142ce64a0cea1da37fe1622"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/the-plainview/sdk/zipball/76b7bf4ca1d357fc0784f8fbe06b1fd7434766f7",
-                "reference": "76b7bf4ca1d357fc0784f8fbe06b1fd7434766f7",
+                "url": "https://api.github.com/repos/the-plainview/sdk/zipball/5c98342a1b47f3ae5142ce64a0cea1da37fe1622",
+                "reference": "5c98342a1b47f3ae5142ce64a0cea1da37fe1622",
                 "shasum": ""
             },
             "require": {
@@ -46,7 +46,7 @@
                 }
             ],
             "description": "Plainview SDK",
-            "time": "2014-06-12 12:53:36"
+            "time": "2014-06-14 20:20:11"
         }
     ],
     "aliases": [
