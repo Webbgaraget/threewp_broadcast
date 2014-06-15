@@ -211,7 +211,7 @@ It works transparently in the background, but in case you've never really used W
 
 == Changelog ==
 
-= 2.24 201406xx =
+= 2.24 20140615 =
 * New: Custom field protect list.
 * Fix: Better support for Windows servers.
 
