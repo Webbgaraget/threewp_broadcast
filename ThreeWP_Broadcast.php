@@ -6,7 +6,7 @@ Author URI:		http://www.plainview.se
 Description:	Broadcast / multipost a post, with attachments, custom fields, tags and other taxonomies to other blogs in the network.
 Plugin Name:	ThreeWP Broadcast
 Plugin URI:		http://plainview.se/wordpress/threewp-broadcast/
-Version:		2.24
+Version:		3
 */
 
 namespace threewp_broadcast;
@@ -90,7 +90,7 @@ class ThreeWP_Broadcast
 	**/
 	public $permalink_cache;
 
-	public $plugin_version = 2.23;
+	public $plugin_version = 3;
 
 	// 20140501 when debug trait is moved to SDK.
 	protected $sdk_version_required = 20130505;		// add_action / add_filter
@@ -2451,8 +2451,10 @@ This can be increased by adding the following to your wp-config.php:
 				{
 					$o = clone( $bcd );
 					$o->attachment_data = $attachment;
-					if ( $o->attachment_data->post->post_parent > 0 )
+					if ( $o->attachment_data->post->post_parent == $bcd->post->ID )
 						$o->attachment_data->post->post_parent = $bcd->new_post[ 'ID' ];
+					else
+						$o->attachment_data->post->post_parent = 0;
 					$this->maybe_copy_attachment( $o );
 					$a = new \stdClass();
 					$a->old = $attachment;
@@ -2539,8 +2541,7 @@ This can be increased by adding the following to your wp-config.php:
 					if ( $key == '_thumbnail_id' )
 					{
 						$thumbnail_post = $value[0];
-						$this->debug( 'Custom fields: Deleting thumbnail %s.', $thumbnail_post );
-						wp_delete_post( $thumbnail_post );
+						$this->debug( 'Custom fields: The thumbnail ID is %s. Saved for later use.', $thumbnail_post );
 					}
 
 					// Do we delete this custom field?
@@ -2596,15 +2597,10 @@ This can be increased by adding the following to your wp-config.php:
 					$o = clone( $bcd );
 					$o->attachment_data = $bcd->attachment_data[ 'thumbnail' ];
 
-					// Clear the attachment cache for this blog because the featured image could have been copied by the file copy.
-					if ( property_exists( $this, 'attachment_cache' ) )
-					{
-						$this->debug( 'Custom fields: Clearing attachment cache.' );
-						$this->attachment_cache->forget( $bcd->current_child_blog_id );
-					}
-
-					if ( $o->attachment_data->post->post_parent > 0 )
+					if ( $o->attachment_data->post->post_parent == $bcd->post->ID )
 						$o->attachment_data->post->post_parent = $bcd->new_post[ 'ID' ];
+					else
+						$o->attachment_data->post->post_parent = 0;
 
 					$this->debug( 'Custom fields: Maybe copying attachment.' );
 					$this->maybe_copy_attachment( $o );
@@ -3044,36 +3040,33 @@ This can be increased by adding the following to your wp-config.php:
 	**/
 	public function maybe_copy_attachment( $options )
 	{
-		if ( !isset( $this->attachment_cache ) )
-			$this->attachment_cache = new collection;
-
 		$attachment_data = $options->attachment_data;		// Convenience.
 
 		$key = get_current_blog_id();
 
-		$attachment_posts = $this->attachment_cache->get( $key, null );
-		if ( $attachment_posts === null )
-		{
-			$this->debug( 'Maybe copy attachment: Searching for attachment posts.' );
-			$attachment_posts = get_posts( [
-				'cache_results' => false,
-				'name' => $attachment_data->post->post_name,
-				'numberposts' => PHP_INT_MAX,
-				'post_type' => 'attachment',
-
-			] );
-			$this->debug( 'Maybe copy attachment: Found %s attachment posts.', count( $attachment_posts ) );
-			$this->attachment_cache->put( $key, $attachment_posts );
-		}
+		$this->debug( 'Maybe copy attachment: Searching for attachment posts with the name %s.', $attachment_data->post->post_name );
+		$attachment_posts = get_posts( [
+			'cache_results' => false,
+			'name' => $attachment_data->post->post_name,
+			'numberposts' => PHP_INT_MAX,
+			'post_parent' => null,
+			'post_type' => 'attachment',
+		] );
+		$this->debug( 'Maybe copy attachment: Found %s attachment posts.', count( $attachment_posts ) );
 
 		// Is there an existing media file?
 		// Try to find the filename in the GUID.
 		foreach( $attachment_posts as $attachment_post )
 		{
 			if ( $attachment_post->post_name !== $attachment_data->post->post_name )
+			{
+				$this->debug( "The attachment post name is %s, and we are looking for %s. Ignoring attachment.", $attachment_post->post_name, $attachment_data->post->post_name );
 				continue;
+			}
 			// We've found an existing attachment. What to do with it...
-			switch( $this->get_site_option( 'existing_attachments', 'use' ) )
+			$existing_action = $this->get_site_option( 'existing_attachments', 'use' );
+			$this->debug( 'Maybe copy attachment: The action for existing attachments is to %s.', $existing_action );
+			switch( $existing_action )
 			{
 				case 'overwrite':
 					// Delete the existing attachment
