@@ -207,15 +207,19 @@ It works transparently in the background, but in case you've never really used W
 6. The other blogs should now have two translations of the same post and the same post overview listing.
 
 2014-01-12 This plugin will soon be replaced by a WPML premium plugin that enables broadcasting from the translation manager.
-2014-05-20 This plugin will be removed in the future. Use the WPML plugin the Premium Pack instead.
+2014-05-20 This plugin will be removed in the future.
 
 == Changelog ==
 
-= 3 201406xx =
-* Fix: Featured post conflicts resolved. See 3 fixes below.
+= 3 201407xx =
+* New: Blog groups: after selecting a blog group the value will no longer change back to "no group selected".
+* New: Blog groups: select "no group selected" and the same blog group again to unselect the blogs from the group.
+* Fix: Featured post conflicts resolved. See 3+1 fixes below.
 * Fix: Do not automatically delete the thumbnail (it might not be attached to this post).
 * Fix: Removed attachment cache.
 * Fix: Only attach copy image to post if it was attached to the parent post.
+* New: New related premium pack plugin: Keep Child Attachments.
+* Code: Meta Box has two new methods to allow for input modifications before display: convert_form_input_later() and convert_form_inputs_now().
 * Note: Changed versioning to rapid release. No more point releases.
 
 = 2.24 20140615 =

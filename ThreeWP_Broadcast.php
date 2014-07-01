@@ -1439,6 +1439,7 @@ This can be increased by adding the following to your wp-config.php:
 				->label_( 'Link this post to its children' )
 				->title( $this->_( 'Create a link to the children, which will be updated when this post is updated, trashed when this post is trashed, etc.' ) );
 			$meta_box_data->html->put( 'link', '' );
+			$meta_box_data->convert_form_input_later( 'link' );
 		}
 
 		if (
@@ -1452,6 +1453,7 @@ This can be increased by adding the following to your wp-config.php:
 				->label_( 'Custom fields' )
 				->title( 'Broadcast all the custom fields and the featured image?' );
 			$meta_box_data->html->put( 'custom_fields', '' );
+			$meta_box_data->convert_form_input_later( 'custom_fields' );
 		}
 
 		if ( is_super_admin() || $this->role_at_least( $this->get_site_option( 'role_taxonomies' ) ) )
@@ -1461,6 +1463,7 @@ This can be increased by adding the following to your wp-config.php:
 				->label_( 'Taxonomies' )
 				->title( 'The taxonomies must have the same name (slug) on the selected blogs.' );
 			$meta_box_data->html->put( 'taxonomies', '' );
+			$meta_box_data->convert_form_input_later( 'taxonomies' );
 		}
 
 		$meta_box_data->html->put( 'broadcast_strings', '
@@ -1513,6 +1516,7 @@ This can be increased by adding the following to your wp-config.php:
 		}
 
 		$meta_box_data->html->put( 'blogs', '' );
+		$meta_box_data->convert_form_input_later( 'blogs' );
 
 		$js = sprintf( '<script type="">var broadcast_blogs_to_hide = %s;</script>', $this->get_site_option( 'blogs_to_hide', 5 ) );
 		$meta_box_data->html->put( 'blogs_js', $js );
@@ -1560,21 +1564,7 @@ This can be increased by adding the following to your wp-config.php:
 	**/
 	public function threewp_broadcast_prepared_meta_box( $action )
 	{
-		$meta_box_data = $action->meta_box_data;
-
-		// If our places in the html are still left, insert the inputs.
-		foreach( [
-			'link',
-			'custom_fields',
-			'taxonomies',
-			'groups',
-			'blogs'
-		] as $type )
-			if ( $meta_box_data->html->has( $type ) )
-			{
-				$input = $meta_box_data->form->input( $type );
-				$meta_box_data->html->put( $type, $input );
-			}
+		$action->meta_box_data->convert_form_inputs_now();
 	}
 
 	/**
@@ -2433,14 +2423,19 @@ This can be increased by adding the following to your wp-config.php:
 				$this->debug( 'Taxonomies: Finished.' );
 			}
 
-			// Remove the current attachments.
-			$attachments_to_remove = get_children( 'post_parent='.$bcd->new_post[ 'ID' ] . '&post_type=attachment' );
-			$this->debug( '%s attachments to remove.', count( $attachments_to_remove ) );
-			foreach ( $attachments_to_remove as $attachment_to_remove )
+			// Maybe remove the current attachments.
+			if ( $bcd->delete_attachments )
 			{
-				$this->debug( 'Deleting existing attachment: %s', $attachment_to_remove->ID );
-				wp_delete_attachment( $attachment_to_remove->ID );
+				$attachments_to_remove = get_children( 'post_parent='.$bcd->new_post[ 'ID' ] . '&post_type=attachment' );
+				$this->debug( '%s attachments to remove.', count( $attachments_to_remove ) );
+				foreach ( $attachments_to_remove as $attachment_to_remove )
+				{
+					$this->debug( 'Deleting existing attachment: %s', $attachment_to_remove->ID );
+					wp_delete_attachment( $attachment_to_remove->ID );
+				}
 			}
+			else
+				$this->debug( 'Not deleting child attachments.' );
 
 			// Copy the attachments
 			$bcd->copied_attachments = [];
