@@ -6,7 +6,7 @@ Author URI:		http://www.plainview.se
 Description:	Broadcast / multipost a post, with attachments, custom fields, tags and other taxonomies to other blogs in the network.
 Plugin Name:	ThreeWP Broadcast
 Plugin URI:		http://plainview.se/wordpress/threewp-broadcast/
-Version:		2.23
+Version:		3
 */
 
 namespace threewp_broadcast;
@@ -18,6 +18,7 @@ require_once( 'vendor/autoload.php' );
 use \plainview\sdk\collections\collection;
 use \threewp_broadcast\broadcast_data\blog;
 use \plainview\sdk\html\div;
+use \stdClass;
 
 class ThreeWP_Broadcast
 	extends \threewp_broadcast\ThreeWP_Broadcast_Base
@@ -89,7 +90,7 @@ class ThreeWP_Broadcast
 	**/
 	public $permalink_cache;
 
-	public $plugin_version = 2.23;
+	public $plugin_version = 3;
 
 	// 20140501 when debug trait is moved to SDK.
 	protected $sdk_version_required = 20130505;		// add_action / add_filter
@@ -101,6 +102,7 @@ class ThreeWP_Broadcast
 		'clear_post' => true,								// Clear the post before broadcasting.
 		'custom_field_whitelist' => '_wp_page_template _wplp_ _aioseop_',				// Internal custom fields that should be broadcasted.
 		'custom_field_blacklist' => '',						// Internal custom fields that should not be broadcasted.
+		'custom_field_protectlist' => '',					// Internal custom fields that should not be overwritten on broadcast
 		'database_version' => 0,							// Version of database and settings
 		'debug' => false,									// Display debug information?
 		'debug_ips' => '',									// List of IP addresses that can see debug information, when debug is enabled.
@@ -418,6 +420,15 @@ class ThreeWP_Broadcast
 			->trim()
 			->value( $blacklist );
 
+		$protectlist = $this->get_site_option( 'custom_field_protectlist' );
+		$protectlist = str_replace( ' ', "\n", $protectlist );
+		$custom_field_protectlist = $fs->textarea( 'custom_field_protectlist' )
+			->cols( 40, 10 )
+			->description_( 'When broadcasting internal custom fields, do not overwrite the following fields on the child blogs.' )
+			->label_( 'Internal field protectlist' )
+			->trim()
+			->value( $protectlist );
+
 		$whitelist = $this->get_site_option( 'custom_field_whitelist' );
 		$whitelist = str_replace( ' ', "\n", $whitelist );
 		$custom_field_whitelist = $fs->textarea( 'custom_field_whitelist' )
@@ -492,6 +503,10 @@ class ThreeWP_Broadcast
 			$whitelist = $custom_field_whitelist->get_post_value();
 			$whitelist = $this->lines_to_string( $whitelist );
 			$this->update_site_option( 'custom_field_whitelist', $whitelist );
+
+			$protectlist = $custom_field_protectlist->get_post_value();
+			$protectlist = $this->lines_to_string( $protectlist );
+			$this->update_site_option( 'custom_field_protectlist', $protectlist );
 
 			$this->update_site_option( 'clear_post', $clear_post->is_checked() );
 			$this->update_site_option( 'save_post_priority', $save_post_priority->get_post_value() );
@@ -1835,6 +1850,8 @@ This can be increased by adding the following to your wp-config.php:
 
 		$bcd->custom_fields = $form->checkbox( 'custom_fields' )->get_post_value()
 			&& ( is_super_admin() || $this->role_at_least( $this->get_site_option( 'role_custom_fields' ) ) );
+		if ( $bcd->custom_fields )
+			$bcd->custom_fields = new \stdClass;
 
 		$bcd->link = $form->checkbox( 'link' )->get_post_value()
 			&& ( is_super_admin() || $this->role_at_least( $this->get_site_option( 'role_link' ) ) );
@@ -2163,8 +2180,11 @@ This can be increased by adding the following to your wp-config.php:
 
 		if ( $bcd->custom_fields )
 		{
-			$this->debug( 'Will broadcast custom fields.' );
+			$this->debug( 'Custom fields: Will broadcast custom fields.' );
 			$bcd->post_custom_fields = get_post_custom( $bcd->post->ID );
+
+			// Save the original custom fields for future use.
+			$bcd->custom_fields->original = $bcd->post_custom_fields;
 
 			$bcd->has_thumbnail = isset( $bcd->post_custom_fields[ '_thumbnail_id' ] );
 
@@ -2173,7 +2193,7 @@ This can be increased by adding the following to your wp-config.php:
 
 			if ( $bcd->has_thumbnail )
 			{
-				$this->debug( 'Post has a thumbnail (featured image).' );
+				$this->debug( 'Custom fields: Post has a thumbnail (featured image).' );
 				$bcd->thumbnail_id = $bcd->post_custom_fields[ '_thumbnail_id' ][0];
 				$bcd->thumbnail = get_post( $bcd->thumbnail_id );
 				unset( $bcd->post_custom_fields[ '_thumbnail_id' ] ); // There is a new thumbnail id for each blog.
@@ -2182,10 +2202,51 @@ This can be increased by adding the following to your wp-config.php:
 				unset( $bcd->attachment_data[ $bcd->thumbnail_id ] );
 			}
 			else
-				$this->debug( 'Post does not have a thumbnail (featured image).' );
+				$this->debug( 'Custom fields: Post does not have a thumbnail (featured image).' );
 
-			// Remove all the _internal custom fields.
-			$bcd->post_custom_fields = $this->keep_valid_custom_fields( $bcd->post_custom_fields );
+			$bcd->custom_fields->blacklist = array_filter( explode( ' ', $this->get_site_option( 'custom_field_blacklist' ) ) );
+			$bcd->custom_fields->protectlist = array_filter( explode( ' ', $this->get_site_option( 'custom_field_protectlist' ) ) );
+			$bcd->custom_fields->whitelist = array_filter( explode( ' ', $this->get_site_option( 'custom_field_whitelist' ) ) );
+
+			foreach( $bcd->post_custom_fields as $custom_field => $ignore )
+			{
+				// If the field does not start with an underscore, it is automatically valid.
+				if ( strpos( $custom_field, '_' ) !== 0 )
+					continue;
+
+				$keep = true;
+
+				// Has the user requested that all internal fields be broadcasted?
+				$broadcast_internal_custom_fields = $this->get_site_option( 'broadcast_internal_custom_fields' );
+				if ( $broadcast_internal_custom_fields )
+				{
+					foreach( $bcd->custom_fields->blacklist as $exception)
+						if ( strpos( $custom_field, $exception) !== false )
+						{
+							$keep = false;
+							break;
+						}
+				}
+				else
+				{
+					$keep = false;
+					foreach( $bcd->custom_fields->whitelist as $exception)
+						if ( strpos( $custom_field, $exception) !== false )
+						{
+							$keep = true;
+							break;
+						}
+
+				}
+
+				if ( ! $keep )
+				{
+					$this->debug( 'Custom fields: Deleting custom field %s', $custom_field );
+					unset( $bcd->post_custom_fields[ $custom_field ] );
+				}
+				else
+					$this->debug( 'Custom fields: Keeping custom field %s', $custom_field );
+			}
 		}
 		else
 			$this->debug( 'Will not broadcast custom fields.' );
@@ -2403,8 +2464,16 @@ This can be increased by adding the following to your wp-config.php:
 				{
 					$o = clone( $bcd );
 					$o->attachment_data = $attachment;
-					if ( $o->attachment_data->post->post_parent > 0 )
+					if ( $o->attachment_data->post->post_parent == $bcd->post->ID )
+					{
+						$this->debug( 'Assigning new parent ID (%s) to attachment %s.', $bcd->new_post()->ID, $o->attachment_data->post->ID );
 						$o->attachment_data->post->post_parent = $bcd->new_post[ 'ID' ];
+					}
+					else
+					{
+						$this->debug( 'Reseting post parent for attachment %s.', $o->attachment_data->post->ID );
+						$o->attachment_data->post->post_parent = 0;
+					}
 					$this->maybe_copy_attachment( $o );
 					$a = new \stdClass();
 					$a->old = $attachment;
@@ -2483,33 +2552,59 @@ This can be increased by adding the following to your wp-config.php:
 				// Remove all old custom fields.
 				$old_custom_fields = get_post_custom( $bcd->new_post[ 'ID' ] );
 
+				$protected_field = [];
+
 				foreach( $old_custom_fields as $key => $value )
 				{
 					// This post has a featured image! Remove it from disk!
 					if ( $key == '_thumbnail_id' )
 					{
 						$thumbnail_post = $value[0];
-						$this->debug( 'Custom fields: Deleting thumbnail %s.', $thumbnail_post );
-						wp_delete_post( $thumbnail_post );
+						$this->debug( 'Custom fields: The thumbnail ID is %s. Saved for later use.', $thumbnail_post );
 					}
 
-					$this->debug( 'Custom fields: Deleting custom field %s.', $key );
-					delete_post_meta( $bcd->new_post[ 'ID' ], $key );
+					// Do we delete this custom field?
+					$delete = true;
+
+					// For the protectlist to work the custom field has to already exist on the child.
+					if ( in_array( $key, $bcd->custom_fields->protectlist ) )
+					{
+						if ( ! isset( $old_custom_fields[ $key ] ) )
+							continue;
+						if ( ! isset( $bcd->post_custom_fields[ $key ] ) )
+							continue;
+						$protected_field[ $key ] = true;
+						$delete = false;
+					}
+
+					if ( $delete )
+					{
+						$this->debug( 'Custom fields: Deleting custom field %s.', $key );
+						delete_post_meta( $bcd->new_post[ 'ID' ], $key );
+					}
+					else
+						$this->debug( 'Custom fields: Keeping custom field %s.', $key );
 				}
 
 				foreach( $bcd->post_custom_fields as $meta_key => $meta_value )
 				{
+					// Protected = ignore.
+					if ( isset( $protected_field[ $meta_key ] ) )
+						continue;
+
 					if ( is_array( $meta_value ) )
 					{
 						foreach( $meta_value as $single_meta_value )
 						{
 							$single_meta_value = maybe_unserialize( $single_meta_value );
+							$this->debug( 'Custom fields: Adding array value %s', $meta_key );
 							add_post_meta( $bcd->new_post[ 'ID' ], $meta_key, $single_meta_value );
 						}
 					}
 					else
 					{
 						$meta_value = maybe_unserialize( $meta_value );
+						$this->debug( 'Custom fields: Adding value %s', $meta_key );
 						add_post_meta( $bcd->new_post[ 'ID' ], $meta_key, $meta_value );
 					}
 				}
@@ -2521,15 +2616,16 @@ This can be increased by adding the following to your wp-config.php:
 					$o = clone( $bcd );
 					$o->attachment_data = $bcd->attachment_data[ 'thumbnail' ];
 
-					// Clear the attachment cache for this blog because the featured image could have been copied by the file copy.
-					if ( property_exists( $this, 'attachment_cache' ) )
+					if ( $o->attachment_data->post->post_parent == $bcd->post->ID )
 					{
-						$this->debug( 'Custom fields: Clearing attachment cache.' );
-						$this->attachment_cache->forget( $bcd->current_child_blog_id );
-					}
-
-					if ( $o->attachment_data->post->post_parent > 0 )
+						$this->debug( 'Assigning new parent ID (%s) to attachment %s.', $bcd->new_post()->ID, $o->attachment_data->post->ID );
 						$o->attachment_data->post->post_parent = $bcd->new_post[ 'ID' ];
+					}
+					else
+					{
+						$this->debug( 'Reseting post parent for attachment %s.', $o->attachment_data->post->ID );
+						$o->attachment_data->post->post_parent = 0;
+					}
 
 					$this->debug( 'Custom fields: Maybe copying attachment.' );
 					$this->maybe_copy_attachment( $o );
@@ -2540,7 +2636,7 @@ This can be increased by adding the following to your wp-config.php:
 						update_post_meta( $bcd->new_post[ 'ID' ], '_thumbnail_id', $o->attachment_id );
 					}
 				}
-				$this->debug( 'Custom fields: finished.' );
+				$this->debug( 'Custom fields: Finished.' );
 			}
 
 			// Sticky behaviour
@@ -2938,65 +3034,6 @@ This can be increased by adding the following to your wp-config.php:
 	}
 
 	/**
-		@brief		Is this custom field (1) external or (2) underscored, but excepted?
-		@details
-
-		Internal fields start with underscore and are generally not interesting to broadcast.
-
-		Some plugins store important information as internal fields and should have their fields broadcasted.
-
-		Documented 20130926.
-
-		@param		string		$custom_field		The name of the custom field to check.
-		@return		bool		True if the field is OK to broadcast.
-		@since		20130926
-	**/
-	private function is_custom_field_valid( $custom_field )
-	{
-		// If the field does not start with an underscore, it is automatically valid.
-		if ( strpos( $custom_field, '_' ) !== 0 )
-			return true;
-
-		// Has the user requested that all internal fields be broadcasted?
-		$broadcast_internal_custom_fields = $this->get_site_option( 'broadcast_internal_custom_fields' );
-		if ( $broadcast_internal_custom_fields )
-		{
-			// Prep the cache.
-			if ( ! isset( $this->custom_field_blacklist_cache ) )
-				$this->custom_field_blacklist_cache = array_filter( explode( ' ', $this->get_site_option( 'custom_field_blacklist' ) ) );
-
-			foreach( $this->custom_field_blacklist_cache as $exception)
-				if ( strpos( $custom_field, $exception) !== false )
-					return false;
-
-			// Not found in the blacklist. Broadcast the field!
-			return true;
-		}
-		else
-		{
-			// Prep the cache.
-			if ( !isset( $this->custom_field_whitelist_cache ) )
-				$this->custom_field_whitelist_cache = array_filter( explode( ' ', $this->get_site_option( 'custom_field_whitelist' ) ) );
-
-			foreach( $this->custom_field_whitelist_cache as $exception)
-				if ( strpos( $custom_field, $exception) !== false )
-					return true;
-
-			// Not found in the whitelist. Do not broadcast.
-			return false;
-		}
-	}
-
-	private function keep_valid_custom_fields( $custom_fields )
-	{
-		foreach( $custom_fields as $key => $array)
-			if ( ! $this->is_custom_field_valid( $key ) )
-				unset( $custom_fields[$key] );
-
-		return $custom_fields;
-	}
-
-	/**
 		@brief		Converts a textarea of lines to a single line of space separated words.
 		@param		string		$lines		Multiline string.
 		@return		string					All of the lines on one line, minus the empty lines.
@@ -3028,36 +3065,33 @@ This can be increased by adding the following to your wp-config.php:
 	**/
 	public function maybe_copy_attachment( $options )
 	{
-		if ( !isset( $this->attachment_cache ) )
-			$this->attachment_cache = new collection;
-
 		$attachment_data = $options->attachment_data;		// Convenience.
 
 		$key = get_current_blog_id();
 
-		$attachment_posts = $this->attachment_cache->get( $key, null );
-		if ( $attachment_posts === null )
-		{
-			$this->debug( 'Maybe copy attachment: Searching for attachment posts.' );
-			$attachment_posts = get_posts( [
-				'cache_results' => false,
-				'name' => $attachment_data->post->post_name,
-				'numberposts' => PHP_INT_MAX,
-				'post_type' => 'attachment',
-
-			] );
-			$this->debug( 'Maybe copy attachment: Found %s attachment posts.', count( $attachment_posts ) );
-			$this->attachment_cache->put( $key, $attachment_posts );
-		}
+		$this->debug( 'Maybe copy attachment: Searching for attachment posts with the name %s.', $attachment_data->post->post_name );
+		$attachment_posts = get_posts( [
+			'cache_results' => false,
+			'name' => $attachment_data->post->post_name,
+			'numberposts' => PHP_INT_MAX,
+			'post_parent' => null,
+			'post_type' => 'attachment',
+		] );
+		$this->debug( 'Maybe copy attachment: Found %s attachment posts.', count( $attachment_posts ) );
 
 		// Is there an existing media file?
 		// Try to find the filename in the GUID.
 		foreach( $attachment_posts as $attachment_post )
 		{
 			if ( $attachment_post->post_name !== $attachment_data->post->post_name )
+			{
+				$this->debug( "The attachment post name is %s, and we are looking for %s. Ignoring attachment.", $attachment_post->post_name, $attachment_data->post->post_name );
 				continue;
+			}
 			// We've found an existing attachment. What to do with it...
-			switch( $this->get_site_option( 'existing_attachments', 'use' ) )
+			$existing_action = $this->get_site_option( 'existing_attachments', 'use' );
+			$this->debug( 'Maybe copy attachment: The action for existing attachments is to %s.', $existing_action );
+			switch( $existing_action )
 			{
 				case 'overwrite':
 					// Delete the existing attachment

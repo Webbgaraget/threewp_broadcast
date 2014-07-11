@@ -211,6 +211,17 @@ It works transparently in the background, but in case you've never really used W
 
 == Changelog ==
 
+= 3 201406xx =
+* Fix: Featured post conflicts resolved. See 3 fixes below.
+* Fix: Do not automatically delete the thumbnail (it might not be attached to this post).
+* Fix: Removed attachment cache.
+* Fix: Only attach copy image to post if it was attached to the parent post.
+* Note: Changed versioning to rapid release. No more point releases.
+
+= 2.24 20140615 =
+* New: Custom field protect list.
+* Fix: Better support for Windows servers.
+
 = 2.23 20140520 =
 * New: Premium Pack Plugin: Comments
 * Code: broadcasting_data->new_post()
