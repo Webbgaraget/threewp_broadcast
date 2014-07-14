@@ -447,7 +447,7 @@ class ThreeWP_Broadcast
 		$clear_post = $fs->checkbox( 'clear_post' )
 			->description_( 'The POST PHP variable is data sent when updating posts. Most plugins are fine if the POST is cleared before broadcasting, while others require that the data remains intact. Uncheck this setting if you notice that child posts are not being treated the same on the child blogs as they are on the parent blog.' )
 			->label_( 'Clear POST' )
-			->checked( $this->get_site_option( 'debug', false ) );
+			->checked( $this->get_site_option( 'clear_post' ) );
 
 		$save_post_priority = $fs->number( 'save_post_priority' )
 			->description_( 'The priority for the save_post hook. Should be after all other plugins have finished modifying the post. Default is 640.' )
