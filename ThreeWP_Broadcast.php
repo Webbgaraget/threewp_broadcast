@@ -2894,7 +2894,8 @@ This can be increased by adding the following to your wp-config.php:
 						$function[ 0 ] = get_class( $function[ 0 ] );
 					$function = sprintf( '%s::%s', $function[ 0 ], $function[ 1 ] );
 				}
-				$function = sprintf( '%s %s', $function, $priority );
+				if ( is_a( $function, 'Closure' ) )
+					$function = '[Anonymous function]';
 				$hook_callbacks[] = $function;
 			}
 		}
