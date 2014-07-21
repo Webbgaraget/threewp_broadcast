@@ -153,6 +153,14 @@ Attachments are force-broadcasted: the child posts have all their attachments de
 
 If you have a gallery shortcode in the post ( [gallery columns="2" ids="427,433,430,429,428"] ) then Broadcast will first check that the image does not already exist on the child blog. It does this by searching for the post name (the filename minus the extension). If no image is found, it is copied.
 
+= Images not being broadcast correctly =
+
+If you find that images are being duplicated unnecessarily or aren't broadcasted / copied correctly, it's probably due to the image names ending in a numeric suffix that Wordpress usually uses for duplicates: -1, -2, etc. For example: imagename-1, lovelycar-2.
+
+The solution is to use images that do not have dashed endings and do not have the same or similar name to an existing post.
+
+Only after trying unique file names is it time to write in the support forum. :)
+
 = Hide broadcast from the users =
 
 The broadcast meta box, menu and columns in the post view can be hidden from users / roles / blogs using <em>User & Blog Settings</em> plugin in the <a href="http://plainview.se/wordpress/threewp-broadcast-premium-pack/" title="Premium Pack's page on the web"><em>Broadcast Premium Pack</em></a>.
