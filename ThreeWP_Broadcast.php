@@ -1265,13 +1265,6 @@ This can be increased by adding the following to your wp-config.php:
 			return;
 		}
 
-		// Nothing of interest in the post?
-		if ( ! isset( $_POST[ 'broadcast' ] ) )
-		{
-			$this->debug( 'The POST does not contain any Broadcast data.' );
-			return;
-		}
-
 		// Is this post a child?
 		$broadcast_data = $this->get_post_broadcast_data( get_current_blog_id(), $post_id );
 		if ( $broadcast_data->get_linked_parent() !== false )
