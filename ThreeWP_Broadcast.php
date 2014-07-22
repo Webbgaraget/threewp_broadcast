@@ -2438,7 +2438,7 @@ This can be increased by adding the following to your wp-config.php:
 				if ( $key != 'thumbnail' )
 				{
 					$o = clone( $bcd );
-					$o->attachment_data = $attachment;
+					$o->attachment_data = clone( $attachment );
 					if ( $o->attachment_data->post->post_parent == $bcd->post->ID )
 					{
 						$this->debug( 'Assigning new parent ID (%s) to attachment %s.', $bcd->new_post()->ID, $o->attachment_data->post->ID );
@@ -2446,7 +2446,7 @@ This can be increased by adding the following to your wp-config.php:
 					}
 					else
 					{
-						$this->debug( 'Reseting post parent for attachment %s.', $o->attachment_data->post->ID );
+						$this->debug( 'Resetting post parent for attachment %s.', $o->attachment_data->post->ID );
 						$o->attachment_data->post->post_parent = 0;
 					}
 					$this->maybe_copy_attachment( $o );
