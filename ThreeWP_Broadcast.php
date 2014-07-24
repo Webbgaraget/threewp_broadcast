@@ -3046,6 +3046,9 @@ This can be increased by adding the following to your wp-config.php:
 		$key = get_current_blog_id();
 
 		$this->debug( 'Maybe copy attachment: Searching for attachment posts with the name %s.', $attachment_data->post->post_name );
+
+		// Do not use get_posts because it is too stupid to find existing attachments with the same name. We have to do this with a raw query. *sigh*
+/**
 		$attachment_posts = get_posts( [
 			'cache_results' => false,
 			'name' => $attachment_data->post->post_name,
@@ -3053,6 +3056,20 @@ This can be increased by adding the following to your wp-config.php:
 			'post_parent' => null,
 			'post_type' => 'attachment',
 		] );
+**/
+		// Start by assuming no attachments.
+		$attachment_posts = [];
+
+		global $wpdb;
+		// The post_name is the important part.
+		$query = sprintf( "SELECT `ID` FROM `%s` WHERE `post_type` = 'attachment' AND `post_parent` = 0 AND `post_name` = '%s'",
+			$wpdb->posts,
+			$attachment_data->post->post_name
+		);
+		$results = $this->query( $query );
+		if ( count( $results ) > 0 )
+			foreach( $results as $result )
+				$attachment_posts[] = get_post( $result[ 'ID' ] );
 		$this->debug( 'Maybe copy attachment: Found %s attachment posts.', count( $attachment_posts ) );
 
 		// Is there an existing media file?

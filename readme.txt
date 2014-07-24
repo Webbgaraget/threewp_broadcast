@@ -223,6 +223,9 @@ It works transparently in the background, but in case you've never really used W
 
 == Changelog ==
 
+= 4 201407xx =
+* Fix: More robust duplicate attachment finding.
+
 = 3 20140708 =
 * New: Blog groups: after selecting a blog group the value will no longer change back to "no group selected".
 * New: Blog groups: select "no group selected" and the same blog group again to unselect the blogs from the group.
