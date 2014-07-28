@@ -1258,6 +1258,16 @@ This can be increased by adding the following to your wp-config.php:
 			return;
 		}
 
+		// We must handle this post type.
+		$post = get_post( $post_id );
+		$action = new actions\get_post_types;
+		$action->apply();
+		if ( ! in_array( $post->post_type, $action->post_types ) )
+		{
+			$this->debug( 'We do not care about the %s post type.', $post->post_type );
+			return;
+		}
+
 		// No post?
 		if ( count( $_POST ) < 1 )
 		{
@@ -1282,8 +1292,6 @@ This can be increased by adding the following to your wp-config.php:
 			$this->save_last_used_settings( $this->user_id(), $_POST[ 'broadcast' ] );
 
 		$this->debug( 'We are currently on blog %s (%s).', get_bloginfo( 'blogname' ), get_current_blog_id() );
-
-		$post = get_post( $post_id );
 
 		$meta_box_data = $this->create_meta_box( $post );
 

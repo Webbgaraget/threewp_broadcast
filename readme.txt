@@ -225,6 +225,7 @@ It works transparently in the background, but in case you've never really used W
 
 = 4 201407xx =
 * Fix: More robust duplicate attachment finding.
+* Fix: Do a post type check before broadcasting.
 
 = 3 20140708 =
 * New: Blog groups: after selecting a blog group the value will no longer change back to "no group selected".
