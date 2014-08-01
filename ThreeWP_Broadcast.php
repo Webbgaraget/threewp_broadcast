@@ -2149,10 +2149,12 @@ This can be increased by adding the following to your wp-config.php:
 		$has_attached_files = count( $attached_files) > 0;
 		if ( $has_attached_files )
 		{
-			$this->debug( 'Has %s attachments.', $has_attached_files );
+			$this->debug( 'Has %s attachments.', count( $has_attached_files ) );
 			foreach( $attached_files as $attached_file )
 			{
-				$bcd->attachment_data[ $attached_file->ID ] = attachment_data::from_attachment_id( $attached_file, $bcd->upload_dir );
+				$data = attachment_data::from_attachment_id( $attached_file, $bcd->upload_dir );
+				$data->set_attached_to_parent( $bcd->post );
+				$bcd->attachment_data[ $attached_file->ID ] = $data;
 				$this->debug( 'Attachment %s found.', $attached_file->ID );
 			}
 		}
@@ -2176,7 +2178,9 @@ This can be increased by adding the following to your wp-config.php:
 				$bcd->thumbnail_id = $bcd->post_custom_fields[ '_thumbnail_id' ][0];
 				$bcd->thumbnail = get_post( $bcd->thumbnail_id );
 				unset( $bcd->post_custom_fields[ '_thumbnail_id' ] ); // There is a new thumbnail id for each blog.
-				$bcd->attachment_data[ 'thumbnail' ] = attachment_data::from_attachment_id( $bcd->thumbnail, $bcd->upload_dir);
+				$data = attachment_data::from_attachment_id( $bcd->thumbnail, $bcd->upload_dir);
+				$data->set_attached_to_parent( $bcd->post );
+				$bcd->attachment_data[ 'thumbnail' ] = $data;
 				// Now that we know what the attachment id the thumbnail has, we must remove it from the attached files to avoid duplicates.
 				unset( $bcd->attachment_data[ $bcd->thumbnail_id ] );
 			}
@@ -2253,8 +2257,9 @@ This can be increased by adding the following to your wp-config.php:
 			foreach( $gallery->ids_array as $id )
 			{
 				$this->debug( 'Gallery has attachment %s.', $id );
-				$ad = attachment_data::from_attachment_id( $id, $bcd->upload_dir );
-				$bcd->attachment_data[ $id ] = $ad;
+				$data = attachment_data::from_attachment_id( $id, $bcd->upload_dir );
+				$data->set_parent_attachment( $bcd->post );
+				$bcd->attachment_data[ $id ] = $data;
 			}
 		}
 
@@ -2443,28 +2448,29 @@ This can be increased by adding the following to your wp-config.php:
 			$this->debug( 'Looking through %s attachments.', count( $bcd->attachment_data ) );
 			foreach( $bcd->attachment_data as $key => $attachment )
 			{
-				if ( $key != 'thumbnail' )
+				if ( $key == 'thumbnail' )
+					continue;
+				$o = clone( $bcd );
+				$o->attachment_data = clone( $attachment );
+				$o->attachment_data->post = clone( $attachment->post );
+				$this->debug( "The attachment's post parent is %s.", $o->attachment_data->post->post_parent );
+				if ( $o->attachment_data->is_attached_to_parent() )
 				{
-					$o = clone( $bcd );
-					$o->attachment_data = clone( $attachment );
-					if ( $o->attachment_data->post->post_parent == $bcd->post->ID )
-					{
-						$this->debug( 'Assigning new parent ID (%s) to attachment %s.', $bcd->new_post()->ID, $o->attachment_data->post->ID );
-						$o->attachment_data->post->post_parent = $bcd->new_post[ 'ID' ];
-					}
-					else
-					{
-						$this->debug( 'Resetting post parent for attachment %s.', $o->attachment_data->post->ID );
-						$o->attachment_data->post->post_parent = 0;
-					}
-					$this->maybe_copy_attachment( $o );
-					$a = new \stdClass();
-					$a->old = $attachment;
-					$a->new = get_post( $o->attachment_id );
-					$a->new->id = $a->new->ID;		// Lowercase is expected.
-					$bcd->copied_attachments[] = $a;
-					$this->debug( 'Copied attachment %s to %s', $a->old->id, $a->new->id );
+					$this->debug( 'Assigning new post parent ID (%s) to attachment %s.', $bcd->new_post()->ID, $o->attachment_data->post->ID );
+					$o->attachment_data->post->post_parent = $bcd->new_post[ 'ID' ];
 				}
+				else
+				{
+					$this->debug( 'Resetting post parent for attachment %s.', $o->attachment_data->post->ID );
+					$o->attachment_data->post->post_parent = 0;
+				}
+				$this->maybe_copy_attachment( $o );
+				$a = new \stdClass();
+				$a->old = $attachment;
+				$a->new = get_post( $o->attachment_id );
+				$a->new->id = $a->new->ID;		// Lowercase is expected.
+				$bcd->copied_attachments[] = $a;
+				$this->debug( 'Copied attachment %s to %s', $a->old->id, $a->new->id );
 			}
 
 			// Maybe modify the post content with new URLs to attachments and what not.
@@ -2599,7 +2605,7 @@ This can be increased by adding the following to your wp-config.php:
 					$o = clone( $bcd );
 					$o->attachment_data = $bcd->attachment_data[ 'thumbnail' ];
 
-					if ( $o->attachment_data->post->post_parent == $bcd->post->ID )
+					if ( $o->attachment_data->is_attached_to_parent() )
 					{
 						$this->debug( 'Assigning new parent ID (%s) to attachment %s.', $bcd->new_post()->ID, $o->attachment_data->post->ID );
 						$o->attachment_data->post->post_parent = $bcd->new_post[ 'ID' ];
