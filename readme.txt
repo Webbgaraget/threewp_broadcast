@@ -1,11 +1,10 @@
 === ThreeWP Broadcast ===
 Contributors: edward_plainview
-Donate link: http://plainview.se/donate/
 License: GPLv3
 Requires at least: 3.3.1
 Stable tag: trunk
 Tags: broadcast, multipost, duplicate, posts, sitepress, threewp, linking, posts, multiple, blogs, woocommerce, wpml, synchronize, event organiser, acf
-Tested up to: 3.9
+Tested up to: 3.9.2
 
 Network plugin for PHP v5.4+ to broadcast posts to other blogs in the network. Custom post types, taxonomies, attachments and WPML are supported.
 
@@ -46,8 +45,9 @@ The <a href="http://plainview.se/wordpress/threewp-broadcast-premium-pack/" titl
 
 For a complete list of features and more information, see <a href="http://plainview.se/wordpress/threewp-broadcast-premium-pack/" title="Premium Pack's page on the web"><em>Broadcast Premium Pack</em>'s page on the web</a>. Currently the Premium Pack offers:
 
-* <strong>Advanced Custom Fields</strong> adds support for correctly broadcasting image field types using the ACF plugin.
+* <strong>Advanced Custom Fields</strong> adds support for correctly broadcasting attachment field types using the ACF plugin.
 * <strong>All Blogs</strong> allows users to broadcast to all blogs in the network without having to be a user of the blog.
+* <strong>All In One Calendar</strong> adds support for <a href="http://www.wordpress.org/plugins/all-in-one-event-calendar/">Timely's All In One Calendar</a> plugin.
 * <strong>Attachment Shortcodes</strong> copies attachments specified in custom shortcodes.
 * <strong>Comments</strong> adds support for broadcasting of comments.
 * <strong>Custom Field Attachments</strong> allows post custom field containing attachment IDs to be broadcasted correctly..
@@ -57,12 +57,15 @@ For a complete list of features and more information, see <a href="http://plainv
 * <strong>Local Links</strong> automatically updates links to local posts on each child blog.
 * <strong>Per Blog Taxonomies</strong> allows individual setting of child post taxonomies.
 * <strong>Permalinks</strong> enables more precise permalink control.
+* <strong>Protect Child Content</strong> prevents overwriting of child post content.
 * <strong>Purge Children</strong> removes children and their attached files from child blogs.
+* <strong>Redirect All Children</strong> redirects single post views from visitors of child posts to the parent post.
 * <strong>Queue</strong> adds a broadcast queue which helps to broadcast posts to tens / hundreds / more blogs.
 * <strong>Send To Many</strong> broadcasts many posts to several blogs at once, instead of individually editing and broadcasting each post.
 Sync Taxonomies
 * <strong>Sync Taxomnomies</strong> synchronize the taxonomies of target blogs with those from a source blog.
-* <strong>User & Blog Settings</strong> can hide the broadcast meta box and/or menu, modify the meta box to force/prevent broadcast to blogs, with separate settings for users / blogs / roles.
+* <strong>User & Blog Settings</strong> (UBS) can hide the broadcast meta box and/or menu, modify the meta box to force/prevent broadcast to blogs, with separate settings for users / blogs / roles.
+* <strong>User & Blog Settings Post</strong> uses the modifications from the UBS plugin to broadcast posts with one click.
 * <strong>Views</strong> adds support for WP Types and Views content templates.
 * <strong>WooCommerce</strong> allows product variations to be broadcasted.
 
@@ -124,6 +127,10 @@ Broadcast offers some actions/filters for plugin developers with which to intera
 29. Premium Pack: Attachment Shortcode help.
 30. Premium Pack: Comments plugin.
 31. Premium Pack: Keep Child Attachments plugin.
+32. Premium Pack: All In One Calendar
+33. Premium Pack: Protect Child Content
+34. Premium Pack: User & Blog Settings Post 1
+35. Premium Pack: User & Blog Settings Post 2
 
 == Frequently Asked Questions ==
 
@@ -152,14 +159,6 @@ To broadcast many posts at once, see the <em>Send To Many</em> plugin in the <a 
 Attachments are force-broadcasted: the child posts have all their attachments deleted and then copied again.
 
 If you have a gallery shortcode in the post ( [gallery columns="2" ids="427,433,430,429,428"] ) then Broadcast will first check that the image does not already exist on the child blog. It does this by searching for the post name (the filename minus the extension). If no image is found, it is copied.
-
-= Images not being broadcast correctly =
-
-If you find that images are being duplicated unnecessarily or aren't broadcasted / copied correctly, it's probably due to the image names ending in a numeric suffix that Wordpress usually uses for duplicates: -1, -2, etc. For example: imagename-1, lovelycar-2.
-
-The solution is to use images that do not have dashed endings and do not have the same or similar name to an existing post.
-
-Only after trying unique file names is it time to write in the support forum. :)
 
 = Hide broadcast from the users =
 
@@ -220,12 +219,21 @@ It works transparently in the background, but in case you've never really used W
 
 2014-01-12 This plugin will soon be replaced by a WPML premium plugin that enables broadcasting from the translation manager.
 2014-05-20 This plugin will be removed in the future.
+2014-08-14 Still awaiting patches to WPML to be integrated.
 
 == Changelog ==
 
-= 4 201407xx =
+= 5 201408xx =
+* Hide information from non-network admins.
+
+= 4 20140814 =
 * Fix: More robust duplicate attachment finding.
 * Fix: Do a post type check before broadcasting.
+* Fix: Check for invalid thumbnails before broadcasting.
+* New: Premium Pack Plugin: All In One Calendar
+* New: Premium Pack Plugin: Protect Child Content
+* New: Premium Pack Plugin: Redirect All Children
+* New: Premium Pack Plugin: User & Blog Settings Post
 
 = 3 20140708 =
 * New: Blog groups: after selecting a blog group the value will no longer change back to "no group selected".
