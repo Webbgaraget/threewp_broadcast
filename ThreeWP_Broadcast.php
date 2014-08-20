@@ -6,7 +6,7 @@ Author URI:		http://www.plainview.se
 Description:	Broadcast / multipost a post, with attachments, custom fields, tags and other taxonomies to other blogs in the network.
 Plugin Name:	ThreeWP Broadcast
 Plugin URI:		http://plainview.se/wordpress/threewp-broadcast/
-Version:		3
+Version:		4
 */
 
 namespace threewp_broadcast;
@@ -810,6 +810,12 @@ class ThreeWP_Broadcast
 
 	public function user_broadcast_info()
 	{
+		if ( ! is_super_admin() )
+		{
+			echo $this->p( 'No information available.' );
+			return;
+		}
+
 		$table = $this->table();
 		$table->caption()->text( 'Information' );
 
@@ -2161,16 +2167,23 @@ This can be increased by adding the following to your wp-config.php:
 
 		if ( $bcd->custom_fields )
 		{
+			if ( ! is_object( $bcd->custom_fields ) )
+				$bcd->custom_fields = new \stdClass;
+
 			$this->debug( 'Custom fields: Will broadcast custom fields.' );
 			$bcd->post_custom_fields = get_post_custom( $bcd->post->ID );
 
 			// Save the original custom fields for future use.
 			$bcd->custom_fields->original = $bcd->post_custom_fields;
-
 			$bcd->has_thumbnail = isset( $bcd->post_custom_fields[ '_thumbnail_id' ] );
 
 			// Check that the thumbnail ID is > 0
-			$bcd->has_thumbnail = $bcd->has_thumbnail && ( reset( $bcd->post_custom_fields[ '_thumbnail_id' ] ) > 0 );
+			if ( $bcd->has_thumbnail )
+			{
+				$thumbnail_id = reset( $bcd->post_custom_fields[ '_thumbnail_id' ] );
+				$thumbnail_post = get_post( $thumbnail_id );
+				$bcd->has_thumbnail = $bcd->has_thumbnail && ( $thumbnail_post !== null );
+			}
 
 			if ( $bcd->has_thumbnail )
 			{
@@ -2276,13 +2289,15 @@ This can be increased by adding the following to your wp-config.php:
 		$action->broadcasting_data = $bcd;
 		$action->apply();
 
+		$this->debug( 'The attachment data is: %s', $bcd->attachment_data );
+
 		$this->debug( 'Beginning child broadcast loop.' );
 
 		foreach( $bcd->blogs as $child_blog )
 		{
 			$child_blog->switch_to();
 			$bcd->current_child_blog_id = $child_blog->get_id();
-			$this->debug( 'Switched to blog %s', $bcd->current_child_blog_id );
+			$this->debug( 'Switched to blog %s (%s)', get_bloginfo( 'name' ), $bcd->current_child_blog_id );
 
 			// Create new post data from the original stuff.
 			$bcd->new_post = (array) $bcd->post;
@@ -2612,7 +2627,7 @@ This can be increased by adding the following to your wp-config.php:
 					}
 					else
 					{
-						$this->debug( 'Reseting post parent for attachment %s.', $o->attachment_data->post->ID );
+						$this->debug( 'Resetting post parent for attachment %s.', $o->attachment_data->post->ID );
 						$o->attachment_data->post->post_parent = 0;
 					}
 
