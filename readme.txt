@@ -225,6 +225,7 @@ It works transparently in the background, but in case you've never really used W
 
 = 5 201408xx =
 * Hide information from non-network admins.
+* Fix: Warning messages on lines ~2000
 
 = 4 20140814 =
 * Fix: More robust duplicate attachment finding.
