@@ -1301,10 +1301,14 @@ This can be increased by adding the following to your wp-config.php:
 
 		$meta_box_data = $this->create_meta_box( $post );
 
+		$this->debug( 'Preparing the meta box.' );
+
 		// Allow plugins to modify the meta box with their own info.
 		$action = new actions\prepare_meta_box;
 		$action->meta_box_data = $meta_box_data;
 		$action->apply();
+
+		$this->debug( 'Prepared.' );
 
 		// Post the form.
 		if ( ! $meta_box_data->form->has_posted )
@@ -1322,9 +1326,13 @@ This can be increased by adding the following to your wp-config.php:
 			'upload_dir' => wp_upload_dir(),
 		] );
 
+		$this->debug( 'Preparing the broadcasting data.' );
+
 		$action = new actions\prepare_broadcasting_data;
 		$action->broadcasting_data = $broadcasting_data;
 		$action->apply();
+
+		$this->debug( 'Prepared.' );
 
 		if ( $broadcasting_data->has_blogs() )
 			$this->filters( 'threewp_broadcast_broadcast_post', $broadcasting_data );
