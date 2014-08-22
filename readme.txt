@@ -136,7 +136,7 @@ Broadcast offers some actions/filters for plugin developers with which to intera
 
 = I need support! =
 
-The easiest way to get my attention is to <a href="mailto:edward@plainview.se">contact me via e-mail</a> and then use <a href="http://plainview.se/donate/">my donation page</a>.
+The easiest way to get my attention is to <a href="mailto:broadcast@plainview.se">contact me via e-mail</a> and ask how to donate a little something for my time.
 
 For contract work such as the following, contact me so we can make a deal:
 
