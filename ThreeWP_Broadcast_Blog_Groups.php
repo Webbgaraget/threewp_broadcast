@@ -250,6 +250,8 @@ class ThreeWP_Broadcast_Blog_Groups
 
 		// Are there any groups to display?
 		$blog_groups = $this->get_blog_groups_for_user( $this->user_id() );
+		if ( ! is_object( $blog_groups ) )
+			return;
 		if ( count( $blog_groups ) < 1 )
 			return;
 
