@@ -318,7 +318,7 @@ class ThreeWP_Broadcast
 			$this->message( 'Custom post types saved!' );
 		}
 
-		$r .= $this->p_( 'Custom post types must be specified using their internal Wordpress names with a space between each. It is not possible to automatically make a list of available post types on the whole network because of a limitation within Wordpress (the current blog knows only of its own custom post types).' );
+		$r .= $this->p_( 'Custom post types must be specified using their internal Wordpress names on a new line each. It is not possible to automatically make a list of available post types on the whole network because of a limitation within Wordpress (the current blog knows only of its own custom post types).' );
 
 		$blog_post_types = get_post_types();
 		unset( $blog_post_types[ 'nav_menu_item' ] );
