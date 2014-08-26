@@ -97,7 +97,7 @@ class ThreeWP_Broadcast
 
 	protected $site_options = array(
 		'blogs_to_hide' => 5,								// How many blogs to auto-hide
-		'broadcast_internal_custom_fields' => false,		// Broadcast internal custom fields?
+		'broadcast_internal_custom_fields' => true,		// Broadcast internal custom fields?
 		'canonical_url' => true,							// Override the canonical URLs with the parent post's.
 		'clear_post' => true,								// Clear the post before broadcasting.
 		'custom_field_whitelist' => '_wp_page_template _wplp_ _aioseop_',				// Internal custom fields that should be broadcasted.

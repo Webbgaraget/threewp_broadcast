@@ -227,6 +227,7 @@ It works transparently in the background, but in case you've never really used W
 * Hide information from non-network admins.
 * Fix: Warning messages on lines ~2000
 * Fix: Unnecessary warning for empty blog groups.
+* Change: Internal fields are now broadcasted per default on NEW installations.
 
 = 4 20140814 =
 * Fix: More robust duplicate attachment finding.
