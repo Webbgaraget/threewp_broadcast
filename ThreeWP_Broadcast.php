@@ -321,6 +321,7 @@ class ThreeWP_Broadcast
 		$r .= $this->p_( 'Custom post types must be specified using their internal Wordpress names with a space between each. It is not possible to automatically make a list of available post types on the whole network because of a limitation within Wordpress (the current blog knows only of its own custom post types).' );
 
 		$blog_post_types = get_post_types();
+		unset( $blog_post_types[ 'nav_menu_item' ] );
 		$blog_post_types = array_keys( $blog_post_types );
 		$r .= $this->p_( 'The custom post types registered on <em>this</em> blog are: <code>%s</code>', implode( ', ', $blog_post_types ) );
 
