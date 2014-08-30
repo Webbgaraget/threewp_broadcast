@@ -227,6 +227,8 @@ It works transparently in the background, but in case you've never really used W
 * Hide information from non-network admins.
 * Fix: Warning messages on lines ~2000
 * Fix: Unnecessary warning for empty blog groups.
+* Fix: Unlink all works again.
+* Code: Better post modification detection (line 2553).
 * Change: Internal fields are now broadcasted per default on NEW installations.
 
 = 4 20140814 =

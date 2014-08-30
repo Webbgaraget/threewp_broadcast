@@ -1668,8 +1668,8 @@ This can be increased by adding the following to your wp-config.php:
 						$this->_( 'Trash' )
 					) );
 
-					$url_unlink_all = sprintf( "admin.php?page=threewp_broadcast&amp;action=user_unlink_all&amp;post=%s", $filter->parent_post_id );
-					$url_unlink_all = wp_nonce_url( $url_unlink_all, 'broadcast_unlink_all_' . $filter->parent_post_id );
+					$url = sprintf( "admin.php?page=threewp_broadcast&amp;action=user_unlink_all&amp;post=%s", $filter->parent_post_id );
+					$url = wp_nonce_url( $url, 'broadcast_unlink_all_' . $filter->parent_post_id );
 					$strings->set( 'unlink_all_separator', ' | ' );
 					$strings->set( 'unlink_all', sprintf( '<a href="%s" title="%s">%s</a>',
 						$url,
@@ -2550,8 +2550,17 @@ This can be increased by adding the following to your wp-config.php:
 			$action->broadcasting_data = $bcd;
 			$action->apply();
 
+			$this->debug( 'Checking for post modifications.' );
+			$post_modified = false;
+			foreach( (array)$unmodified_post as $key => $value )
+				if ( $unmodified_post->$key != $modified_post->$key )
+				{
+					$this->debug( 'Post has been modified because of %s.', $key );
+					$post_modified = true;
+				}
+
 			// Maybe updating the post is not necessary.
-			if ( $unmodified_post->post_content != $modified_post->post_content )
+			if ( $post_modified )
 			{
 				$this->debug( 'Modifying with new post: %s', $modified_post->post_content );
 				wp_update_post( $modified_post );	// Or maybe it is.
