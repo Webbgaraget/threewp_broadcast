@@ -145,7 +145,7 @@ class ThreeWP_Broadcast_Blog_Groups
 
 				if ( count( $blog_group->data->blogs ) < 1 )
 				{
-					$text = $this->_( 'No group has no blogs assigned.' );
+					$text = $this->_( 'The group has no blogs assigned.' );
 				}
 				else
 				{
@@ -259,6 +259,8 @@ class ThreeWP_Broadcast_Blog_Groups
 			->option_( 'No group selected', '' );
 		foreach( $blog_groups as $blog_group )
 		{
+			if ( ! is_array( $blog_group->data->blogs ) )
+				continue;
 			$values = implode( ' ', $blog_group->data->blogs );
 			$name = $form->unfilter_text( $blog_group->data->name );
 			$input_blog_groups->option( $name, $values );
@@ -425,4 +427,5 @@ class ThreeWP_Broadcast_Blog_Groups
 		echo $r;
 	}
 }
+
 $threewp_broadcast_blog_groups = new ThreeWP_Broadcast_Blog_Groups();
