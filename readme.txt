@@ -223,7 +223,7 @@ It works transparently in the background, but in case you've never really used W
 
 == Changelog ==
 
-= 5 201408xx =
+= 5 20140830 =
 * Hide information from non-network admins.
 * Fix: Warning messages on lines ~2000
 * Fix: Unnecessary warning for empty blog groups.
