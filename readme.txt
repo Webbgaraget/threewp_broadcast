@@ -3,14 +3,14 @@ Contributors: edward_plainview
 License: GPLv3
 Requires at least: 3.3.1
 Stable tag: trunk
-Tags: broadcast, multipost, duplicate, posts, sitepress, threewp, linking, posts, multiple, blogs, woocommerce, wpml, synchronize, event organiser, acf
+Tags: broadcast, multipost, share content, duplicate, posts, marketing, threewp, linking, posts, multiple, blogs, sitepress, woocommerce, wpml, synchronize, event organiser, acf, all in one calendar
 Tested up to: 3.9.2
 
 Network plugin for PHP v5.4+ to broadcast posts to other blogs in the network. Custom post types, taxonomies, attachments and WPML are supported.
 
 == Description ==
 
-Network plugin for PHP v5.4 to broadcast posts to other blogs in the network. Broadcastable features include:
+Network plugin for PHP v5.4 to broadcast posts to other blogs in the network. Broadcast can be used to copy posts to other blogs, link posts between blogs, share content as templates, etc. Broadcastable features include:
 
 * Parent post links to child posts
 * Posts, pages
@@ -34,7 +34,7 @@ For those who have Yoast's Wordpress SEO plugin installed, if the Broadcast's ca
 = Other features =
 
 * Groups plugin enables blog grouping for easy selection
-* Custom field blacklist and whitelist
+* Custom field blacklist, whitelist and protect list.
 * Last used settings are remembered
 * User role access granularity
 * An enormous amount of extra features in the premium pack
@@ -71,7 +71,7 @@ Sync Taxonomies
 
 = Misc =
 
-Requires php v5.4 for trait support. Users of php v5.3 should remain with version 1.18. Users of php v5.3 can only use the <a href="http://plainview.se/wp-content/uploads/2013/08/threewp-broadcast_v1.18.zip">latest legacy version: v1.18</a>.
+Requires php v5.4 for trait support. Users of php v5.3 should remain with version 1.18. Users of php v5.3 can only use the <a href="http://plainview.se/wp-content/uploads/2013/08/threewp-broadcast_v1.18.zip">latest legacy version: v1.18</a> but don't expect any support.
 
 Available in the following languages:
 
