@@ -2183,7 +2183,7 @@ This can be increased by adding the following to your wp-config.php:
 			}
 		}
 
-		if ( $bcd->custom_fields )
+		if ( $bcd->custom_fields !== false )
 		{
 			if ( ! is_object( $bcd->custom_fields ) )
 				$bcd->custom_fields = new \stdClass;
