@@ -223,6 +223,9 @@ It works transparently in the background, but in case you've never really used W
 
 == Changelog ==
 
+= 6 2014xxxx =
+* Code: broadcast_data class replaces BroadcastData.
+
 = 5 20140830 =
 * Hide information from non-network admins.
 * Fix: Warning messages on lines ~2000

@@ -90,7 +90,7 @@ class ThreeWP_Broadcast
 	**/
 	public $permalink_cache;
 
-	public $plugin_version = 3;
+	public $plugin_version = 5;
 
 	// 20140501 when debug trait is moved to SDK.
 	protected $sdk_version_required = 20130505;		// add_action / add_filter
@@ -868,6 +868,11 @@ class ThreeWP_Broadcast
 		$object = new \ReflectionObject( new \plainview\sdk\wordpress\base );
 		$row->td()->text( $object->getFilename() );
 
+		// WP upload path
+		$row = $table->body()->row();
+		$row->td()->text( 'Wordpress upload directory array' );
+		$row->td()->text( '<pre>' . var_export( wp_upload_dir(), true ) . '</pre>' );
+
 		// PHP maximum execution time
 		$row = $table->body()->row();
 		$row->td()->text( 'PHP maximum execution time' );
@@ -1418,7 +1423,7 @@ This can be increased by adding the following to your wp-config.php:
 		if ( $meta_box_data->broadcast_data->get_linked_parent() !== false)
 		{
 			$meta_box_data->html->put( 'already_broadcasted',  sprintf( '<p>%s</p>',
-				$this->_( 'This post is broadcasted child post. It cannot be broadcasted further.' )
+				$this->_( 'This post is a broadcasted child post. It cannot be broadcasted further.' )
 			) );
 			$action->applied();
 			return;
@@ -2335,7 +2340,7 @@ This can be increased by adding the following to your wp-config.php:
 			if ( $bcd->broadcast_data !== null )
 				if ( $bcd->broadcast_data->has_linked_child_on_this_blog() )
 				{
-					$child_post_id = $broadcast_data->get_linked_child_on_this_blog();
+					$child_post_id = $bcd->broadcast_data->get_linked_child_on_this_blog();
 					$this->debug( 'There is already a child post on this blog: %s', $child_post_id );
 
 					// Does this child post still exist?
