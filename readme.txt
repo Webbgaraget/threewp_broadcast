@@ -4,7 +4,7 @@ License: GPLv3
 Requires at least: 3.3.1
 Stable tag: trunk
 Tags: broadcast, multipost, share content, duplicate, posts, marketing, threewp, linking, posts, multiple, blogs, sitepress, woocommerce, wpml, synchronize, event organiser, acf, all in one calendar
-Tested up to: 3.9.2
+Tested up to: 4.0
 
 Network plugin for PHP v5.4+ to broadcast posts to other blogs in the network. Custom post types, taxonomies, attachments and WPML are supported.
 
@@ -48,6 +48,7 @@ For a complete list of features and more information, see <a href="http://plainv
 * <strong>Advanced Custom Fields</strong> adds support for correctly broadcasting attachment field types using the ACF plugin.
 * <strong>All Blogs</strong> allows users to broadcast to all blogs in the network without having to be a user of the blog.
 * <strong>All In One Calendar</strong> adds support for <a href="http://www.wordpress.org/plugins/all-in-one-event-calendar/">Timely's All In One Calendar</a> plugin.
+* <strong>Back To Parent</strong> updates the parent post with the new child content.
 * <strong>Attachment Shortcodes</strong> copies attachments specified in custom shortcodes.
 * <strong>Comments</strong> adds support for broadcasting of comments.
 * <strong>Custom Field Attachments</strong> allows post custom field containing attachment IDs to be broadcasted correctly..
@@ -67,7 +68,7 @@ Sync Taxonomies
 * <strong>User & Blog Settings</strong> (UBS) can hide the broadcast meta box and/or menu, modify the meta box to force/prevent broadcast to blogs, with separate settings for users / blogs / roles.
 * <strong>User & Blog Settings Post</strong> uses the modifications from the UBS plugin to broadcast posts with one click.
 * <strong>Views</strong> adds support for WP Types and Views content templates.
-* <strong>WooCommerce</strong> allows product variations to be broadcasted.
+* <strong>WooCommerce</strong> allows attribute taxonomies and product variations to be broadcasted.
 
 = Misc =
 
@@ -208,25 +209,17 @@ If you have a product gallery, use the "Custom Field Attachments" premium plugin
 
 = WPML Sitepress =
 
-There is an included plugin, ThreeWP Broadcast WPML, that provides support for transferring WPML translation data between broadcasted posts.
+WPML is supported via a plugin in the premium pack.
 
-It works transparently in the background, but in case you've never really used WPML (like myself), here's how I got it working:
-
-1. Enable the Broadcast and Broadcast WPML plugins.
-2. Write a new post in a language. Link and broadcast it to another blog in the network.
-3. The new post should have the same language in the child blog(s).
-4. In the parent blog, create a new translation of the post.
-5. Link and broadcast it to the other blogs in the network.
-6. The other blogs should now have two translations of the same post and the same post overview listing.
-
-2014-01-12 This plugin will soon be replaced by a WPML premium plugin that enables broadcasting from the translation manager.
-2014-05-20 This plugin will be removed in the future.
-2014-08-14 Still awaiting patches to WPML to be integrated.
+For more information, see WPML discussion here: http://wordpress.org/support/topic/wmpl-integration-not-working
 
 == Changelog ==
 
-= 6 2014xxxx =
+= 6 20140909 =
 * Code: broadcast_data class replaces BroadcastData.
+* New: Premium Pack Plugin: Back To Parent
+* Version 4.0 compataiblity (version bump).
+* Obsolete and broken WPML plugin removed. See discussion here: http://wordpress.org/support/topic/wmpl-integration-not-working
 
 = 5 20140830 =
 * Hide information from non-network admins.
