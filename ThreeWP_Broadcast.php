@@ -2450,6 +2450,7 @@ This can be increased by adding the following to your wp-config.php:
 
 					$this->debug( 'Taxonomies: Syncing terms.' );
 					$this->sync_terms( $bcd, $parent_post_taxonomy );
+					$this->debug( 'Taxonomies: Synced terms.' );
 
 					if ( count( $taxonomies_to_add_to ) > 0 )
 					{
@@ -3221,21 +3222,26 @@ This can be increased by adding the following to your wp-config.php:
 		// Also keep track of which sources we haven't found on the target blog.
 		$unfound_sources = $source_terms;
 
-		// First step: find out which of the target terms exist on the source blog
-		$this->debug( 'Find out which of the source terms exist on the target blog.' );
+		// Rekey the terms in order to find them faster.
+		$source_slugs = [];
+		foreach( $source_terms as $source_term_id => $source_term )
+			$source_slugs[ $source_term[ 'slug' ] ] = $source_term_id;
+		$target_slugs = [];
 		foreach( $target_terms as $target_term_id => $target_term )
-			foreach( $source_terms as $source_term_id => $source_term )
-			{
-				if ( isset( $found_sources[ $source_term_id ] ) )
-					continue;
-				if ( $source_term[ 'slug' ] == $target_term[ 'slug' ] )
-				{
-					$this->debug( 'Find source term %s. Source ID: %s. Target ID: %s.', $source_term[ 'slug' ], $source_term_id, $target_term_id );
-					$found_targets[ $target_term_id ] = $source_term_id;
-					$found_sources[ $source_term_id ] = $target_term_id;
-					unset( $unfound_sources[ $source_term_id ] );
-				}
-			}
+			$target_slugs[ $target_term[ 'slug' ] ] = $target_term_id;
+
+		// Step 1.
+		$this->debug( 'Find out which of the source terms exist on the target blog.' );
+		foreach( $source_slugs as $source_slug => $source_term_id )
+		{
+			if ( ! isset( $target_slugs[ $source_slug ] ) )
+				continue;
+			$target_term_id = $target_slugs[ $source_slug ];
+			$this->debug( 'Found source term %s. Source ID: %s. Target ID: %s.', $source_slug, $source_term_id, $target_term_id );
+			$found_targets[ $target_term_id ] = $source_term_id;
+			$found_sources[ $source_term_id ] = $target_term_id;
+			unset( $unfound_sources[ $source_term_id ] );
+		}
 
 		// These sources were not found. Add them.
 		if ( isset( $bcd->add_new_taxonomies ) && $bcd->add_new_taxonomies )
