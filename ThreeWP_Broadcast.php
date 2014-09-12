@@ -3210,8 +3210,6 @@ This can be increased by adding the following to your wp-config.php:
 	{
 		$source_terms = $bcd->parent_blog_taxonomies[ $taxonomy ][ 'terms' ];
 		$target_terms = $this->get_current_blog_taxonomy_terms( $taxonomy );
-		$this->debug( 'Source terms for taxonomy %s: %s', $taxonomy, $source_terms );
-		$this->debug( 'Target terms for taxonomy %s: %s', $taxonomy, $target_terms );
 
 		$refresh_cache = false;
 
