@@ -23,9 +23,7 @@ use \stdClass;
 class ThreeWP_Broadcast
 	extends \threewp_broadcast\ThreeWP_Broadcast_Base
 {
-	// Include in the next version or so.
-	//use \plainview\sdk\wordpress\traits\debug;
-	use debug;
+	use \plainview\sdk\wordpress\traits\debug;
 
 	/**
 		@brief		Broadcasting stack.
@@ -2289,7 +2287,7 @@ This can be increased by adding the following to your wp-config.php:
 			{
 				$this->debug( 'Gallery has attachment %s.', $id );
 				$data = attachment_data::from_attachment_id( $id, $bcd->upload_dir );
-				$data->set_parent_attachment( $bcd->post );
+				$data->set_attached_to_parent( $bcd->post );
 				$bcd->attachment_data[ $id ] = $data;
 			}
 		}
@@ -2457,6 +2455,7 @@ This can be increased by adding the following to your wp-config.php:
 						// This relates to the bug mentioned in the method $this->set_term_parent()
 						delete_option( $parent_post_taxonomy . '_children' );
 						clean_term_cache( '', $parent_post_taxonomy );
+						$this->debug( 'Setting taxonomies for %s: %s', $parent_post_taxonomy, $taxonomies_to_add_to );
 						wp_set_object_terms( $bcd->new_post[ 'ID' ], $taxonomies_to_add_to, $parent_post_taxonomy );
 					}
 				}
