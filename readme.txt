@@ -215,6 +215,9 @@ For more information, see WPML discussion here: http://wordpress.org/support/top
 
 == Changelog ==
 
+= 7 201409xx =
+* Fix: Massive optimization of taxonomy syncing.
+
 = 6 20140909 =
 * Code: broadcast_data class replaces BroadcastData.
 * New: Premium Pack Plugin: Back To Parent

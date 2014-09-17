@@ -143,13 +143,18 @@ extends \threewp_broadcast\maintenance\checks\check
 					continue;
 				}
 
-				// The child does have a bcd. Does it have a parent link?
 				$linked_parent = $child_bcd->get_linked_parent();
+				// The child does have a bcd. Does it have a parent link?
 				if ( ! $linked_parent )
 				{
 					$this->data->child_is_unlinked->set( $id, [ $blog_id => $post_id ] );
 					continue;
 				}
+
+				// Does the parent have something linked on this blog?
+
+				// Does the parent already have a post on this blog?
+
 				// Does the child's bcd link back to this blog+post?
 				if ( ( $linked_parent[ 'blog_id' ] != $bcd->blog_id ) && ( $linked_parent[ 'post_id' ] != $bcd->post_id ) )
 				{
