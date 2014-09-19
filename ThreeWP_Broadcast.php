@@ -2439,10 +2439,10 @@ This can be increased by adding the following to your wp-config.php:
 							$action->term = $new_term;
 							$action->apply();
 							$new_taxonomy = $action->new_term;
-							$term_taxonomy_id = $new_taxonomy[ 'term_taxonomy_id' ];
-							$this->debug( 'Taxonomies: Created taxonomy %s (%s).', $parent_post_term->name, $term_taxonomy_id );
+							$term_id = $new_taxonomy[ 'term_id' ];
+							$this->debug( 'Taxonomies: Created taxonomy %s (%s).', $parent_post_term->name, $term_id );
 
-							$taxonomies_to_add_to []= intval( $term_taxonomy_id );
+							$taxonomies_to_add_to []= intval( $term_id );
 						}
 					}
 
