@@ -2,6 +2,8 @@
 
 namespace threewp_broadcast\maintenance\checks\broadcast_data\traits\steps;
 
+use \plainview\sdk\collections\collection;
+
 trait step_results_fail_same_parent
 {
 	public function step_results_fail_same_parent( $o )
@@ -11,6 +13,25 @@ trait step_results_fail_same_parent
 		{
 			foreach( $blog as $post_id => $children )
 			{
+				// Find out how many children there are per blog.
+				$blog_count = new collection;
+				foreach( $children as $child )
+				{
+					$value = $blog_count->get( $child->blog_id, 0 );
+					$blog_count->set( $child->blog_id, $value + 1 );
+				}
+				// Remove all of those children that only have one post linked.
+				foreach( $blog_count as $child_blog_id => $count )
+				{
+					// We only want to keep those child blogs with more than one link to the parent.
+					if ( $count > 1 )
+						continue;
+					// Find all children with this child blog ID and remove them.
+					foreach( $children as $child_index => $child )
+						if ( $child->blog_id == $child_blog_id )
+							$children->forget( $child_index );
+				}
+				// If less than two children, ignore it.
 				if ( $children->count() < 2 )
 					$blog->forget( $post_id );
 			}
