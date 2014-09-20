@@ -219,6 +219,7 @@ For more information, see WPML discussion here: http://wordpress.org/support/top
 * Fix: Massive optimization of taxonomy syncing.
 * New: "Same Parent" check for broadcast data maintenance check. If two posts on a blog say they have the same parent.
 * Fix: Hang upon broadcasting galleries.
+* Fix: Not setting child post taxonomies sometimes.
 
 = 6 20140909 =
 * Code: broadcast_data class replaces BroadcastData.
