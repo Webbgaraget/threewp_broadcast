@@ -220,6 +220,7 @@ For more information, see WPML discussion here: http://wordpress.org/support/top
 * New: "Same Parent" check for broadcast data maintenance check. If two posts on a blog say they have the same parent.
 * Fix: Hang upon broadcasting galleries.
 * Fix: Not setting child post taxonomies sometimes.
+* Fix: Code to prevent broadcast looping (using the ACF plugin).
 
 = 6 20140909 =
 * Code: broadcast_data class replaces BroadcastData.

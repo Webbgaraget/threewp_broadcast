@@ -2378,6 +2378,9 @@ This can be increased by adding the following to your wp-config.php:
 				}
 			}
 
+			$bcd->equivalent_posts()->set( $bcd->parent_blog_id, $bcd->post->ID, $bcd->current_child_blog_id, $bcd->new_post()->ID );
+			$this->debug( 'Equivalent of %s/%s is %s/%s', $bcd->parent_blog_id, $bcd->post->ID, $bcd->current_child_blog_id, $bcd->new_post()->ID  );
+
 			if ( $bcd->taxonomies )
 			{
 				$this->debug( 'Taxonomies: Starting.' );
