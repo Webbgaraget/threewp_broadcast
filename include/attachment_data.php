@@ -48,9 +48,10 @@ class attachment_data
 			$r->filename_path = $upload_dir[ 'basedir' ] . '/' . $metadata[ 'file' ];
 			$r->file_metadata = $metadata;
 		}
-		else
+
+		// No metadata = not an image. Guess the upload directory and what not.
+		if ( strlen( $r->filename_path ) < 1 )
 		{
-			// No metadata = not an image. Guess the upload directory and what not.
 			$r->filename_path = get_attached_file( $r->id );
 			$r->filename_base = basename( $r->filename_path );
 		}

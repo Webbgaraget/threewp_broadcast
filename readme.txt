@@ -221,6 +221,7 @@ For more information, see WPML discussion here: http://wordpress.org/support/top
 * Fix: Hang upon broadcasting galleries.
 * Fix: Not setting child post taxonomies sometimes.
 * Fix: Code to prevent broadcast looping (using the ACF plugin).
+* Fix: Copy attachments with metadata that don't have filenames (ex: m4a files).
 
 = 6 20140909 =
 * Code: broadcast_data class replaces BroadcastData.
