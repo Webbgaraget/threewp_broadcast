@@ -44,8 +44,11 @@ class attachment_data
 		// Does the file have metadata?
 		if ( $metadata )
 		{
-			$r->filename_base = basename( $metadata['file'] );
-			$r->filename_path = $upload_dir[ 'basedir' ] . '/' . $metadata[ 'file' ];
+			if ( isset( $metadata['file'] ) )
+			{
+				$r->filename_base = basename( $metadata['file'] );
+				$r->filename_path = $upload_dir[ 'basedir' ] . '/' . $metadata[ 'file' ];
+			}
 			$r->file_metadata = $metadata;
 		}
 
