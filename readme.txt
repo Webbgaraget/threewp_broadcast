@@ -215,7 +215,7 @@ For more information, see WPML discussion here: http://wordpress.org/support/top
 
 == Changelog ==
 
-= 7 201409xx =
+= 7 20140923 =
 * Fix: Massive optimization of taxonomy syncing.
 * New: "Same Parent" check for broadcast data maintenance check. If two posts on a blog say they have the same parent.
 * Fix: Hang upon broadcasting galleries.
