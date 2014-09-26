@@ -6,7 +6,7 @@ Author URI:		http://www.plainview.se
 Description:	Broadcast / multipost a post, with attachments, custom fields, tags and other taxonomies to other blogs in the network.
 Plugin Name:	ThreeWP Broadcast
 Plugin URI:		http://plainview.se/wordpress/threewp-broadcast/
-Version:		3
+Version:		7
 */
 
 namespace threewp_broadcast;
@@ -23,9 +23,7 @@ use \stdClass;
 class ThreeWP_Broadcast
 	extends \threewp_broadcast\ThreeWP_Broadcast_Base
 {
-	// Include in the next version or so.
-	//use \plainview\sdk\wordpress\traits\debug;
-	use debug;
+	use \plainview\sdk\wordpress\traits\debug;
 
 	/**
 		@brief		Broadcasting stack.
@@ -90,14 +88,14 @@ class ThreeWP_Broadcast
 	**/
 	public $permalink_cache;
 
-	public $plugin_version = 3;
+	public $plugin_version = 7;
 
 	// 20140501 when debug trait is moved to SDK.
 	protected $sdk_version_required = 20130505;		// add_action / add_filter
 
 	protected $site_options = array(
 		'blogs_to_hide' => 5,								// How many blogs to auto-hide
-		'broadcast_internal_custom_fields' => false,		// Broadcast internal custom fields?
+		'broadcast_internal_custom_fields' => true,		// Broadcast internal custom fields?
 		'canonical_url' => true,							// Override the canonical URLs with the parent post's.
 		'clear_post' => true,								// Clear the post before broadcasting.
 		'custom_field_whitelist' => '_wp_page_template _wplp_ _aioseop_',				// Internal custom fields that should be broadcasted.
@@ -318,9 +316,10 @@ class ThreeWP_Broadcast
 			$this->message( 'Custom post types saved!' );
 		}
 
-		$r .= $this->p_( 'Custom post types must be specified using their internal Wordpress names with a space between each. It is not possible to automatically make a list of available post types on the whole network because of a limitation within Wordpress (the current blog knows only of its own custom post types).' );
+		$r .= $this->p_( 'Custom post types must be specified using their internal Wordpress names on a new line each. It is not possible to automatically make a list of available post types on the whole network because of a limitation within Wordpress (the current blog knows only of its own custom post types).' );
 
 		$blog_post_types = get_post_types();
+		unset( $blog_post_types[ 'nav_menu_item' ] );
 		$blog_post_types = array_keys( $blog_post_types );
 		$r .= $this->p_( 'The custom post types registered on <em>this</em> blog are: <code>%s</code>', implode( ', ', $blog_post_types ) );
 
@@ -447,7 +446,7 @@ class ThreeWP_Broadcast
 		$clear_post = $fs->checkbox( 'clear_post' )
 			->description_( 'The POST PHP variable is data sent when updating posts. Most plugins are fine if the POST is cleared before broadcasting, while others require that the data remains intact. Uncheck this setting if you notice that child posts are not being treated the same on the child blogs as they are on the parent blog.' )
 			->label_( 'Clear POST' )
-			->checked( $this->get_site_option( 'debug', false ) );
+			->checked( $this->get_site_option( 'clear_post' ) );
 
 		$save_post_priority = $fs->number( 'save_post_priority' )
 			->description_( 'The priority for the save_post hook. Should be after all other plugins have finished modifying the post. Default is 640.' )
@@ -810,6 +809,12 @@ class ThreeWP_Broadcast
 
 	public function user_broadcast_info()
 	{
+		if ( ! is_super_admin() )
+		{
+			echo $this->p( 'No information available.' );
+			return;
+		}
+
 		$table = $this->table();
 		$table->caption()->text( 'Information' );
 
@@ -860,6 +865,11 @@ class ThreeWP_Broadcast
 		$row->td()->text( 'Plainview Wordpress SDK path' );
 		$object = new \ReflectionObject( new \plainview\sdk\wordpress\base );
 		$row->td()->text( $object->getFilename() );
+
+		// WP upload path
+		$row = $table->body()->row();
+		$row->td()->text( 'Wordpress upload directory array' );
+		$row->td()->text( '<pre>' . var_export( wp_upload_dir(), true ) . '</pre>' );
 
 		// PHP maximum execution time
 		$row = $table->body()->row();
@@ -1258,17 +1268,20 @@ This can be increased by adding the following to your wp-config.php:
 			return;
 		}
 
+		// We must handle this post type.
+		$post = get_post( $post_id );
+		$action = new actions\get_post_types;
+		$action->apply();
+		if ( ! in_array( $post->post_type, $action->post_types ) )
+		{
+			$this->debug( 'We do not care about the %s post type.', $post->post_type );
+			return;
+		}
+
 		// No post?
 		if ( count( $_POST ) < 1 )
 		{
 			$this->debug( 'The POST is empty.' );
-			return;
-		}
-
-		// Nothing of interest in the post?
-		if ( ! isset( $_POST[ 'broadcast' ] ) )
-		{
-			$this->debug( 'The POST does not contain any Broadcast data.' );
 			return;
 		}
 
@@ -1290,14 +1303,16 @@ This can be increased by adding the following to your wp-config.php:
 
 		$this->debug( 'We are currently on blog %s (%s).', get_bloginfo( 'blogname' ), get_current_blog_id() );
 
-		$post = get_post( $post_id );
-
 		$meta_box_data = $this->create_meta_box( $post );
+
+		$this->debug( 'Preparing the meta box.' );
 
 		// Allow plugins to modify the meta box with their own info.
 		$action = new actions\prepare_meta_box;
 		$action->meta_box_data = $meta_box_data;
 		$action->apply();
+
+		$this->debug( 'Prepared.' );
 
 		// Post the form.
 		if ( ! $meta_box_data->form->has_posted )
@@ -1315,9 +1330,13 @@ This can be increased by adding the following to your wp-config.php:
 			'upload_dir' => wp_upload_dir(),
 		] );
 
+		$this->debug( 'Preparing the broadcasting data.' );
+
 		$action = new actions\prepare_broadcasting_data;
 		$action->broadcasting_data = $broadcasting_data;
 		$action->apply();
+
+		$this->debug( 'Prepared.' );
 
 		if ( $broadcasting_data->has_blogs() )
 			$this->filters( 'threewp_broadcast_broadcast_post', $broadcasting_data );
@@ -1402,7 +1421,7 @@ This can be increased by adding the following to your wp-config.php:
 		if ( $meta_box_data->broadcast_data->get_linked_parent() !== false)
 		{
 			$meta_box_data->html->put( 'already_broadcasted',  sprintf( '<p>%s</p>',
-				$this->_( 'This post is broadcasted child post. It cannot be broadcasted further.' )
+				$this->_( 'This post is a broadcasted child post. It cannot be broadcasted further.' )
 			) );
 			$action->applied();
 			return;
@@ -1439,6 +1458,7 @@ This can be increased by adding the following to your wp-config.php:
 				->label_( 'Link this post to its children' )
 				->title( $this->_( 'Create a link to the children, which will be updated when this post is updated, trashed when this post is trashed, etc.' ) );
 			$meta_box_data->html->put( 'link', '' );
+			$meta_box_data->convert_form_input_later( 'link' );
 		}
 
 		if (
@@ -1452,6 +1472,7 @@ This can be increased by adding the following to your wp-config.php:
 				->label_( 'Custom fields' )
 				->title( 'Broadcast all the custom fields and the featured image?' );
 			$meta_box_data->html->put( 'custom_fields', '' );
+			$meta_box_data->convert_form_input_later( 'custom_fields' );
 		}
 
 		if ( is_super_admin() || $this->role_at_least( $this->get_site_option( 'role_taxonomies' ) ) )
@@ -1461,6 +1482,7 @@ This can be increased by adding the following to your wp-config.php:
 				->label_( 'Taxonomies' )
 				->title( 'The taxonomies must have the same name (slug) on the selected blogs.' );
 			$meta_box_data->html->put( 'taxonomies', '' );
+			$meta_box_data->convert_form_input_later( 'taxonomies' );
 		}
 
 		$meta_box_data->html->put( 'broadcast_strings', '
@@ -1513,6 +1535,7 @@ This can be increased by adding the following to your wp-config.php:
 		}
 
 		$meta_box_data->html->put( 'blogs', '' );
+		$meta_box_data->convert_form_input_later( 'blogs' );
 
 		$js = sprintf( '<script type="">var broadcast_blogs_to_hide = %s;</script>', $this->get_site_option( 'blogs_to_hide', 5 ) );
 		$meta_box_data->html->put( 'blogs_js', $js );
@@ -1560,21 +1583,7 @@ This can be increased by adding the following to your wp-config.php:
 	**/
 	public function threewp_broadcast_prepared_meta_box( $action )
 	{
-		$meta_box_data = $action->meta_box_data;
-
-		// If our places in the html are still left, insert the inputs.
-		foreach( [
-			'link',
-			'custom_fields',
-			'taxonomies',
-			'groups',
-			'blogs'
-		] as $type )
-			if ( $meta_box_data->html->has( $type ) )
-			{
-				$input = $meta_box_data->form->input( $type );
-				$meta_box_data->html->put( $type, $input );
-			}
+		$action->meta_box_data->convert_form_inputs_now();
 	}
 
 	/**
@@ -1662,8 +1671,8 @@ This can be increased by adding the following to your wp-config.php:
 						$this->_( 'Trash' )
 					) );
 
-					$url_unlink_all = sprintf( "admin.php?page=threewp_broadcast&amp;action=user_unlink_all&amp;post=%s", $filter->parent_post_id );
-					$url_unlink_all = wp_nonce_url( $url_unlink_all, 'broadcast_unlink_all_' . $filter->parent_post_id );
+					$url = sprintf( "admin.php?page=threewp_broadcast&amp;action=user_unlink_all&amp;post=%s", $filter->parent_post_id );
+					$url = wp_nonce_url( $url, 'broadcast_unlink_all_' . $filter->parent_post_id );
 					$strings->set( 'unlink_all_separator', ' | ' );
 					$strings->set( 'unlink_all', sprintf( '<a href="%s" title="%s">%s</a>',
 						$url,
@@ -2132,15 +2141,19 @@ This can be increased by adding the following to your wp-config.php:
 		if ( $bcd->link )
 		{
 			$this->debug( 'Linking is enabled.' );
-			// Prepare the broadcast data for linked children.
-			$broadcast_data = $this->get_post_broadcast_data( $bcd->parent_blog_id, $bcd->post->ID );
 
-			// Does this post type have parent support, so that we can link to a parent?
-			if ( $bcd->post_type_is_hierarchical && $bcd->post->post_parent > 0)
+			if ( $broadcasting_data->broadcast_data === null )
 			{
-				$parent_broadcast_data = $this->get_post_broadcast_data( $bcd->parent_blog_id, $bcd->post->post_parent );
+				// Prepare the broadcast data for linked children.
+				$bcd->broadcast_data = $this->get_post_broadcast_data( $bcd->parent_blog_id, $bcd->post->ID );
+
+				// Does this post type have parent support, so that we can link to a parent?
+				if ( $bcd->post_type_is_hierarchical && $bcd->post->post_parent > 0)
+				{
+					$parent_broadcast_data = $this->get_post_broadcast_data( $bcd->parent_blog_id, $bcd->post->post_parent );
+				}
+				$this->debug( 'Post type is hierarchical: %s', $this->yes_no( $bcd->post_type_is_hierarchical ) );
 			}
-			$this->debug( 'Post type is hierarchical: %s', $this->yes_no( $bcd->post_type_is_hierarchical ) );
 		}
 		else
 			$this->debug( 'Linking is disabled.' );
@@ -2158,26 +2171,35 @@ This can be increased by adding the following to your wp-config.php:
 		$has_attached_files = count( $attached_files) > 0;
 		if ( $has_attached_files )
 		{
-			$this->debug( 'Has %s attachments.', $has_attached_files );
+			$this->debug( 'Has %s attachments.', count( $has_attached_files ) );
 			foreach( $attached_files as $attached_file )
 			{
-				$bcd->attachment_data[ $attached_file->ID ] = attachment_data::from_attachment_id( $attached_file, $bcd->upload_dir );
+				$data = attachment_data::from_attachment_id( $attached_file, $bcd->upload_dir );
+				$data->set_attached_to_parent( $bcd->post );
+				$bcd->attachment_data[ $attached_file->ID ] = $data;
 				$this->debug( 'Attachment %s found.', $attached_file->ID );
 			}
 		}
 
-		if ( $bcd->custom_fields )
+		if ( $bcd->custom_fields !== false )
 		{
+			if ( ! is_object( $bcd->custom_fields ) )
+				$bcd->custom_fields = new \stdClass;
+
 			$this->debug( 'Custom fields: Will broadcast custom fields.' );
 			$bcd->post_custom_fields = get_post_custom( $bcd->post->ID );
 
 			// Save the original custom fields for future use.
 			$bcd->custom_fields->original = $bcd->post_custom_fields;
-
 			$bcd->has_thumbnail = isset( $bcd->post_custom_fields[ '_thumbnail_id' ] );
 
 			// Check that the thumbnail ID is > 0
-			$bcd->has_thumbnail = $bcd->has_thumbnail && ( reset( $bcd->post_custom_fields[ '_thumbnail_id' ] ) > 0 );
+			if ( $bcd->has_thumbnail )
+			{
+				$thumbnail_id = reset( $bcd->post_custom_fields[ '_thumbnail_id' ] );
+				$thumbnail_post = get_post( $thumbnail_id );
+				$bcd->has_thumbnail = $bcd->has_thumbnail && ( $thumbnail_post !== null );
+			}
 
 			if ( $bcd->has_thumbnail )
 			{
@@ -2185,7 +2207,9 @@ This can be increased by adding the following to your wp-config.php:
 				$bcd->thumbnail_id = $bcd->post_custom_fields[ '_thumbnail_id' ][0];
 				$bcd->thumbnail = get_post( $bcd->thumbnail_id );
 				unset( $bcd->post_custom_fields[ '_thumbnail_id' ] ); // There is a new thumbnail id for each blog.
-				$bcd->attachment_data[ 'thumbnail' ] = attachment_data::from_attachment_id( $bcd->thumbnail, $bcd->upload_dir);
+				$data = attachment_data::from_attachment_id( $bcd->thumbnail, $bcd->upload_dir);
+				$data->set_attached_to_parent( $bcd->post );
+				$bcd->attachment_data[ 'thumbnail' ] = $data;
 				// Now that we know what the attachment id the thumbnail has, we must remove it from the attached files to avoid duplicates.
 				unset( $bcd->attachment_data[ $bcd->thumbnail_id ] );
 			}
@@ -2262,8 +2286,9 @@ This can be increased by adding the following to your wp-config.php:
 			foreach( $gallery->ids_array as $id )
 			{
 				$this->debug( 'Gallery has attachment %s.', $id );
-				$ad = attachment_data::from_attachment_id( $id, $bcd->upload_dir );
-				$bcd->attachment_data[ $id ] = $ad;
+				$data = attachment_data::from_attachment_id( $id, $bcd->upload_dir );
+				$data->set_attached_to_parent( $bcd->post );
+				$bcd->attachment_data[ $id ] = $data;
 			}
 		}
 
@@ -2280,13 +2305,15 @@ This can be increased by adding the following to your wp-config.php:
 		$action->broadcasting_data = $bcd;
 		$action->apply();
 
+		$this->debug( 'The attachment data is: %s', $bcd->attachment_data );
+
 		$this->debug( 'Beginning child broadcast loop.' );
 
 		foreach( $bcd->blogs as $child_blog )
 		{
 			$child_blog->switch_to();
 			$bcd->current_child_blog_id = $child_blog->get_id();
-			$this->debug( 'Switched to blog %s', $bcd->current_child_blog_id );
+			$this->debug( 'Switched to blog %s (%s)', get_bloginfo( 'name' ), $bcd->current_child_blog_id );
 
 			// Create new post data from the original stuff.
 			$bcd->new_post = (array) $bcd->post;
@@ -2308,10 +2335,10 @@ This can be increased by adding the following to your wp-config.php:
 
 			// Insert new? Or update? Depends on whether the parent post was linked before or is newly linked?
 			$need_to_insert_post = true;
-			if ( $bcd->link )
-				if ( $broadcast_data->has_linked_child_on_this_blog() )
+			if ( $bcd->broadcast_data !== null )
+				if ( $bcd->broadcast_data->has_linked_child_on_this_blog() )
 				{
-					$child_post_id = $broadcast_data->get_linked_child_on_this_blog();
+					$child_post_id = $bcd->broadcast_data->get_linked_child_on_this_blog();
 					$this->debug( 'There is already a child post on this blog: %s', $child_post_id );
 
 					// Does this child post still exist?
@@ -2347,9 +2374,12 @@ This can be increased by adding the following to your wp-config.php:
 				if ( $bcd->link )
 				{
 					$this->debug( 'Adding link to child.' );
-					$broadcast_data->add_linked_child( $bcd->current_child_blog_id, $bcd->new_post[ 'ID' ] );
+					$bcd->broadcast_data->add_linked_child( $bcd->current_child_blog_id, $bcd->new_post[ 'ID' ] );
 				}
 			}
+
+			$bcd->equivalent_posts()->set( $bcd->parent_blog_id, $bcd->post->ID, $bcd->current_child_blog_id, $bcd->new_post()->ID );
+			$this->debug( 'Equivalent of %s/%s is %s/%s', $bcd->parent_blog_id, $bcd->post->ID, $bcd->current_child_blog_id, $bcd->new_post()->ID  );
 
 			if ( $bcd->taxonomies )
 			{
@@ -2359,7 +2389,7 @@ This can be increased by adding the following to your wp-config.php:
 					$this->debug( 'Taxonomies: %s', $parent_post_taxonomy );
 					// If we're updating a linked post, remove all the taxonomies and start from the top.
 					if ( $bcd->link )
-						if ( $broadcast_data->has_linked_child_on_this_blog() )
+						if ( $bcd->broadcast_data->has_linked_child_on_this_blog() )
 							wp_set_object_terms( $bcd->new_post[ 'ID' ], [], $parent_post_taxonomy );
 
 					// Skip this iteration if there are no terms
@@ -2412,63 +2442,71 @@ This can be increased by adding the following to your wp-config.php:
 							$action->term = $new_term;
 							$action->apply();
 							$new_taxonomy = $action->new_term;
-							$term_taxonomy_id = $new_taxonomy[ 'term_taxonomy_id' ];
-							$this->debug( 'Taxonomies: Created taxonomy %s (%s).', $parent_post_term->name, $term_taxonomy_id );
+							$term_id = $new_taxonomy[ 'term_id' ];
+							$this->debug( 'Taxonomies: Created taxonomy %s (%s).', $parent_post_term->name, $term_id );
 
-							$taxonomies_to_add_to []= intval( $term_taxonomy_id );
+							$taxonomies_to_add_to []= intval( $term_id );
 						}
 					}
 
 					$this->debug( 'Taxonomies: Syncing terms.' );
 					$this->sync_terms( $bcd, $parent_post_taxonomy );
+					$this->debug( 'Taxonomies: Synced terms.' );
 
 					if ( count( $taxonomies_to_add_to ) > 0 )
 					{
 						// This relates to the bug mentioned in the method $this->set_term_parent()
 						delete_option( $parent_post_taxonomy . '_children' );
 						clean_term_cache( '', $parent_post_taxonomy );
+						$this->debug( 'Setting taxonomies for %s: %s', $parent_post_taxonomy, $taxonomies_to_add_to );
 						wp_set_object_terms( $bcd->new_post[ 'ID' ], $taxonomies_to_add_to, $parent_post_taxonomy );
 					}
 				}
 				$this->debug( 'Taxonomies: Finished.' );
 			}
 
-			// Remove the current attachments.
-			$attachments_to_remove = get_children( 'post_parent='.$bcd->new_post[ 'ID' ] . '&post_type=attachment' );
-			$this->debug( '%s attachments to remove.', count( $attachments_to_remove ) );
-			foreach ( $attachments_to_remove as $attachment_to_remove )
+			// Maybe remove the current attachments.
+			if ( $bcd->delete_attachments )
 			{
-				$this->debug( 'Deleting existing attachment: %s', $attachment_to_remove->ID );
-				wp_delete_attachment( $attachment_to_remove->ID );
+				$attachments_to_remove = get_children( 'post_parent='.$bcd->new_post[ 'ID' ] . '&post_type=attachment' );
+				$this->debug( '%s attachments to remove.', count( $attachments_to_remove ) );
+				foreach ( $attachments_to_remove as $attachment_to_remove )
+				{
+					$this->debug( 'Deleting existing attachment: %s', $attachment_to_remove->ID );
+					wp_delete_attachment( $attachment_to_remove->ID );
+				}
 			}
+			else
+				$this->debug( 'Not deleting child attachments.' );
 
 			// Copy the attachments
 			$bcd->copied_attachments = [];
 			$this->debug( 'Looking through %s attachments.', count( $bcd->attachment_data ) );
 			foreach( $bcd->attachment_data as $key => $attachment )
 			{
-				if ( $key != 'thumbnail' )
+				if ( $key == 'thumbnail' )
+					continue;
+				$o = clone( $bcd );
+				$o->attachment_data = clone( $attachment );
+				$o->attachment_data->post = clone( $attachment->post );
+				$this->debug( "The attachment's post parent is %s.", $o->attachment_data->post->post_parent );
+				if ( $o->attachment_data->is_attached_to_parent() )
 				{
-					$o = clone( $bcd );
-					$o->attachment_data = $attachment;
-					if ( $o->attachment_data->post->post_parent == $bcd->post->ID )
-					{
-						$this->debug( 'Assigning new parent ID (%s) to attachment %s.', $bcd->new_post()->ID, $o->attachment_data->post->ID );
-						$o->attachment_data->post->post_parent = $bcd->new_post[ 'ID' ];
-					}
-					else
-					{
-						$this->debug( 'Reseting post parent for attachment %s.', $o->attachment_data->post->ID );
-						$o->attachment_data->post->post_parent = 0;
-					}
-					$this->maybe_copy_attachment( $o );
-					$a = new \stdClass();
-					$a->old = $attachment;
-					$a->new = get_post( $o->attachment_id );
-					$a->new->id = $a->new->ID;		// Lowercase is expected.
-					$bcd->copied_attachments[] = $a;
-					$this->debug( 'Copied attachment %s to %s', $a->old->id, $a->new->id );
+					$this->debug( 'Assigning new post parent ID (%s) to attachment %s.', $bcd->new_post()->ID, $o->attachment_data->post->ID );
+					$o->attachment_data->post->post_parent = $bcd->new_post[ 'ID' ];
 				}
+				else
+				{
+					$this->debug( 'Resetting post parent for attachment %s.', $o->attachment_data->post->ID );
+					$o->attachment_data->post->post_parent = 0;
+				}
+				$this->maybe_copy_attachment( $o );
+				$a = new \stdClass();
+				$a->old = $attachment;
+				$a->new = get_post( $o->attachment_id );
+				$a->new->id = $a->new->ID;		// Lowercase is expected.
+				$bcd->copied_attachments[] = $a;
+				$this->debug( 'Copied attachment %s to %s', $a->old->id, $a->new->id );
 			}
 
 			// Maybe modify the post content with new URLs to attachments and what not.
@@ -2524,8 +2562,17 @@ This can be increased by adding the following to your wp-config.php:
 			$action->broadcasting_data = $bcd;
 			$action->apply();
 
+			$this->debug( 'Checking for post modifications.' );
+			$post_modified = false;
+			foreach( (array)$unmodified_post as $key => $value )
+				if ( $unmodified_post->$key != $modified_post->$key )
+				{
+					$this->debug( 'Post has been modified because of %s.', $key );
+					$post_modified = true;
+				}
+
 			// Maybe updating the post is not necessary.
-			if ( $unmodified_post->post_content != $modified_post->post_content )
+			if ( $post_modified )
 			{
 				$this->debug( 'Modifying with new post: %s', $modified_post->post_content );
 				wp_update_post( $modified_post );	// Or maybe it is.
@@ -2603,14 +2650,14 @@ This can be increased by adding the following to your wp-config.php:
 					$o = clone( $bcd );
 					$o->attachment_data = $bcd->attachment_data[ 'thumbnail' ];
 
-					if ( $o->attachment_data->post->post_parent == $bcd->post->ID )
+					if ( $o->attachment_data->is_attached_to_parent() )
 					{
 						$this->debug( 'Assigning new parent ID (%s) to attachment %s.', $bcd->new_post()->ID, $o->attachment_data->post->ID );
 						$o->attachment_data->post->post_parent = $bcd->new_post[ 'ID' ];
 					}
 					else
 					{
-						$this->debug( 'Reseting post parent for attachment %s.', $o->attachment_data->post->ID );
+						$this->debug( 'Resetting post parent for attachment %s.', $o->attachment_data->post->ID );
 						$o->attachment_data->post->post_parent = 0;
 					}
 
@@ -2655,7 +2702,7 @@ This can be increased by adding the following to your wp-config.php:
 		if ( $bcd->link )
 		{
 			$this->debug( 'Saving broadcast data.' );
-			$this->set_post_broadcast_data( $bcd->parent_blog_id, $bcd->post->ID, $broadcast_data );
+			$this->set_post_broadcast_data( $bcd->parent_blog_id, $bcd->post->ID, $bcd->broadcast_data );
 		}
 
 		$action = new actions\broadcasting_finished;
@@ -2899,7 +2946,8 @@ This can be increased by adding the following to your wp-config.php:
 						$function[ 0 ] = get_class( $function[ 0 ] );
 					$function = sprintf( '%s::%s', $function[ 0 ], $function[ 1 ] );
 				}
-				$function = sprintf( '%s %s', $function, $priority );
+				if ( is_a( $function, 'Closure' ) )
+					$function = '[Anonymous function]';
 				$hook_callbacks[] = $function;
 			}
 		}
@@ -3057,6 +3105,9 @@ This can be increased by adding the following to your wp-config.php:
 		$key = get_current_blog_id();
 
 		$this->debug( 'Maybe copy attachment: Searching for attachment posts with the name %s.', $attachment_data->post->post_name );
+
+		// Do not use get_posts because it is too stupid to find existing attachments with the same name. We have to do this with a raw query. *sigh*
+/**
 		$attachment_posts = get_posts( [
 			'cache_results' => false,
 			'name' => $attachment_data->post->post_name,
@@ -3064,6 +3115,20 @@ This can be increased by adding the following to your wp-config.php:
 			'post_parent' => null,
 			'post_type' => 'attachment',
 		] );
+**/
+		// Start by assuming no attachments.
+		$attachment_posts = [];
+
+		global $wpdb;
+		// The post_name is the important part.
+		$query = sprintf( "SELECT `ID` FROM `%s` WHERE `post_type` = 'attachment' AND `post_parent` = 0 AND `post_name` = '%s'",
+			$wpdb->posts,
+			$attachment_data->post->post_name
+		);
+		$results = $this->query( $query );
+		if ( count( $results ) > 0 )
+			foreach( $results as $result )
+				$attachment_posts[] = get_post( $result[ 'ID' ] );
 		$this->debug( 'Maybe copy attachment: Found %s attachment posts.', count( $attachment_posts ) );
 
 		// Is there an existing media file?
@@ -3075,6 +3140,7 @@ This can be increased by adding the following to your wp-config.php:
 				$this->debug( "The attachment post name is %s, and we are looking for %s. Ignoring attachment.", $attachment_post->post_name, $attachment_data->post->post_name );
 				continue;
 			}
+			$this->debug( "Found attachment %s and we are looking for %s.", $attachment_post->post_name, $attachment_data->post->post_name );
 			// We've found an existing attachment. What to do with it...
 			$existing_action = $this->get_site_option( 'existing_attachments', 'use' );
 			$this->debug( 'Maybe copy attachment: The action for existing attachments is to %s.', $existing_action );
@@ -3146,8 +3212,6 @@ This can be increased by adding the following to your wp-config.php:
 	{
 		$source_terms = $bcd->parent_blog_taxonomies[ $taxonomy ][ 'terms' ];
 		$target_terms = $this->get_current_blog_taxonomy_terms( $taxonomy );
-		$this->debug( 'Source terms for taxonomy %s: %s', $taxonomy, $source_terms );
-		$this->debug( 'Target terms for taxonomy %s: %s', $taxonomy, $target_terms );
 
 		$refresh_cache = false;
 
@@ -3158,21 +3222,26 @@ This can be increased by adding the following to your wp-config.php:
 		// Also keep track of which sources we haven't found on the target blog.
 		$unfound_sources = $source_terms;
 
-		// First step: find out which of the target terms exist on the source blog
-		$this->debug( 'Find out which of the source terms exist on the target blog.' );
+		// Rekey the terms in order to find them faster.
+		$source_slugs = [];
+		foreach( $source_terms as $source_term_id => $source_term )
+			$source_slugs[ $source_term[ 'slug' ] ] = $source_term_id;
+		$target_slugs = [];
 		foreach( $target_terms as $target_term_id => $target_term )
-			foreach( $source_terms as $source_term_id => $source_term )
-			{
-				if ( isset( $found_sources[ $source_term_id ] ) )
-					continue;
-				if ( $source_term[ 'slug' ] == $target_term[ 'slug' ] )
-				{
-					$this->debug( 'Find source term %s. Source ID: %s. Target ID: %s.', $source_term[ 'slug' ], $source_term_id, $target_term_id );
-					$found_targets[ $target_term_id ] = $source_term_id;
-					$found_sources[ $source_term_id ] = $target_term_id;
-					unset( $unfound_sources[ $source_term_id ] );
-				}
-			}
+			$target_slugs[ $target_term[ 'slug' ] ] = $target_term_id;
+
+		// Step 1.
+		$this->debug( 'Find out which of the source terms exist on the target blog.' );
+		foreach( $source_slugs as $source_slug => $source_term_id )
+		{
+			if ( ! isset( $target_slugs[ $source_slug ] ) )
+				continue;
+			$target_term_id = $target_slugs[ $source_slug ];
+			$this->debug( 'Found source term %s. Source ID: %s. Target ID: %s.', $source_slug, $source_term_id, $target_term_id );
+			$found_targets[ $target_term_id ] = $source_term_id;
+			$found_sources[ $source_term_id ] = $target_term_id;
+			unset( $unfound_sources[ $source_term_id ] );
+		}
 
 		// These sources were not found. Add them.
 		if ( isset( $bcd->add_new_taxonomies ) && $bcd->add_new_taxonomies )
