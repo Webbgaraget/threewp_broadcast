@@ -165,7 +165,9 @@ The broadcast meta box, menu and columns in the post view can be hidden from use
 
 = Is php v5.4 really necessary? =
 
-Yes, if you expect me to write neat, maintainable, legible code.
+Yes.
+
+PHP v5.3 has been officially unsupported since the 14th of August, 2014. If your web host refuses to upgrade to a supported version, go find a new host.
 
 If you use v5.3 then use the last plugin that works with that version: v1.18. The download link is on the main page.
 
