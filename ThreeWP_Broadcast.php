@@ -1381,7 +1381,7 @@ class ThreeWP_Broadcast
 		require_once( 'AttachmentData.php' );
 		$upload_dir = wp_upload_dir();	// We need to find out where the files are on disk for this blog.
 		$attachment_data = array();
-		$attached_files =& get_children( 'post_parent='.$post_id.'&post_type=attachment' );
+		$attached_files = get_children( 'post_parent='.$post_id.'&post_type=attachment' );
 		$has_attached_files = count( $attached_files) > 0;
 		if ( $has_attached_files)
 		{
@@ -1551,7 +1551,7 @@ class ThreeWP_Broadcast
 			/**
 				Remove the current attachments.
 			*/
-			$attachments_to_remove =& get_children( 'post_parent='.$new_post_id.'&post_type=attachment' );
+			$attachments_to_remove = get_children( 'post_parent='.$new_post_id.'&post_type=attachment' );
 			foreach ( $attachments_to_remove as $attachment_to_remove )
 				wp_delete_attachment( $attachment_to_remove->ID );
 			
